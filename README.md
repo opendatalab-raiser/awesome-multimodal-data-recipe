@@ -8,7 +8,9 @@
   <img src="https://img.shields.io/github/last-commit/opendatalab-raiser/awesome-multimodal-data-recipe?style=flat-square" alt="Last Commit">
 </div>
 
-[English](README.md) | [中文](README_zh.md)
+<p align="center">
+  <a href="README.md">English</a> | <a href="README_zh.md">中文</a>
+</p>
 
 <p align="center">
   <b>A curated list of multimodal data synthesis methods, tools, and resources for Vision-Language Models</b>
@@ -18,10 +20,10 @@
 
 ## 📊 Statistics
 
-- **Total Papers:** 13 (data synthesis methods)
+- **Total Papers:** 12 (data synthesis methods)
 - **Industrial Reports:** 6 (Baidu, Microsoft, Alibaba, ByteDance)
-- **Data Synthesis Methods:** Image-Invariant (13)
-- **Open Source Datasets:** 12 datasets fully open-sourced
+- **Data Synthesis Methods:** Image-Invariant (12)
+- **Open Source Datasets:** 11 datasets fully open-sourced
 
 ---
 
@@ -473,15 +475,6 @@ This category of methods keeps original images fixed while enriching and improvi
   - **Experimental Results**: Substantial improvements on unseen questions, largest gains on reasoning-heavy and compositional questions, good transfer across datasets
   - **Publication**: arXiv October 2025
   - **Institution**: MIT, IBM Research, etc.
-
-#### Data Quality Filtering (Not Generation)
-
-**⚠️ Note**: Following papers focus on **filtering and selecting existing data**, not generating new data. But they are important for understanding data quality.
-
-- **📄 DataComp** [(arxiv 2304.14108)](https://arxiv.org/abs/2304.14108)
-  - **Focus**: Studies impact of different data filtering strategies on model performance
-  - **Not Synthesis**: This is a data filtering benchmark, not generating new data
-  - **Open Source**: ✅ [Website](https://www.datacomp.ai/)
 
 #### 🛠️ Tool-Assisted Annotation Generation (For Data Synthesis)
 

@@ -8,7 +8,9 @@
   <img src="https://img.shields.io/github/last-commit/opendatalab-raiser/awesome-multimodal-data-recipe?style=flat-square" alt="Last Commit">
 </div>
 
-[English](README.md) | [中文](README_zh.md)
+<p align="center">
+  <a href="README.md">English</a> | <a href="README_zh.md">中文</a>
+</p>
 
 <p align="center">
   <b>精选的多模态数据合成方法、工具和资源列表，专注于视觉-语言模型</b>
@@ -18,10 +20,10 @@
 
 ## 📊 统计信息
 
-- **论文总数：** 13篇（数据合成方法）
+- **论文总数：** 12篇（数据合成方法）
 - **大厂报告：** 6篇（百度、微软、阿里巴巴、字节跳动）
-- **数据合成方法：** 图像不变(13篇)
-- **开源数据集：** 12个数据集完全开源
+- **数据合成方法：** 图像不变(12篇)
+- **开源数据集：** 11个数据集完全开源
 
 ---
 
@@ -473,15 +475,6 @@ Florence-2开发了一个**自动化数据引擎**来生成大规模**FLD-5B**�
   - **实验结果**: 在未见问题上大幅提升，推理密集型和组合性问题提升最大，跨数据集迁移效果好
   - **发布时间**: arXiv 2025年10月
   - **机构**: MIT、IBM Research等
-
-#### 📊 数据质量过滤（非生成）
-
-**⚠️ 注意**: 以下论文专注于**过滤和选择现有数据**，而非生成新数据。但对理解数据质量很重要。
-
-- **📄 DataComp** [(arxiv 2304.14108)](https://arxiv.org/abs/2304.14108)
-  - **重点**: 研究不同数据过滤策略对模型性能的影响
-  - **不是合成**: 这是数据过滤benchmark，非生成新数据
-  - **开源**: ✅ [Website](https://www.datacomp.ai/)
 
 #### 🛠️ 工具辅助标注生成（用于数据合成）
 
