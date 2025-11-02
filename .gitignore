@@ -57,3 +57,7 @@ ENV/
 *.log
 *.cache
 
+# Development tools and documentation
+scripts/
+IMPROVEMENTS.md
+

@@ -491,6 +491,96 @@ This category of methods keeps original images fixed while enriching and improvi
 
 ---
 
+## 🧠 Cross-Domain Methodology Insights
+
+> **Note**: This section includes influential works from adjacent domains (e.g., LLM reasoning, mathematical data curation) whose **data curation and quality assessment methodologies** provide valuable frameworks transferable to multimodal settings. While not directly VLM papers, their systematic approaches to data quality evaluation, mixture optimization, and efficient filtering pipelines offer important insights for multimodal data practitioners.
+
+### 📚 Foundation Model Mid-training & Data Curation
+
+<details>
+<summary><b>OctoThinker: Mid-training Incentivizes Reinforcement Learning Scaling</b> - Systematic Data Curation, Quality Assessment & Mixture Optimization</summary>
+
+**Paper**: [OctoThinker: Mid-training Incentivizes Reinforcement Learning Scaling](https://arxiv.org/abs/2506.20512)
+
+**Institution**: GAIR Lab, Shanghai Jiao Tong University (Wang et al.)
+
+**Publication**: arXiv June 2025
+
+**Domain**: Mathematical reasoning / LLM mid-training
+
+**🔬 Why Relevant to VLM Data Curation?**
+
+**Core Contribution**: This paper is **NOT about data synthesis/generation**, but rather about **systematic data quality assessment, large-scale filtering/curation, and mixture optimization**. While focused on mathematical reasoning in the text domain, OctoThinker provides a rigorous experimental framework for evaluating and selecting high-quality data from existing corpora—methods highly transferable to multimodal scenarios where practitioners need to curate billion-scale datasets from noisy web sources.
+
+---
+
+**📊 Key Transferable Insights**:
+
+**1. Two-Stage Quality Assessment Pipeline**
+- **Method**: LLM annotation (0-5 scale) → Train efficient classifier (FastText) → Large-scale filtering (threshold 0.4) → Optional LLM refinement
+- **Key Finding**: Preprocessing critical for recall; threshold 0.4 balances quality-quantity (vs 0.9 in prior work)
+- **Result**: MegaMath-Web-Pro-Max (73.8B tokens, 5.5× larger than MegaMath-Web-Pro's 13B)
+- **VLM Transfer**: Construct multimodal annotation schema addressing vision-language alignment quality, information density, and compositional reasoning complexity; train lightweight cross-modal discriminators with frozen vision encoders to enable cost-effective billion-scale curation while preserving high-fidelity filtering
+
+**2. Systematic Data Mixture Optimization**
+- **Rigorous Testing**: 10%, 20%, 30%, 40% ratios across multiple dimensions
+- **Optimal Finding**: 30% QA data (diminishing returns beyond due to redundancy)
+- **Critical Insight**: *"Distribution gap between training data and downstream tasks notably affects performance"*
+- **VLM Transfer**: Establish controlled experimental frameworks varying caption granularity (entity-level vs scene-level vs reasoning-level), data provenance (web-scraped vs human-annotated vs model-synthesized), and cross-modal interaction patterns; employ grid search with rigorous downstream evaluation rather than heuristic mixing
+
+**3. Distribution Alignment > Data Scale**
+- **Observation**: Structured QA datasets (OpenR1, OMI2) outperform web-sourced QA (MegaMath-QA) for competition-style benchmarks due to distributional alignment, not data volume
+- **Principle**: Match pre-training distribution to downstream task format, not just domain
+- **VLM Transfer**: Prioritize distribution-aware data curation over volume maximization—document understanding benefits from text-dense layouts with diverse typography rather than natural images; visual reasoning requires multi-hop relational annotations over descriptive captions; domain-specific applications demand modality-consistent and structurally-aligned pre-training corpora
+
+**4. Small "Stabilizer" Data Has Outsized Impact**
+- **Finding**: Small amounts (1-10%) of high-quality instruction data unlock potential of other data types
+- **Effect**: Stabilizes training, reduces instability from long-format data, enables successful RL scaling
+- **VLM Transfer**: Introduce small-proportion high-quality vision-language alignment data (1-10%) to regularize training dynamics, particularly when scaling to dense long-form captions or complex multi-image reasoning scenarios; acts as distributional anchor preventing mode collapse and representation drift
+
+---
+
+**🎯 Summary: Key Takeaways for VLM Data Practitioners**
+
+| # | Principle | OctoThinker Method | VLM Application |
+|---|-----------|-------------------|-----------------|
+| 1 | **Quality over Quantity** | Filtered MegaMath-Web-Pro-Max >> Raw corpus | Curated high-precision pairs demonstrate superior downstream transfer over raw web-scale noisy corpora |
+| 2 | **Efficient Filtering** | LLM annotation → FastText classifier → Scale | Scalable two-stage pipeline enabling billion-scale curation with computational efficiency |
+| 3 | **Systematic Experimentation** | Test 10%, 20%, 30%, 40% ratios | Grid search over data mixture hyperspace with rigorous ablation studies |
+| 4 | **Diminishing Returns** | Beyond 30% QA, redundancy hurts | Identify saturation points where marginal utility diminishes due to distributional redundancy |
+| 5 | **Distribution Alignment** | Match downstream task format | Data format alignment with tasks outweighs domain similarity |
+| 6 | **Stabilizer Data** | 1-10% instruction data unlocks QA potential | Small-proportion regularization data prevents training instability and enables scaling |
+| 7 | **Format Awareness** | Long-CoT = high capability + instability | High-capacity dense outputs require stabilization mechanisms to prevent mode collapse |
+| 8 | **Two-Stage Philosophy** | Foundation (90%) → Specialization (10%) | Broad distributional coverage followed by targeted capability specialization |
+| 9 | **Preprocessing Matters** | Critical for classifier performance | Systematic normalization and artifact removal critical for discriminator generalization |
+| 10 | **Empirical Validation** | Threshold validated on downstream tasks | Hyperparameter selection guided by downstream task performance rather than proxy metrics |
+
+---
+
+**📈 Scale & Resources**:
+- **Base Model**: Llama-3.2-1B/3B/8B
+- **Mid-training Budget**: Up to 200B tokens (Stable) + 20B tokens (Decay)
+- **Final Corpus**: MegaMath-Web-Pro-Max (73.8B tokens, 5.5× larger than MegaMath-Web-Pro)
+- **Ablation Studies**: Systematic controlled experiments across data quality, mixture ratios, QA sources, and format characteristics
+- **Performance Gain**: 10-20% improvement over base model, matches Qwen2.5 after RL
+
+**🔗 Resources**:
+- ✅ **Paper**: [arXiv:2506.20512](https://arxiv.org/abs/2506.20512)
+- ✅ **Code**: [GitHub - GAIR-NLP/OctoThinker](https://github.com/GAIR-NLP/OctoThinker)
+- ✅ **Models**: [HuggingFace - OctoThinker](https://huggingface.co/OctoThinker)
+- ✅ **Dataset**: MegaMath-Web-Pro-Max (70B+ tokens, open-source promised)
+- ✅ **Full Disclosure**: All prompts and methods detailed in paper appendix
+
+**💡 Potential VLM Follow-up Works**:
+- Systematic vision-language data mixture optimization
+- Efficient multimodal quality classifiers
+- Distribution-aligned synthetic caption generation for specific domains
+- Two-stage VLM pre-training with specialized branches
+
+</details>
+
+---
+
 ## 🛠️ Tools & Frameworks
 
 ### 📦 Data Synthesis Tools

@@ -57,8 +57,7 @@ Please use the following template when adding new papers:
 
 ### 📐 Formatting Standards
 
-- **Use the provided Python script** to automatically generate entries (recommended)
-- When adding manually, please **strictly adhere to the template format**
+- When adding entries, please **strictly adhere to the template format**
 - **Cite specific sections** where synthesis methods are described (e.g., "Section 3.2", "Appendix B")
 - Keep image sizes under **500KB** if adding figures
 - Ensure all links are accessible and not broken
@@ -91,13 +90,10 @@ awesome-multimodal-data-recipe/
 ├── CONTRIBUTING.md        # This file
 ├── LICENSE                # CC0-1.0 License
 ├── .gitignore             # Git ignore rules
-├── assets/
-│   ├── images/           # Paper figures and diagrams
-│   ├── figures/          # Custom illustrations
-│   └── logos/            # Project logos
-└── scripts/
-    ├── arxiv_to_markdown.py        # arXiv paper converter
-    └── arxiv_to_markdown_ai.py     # AI-enhanced converter
+└── assets/
+    ├── images/           # Paper figures and diagrams
+    ├── figures/          # Custom illustrations
+    └── logos/            # Project logos
 ```
 
 ### 📁 Adding Images
