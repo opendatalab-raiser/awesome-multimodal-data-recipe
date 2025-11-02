@@ -18,9 +18,9 @@
 
 ## 📊 Statistics
 
-- **Total Papers:** 15 (data synthesis methods)
+- **Total Papers:** 13 (data synthesis methods)
 - **Industrial Reports:** 6 (Baidu, Microsoft, Alibaba, ByteDance)
-- **Data Synthesis Methods:** Image-Invariant (13) | Image Generation (2)
+- **Data Synthesis Methods:** Image-Invariant (13)
 - **Open Source Datasets:** 12 datasets fully open-sourced
 
 ---
@@ -31,8 +31,6 @@
 - [Industrial & Open-Source Data Synthesis](#-industrial--open-source-data-synthesis)
 - [Methods by Image Processing Type](#-methods-by-image-processing-type)
   - [Image-Invariant Text Enhancement](#image-invariant-text-enhancement)
-  - [New Image Retrieval](#new-image-retrieval)
-  - [New Image Generation](#new-image-generation)
 - [Tools & Frameworks](#-tools--frameworks)
 - [Benchmark Datasets](#-benchmark-datasets)
 - [Resources](#-resources)
@@ -497,36 +495,6 @@ This category of methods keeps original images fixed while enriching and improvi
   - **This is true data synthesis**: Uses tool combination to generate new annotations
   - **Open Source**: ✅ [Dataset](https://huggingface.co/datasets/OpenGVLab/all-seeing) | [Code](https://github.com/OpenGVLab/all-seeing)
 
----
-
-### New Image Generation for Data Synthesis
-
-Uses generative models (e.g., Stable Diffusion) to create new images, paired with text to build training data.
-
-**⚠️ Important Distinction**:
-- ✅ **Included**: Papers using T2I models to generate images for VLM training
-- ❌ **Not Included**: Pure generative model papers (e.g., DALL-E, Stable Diffusion itself)
-- ❌ **Not Included**: Data collection/acquisition (non-synthesis)
-
-#### 🎨 Diffusion Model-based Training Data Generation
-
-> Uses diffusion models (e.g., Stable Diffusion) to generate training images
-
-- **📄 StableRep** [(arxiv 2306.00984)](https://arxiv.org/abs/2306.00984)
-  - **Data Synthesis Method** (Section 3):
-    - Uses **Stable Diffusion** to generate 20M synthetic images
-    - Based on ImageNet class names as prompts
-    - Studies effectiveness of synthetic data for training visual representations
-  - **Key Finding**: Pure synthetic data can also train strong representation learning models
-  - **Open Source**: ✅ [Code](https://github.com/google-research/syn-rep-learn)
-
-- **📄 Synthetic Data from Diffusion Models Improves ImageNet Classification** [(arxiv 2304.08466)](https://arxiv.org/abs/2304.08466)
-  - **Data Synthesis Method** (Section 3):
-    - Uses Guided Diffusion to generate ImageNet category images
-    - Focuses on supplementing long-tail category data
-    - Real + synthetic hybrid training
-  - **Key Finding**: Synthetic data significantly improves scarce categories
-  - **Paper**: [arxiv](https://arxiv.org/abs/2304.08466)
 
 ---
 
