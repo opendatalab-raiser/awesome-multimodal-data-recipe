@@ -2,10 +2,10 @@
 
 <div align="center">
   <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square" alt="PRs Welcome">
-  <img src="https://img.shields.io/github/stars/opendatalab-raiser/Awesome-Multimodal-Data-Recipe?style=flat-square" alt="Stars">
-  <img src="https://img.shields.io/github/forks/opendatalab-raiser/Awesome-Multimodal-Data-Recipe?style=flat-square" alt="Forks">
-  <img src="https://img.shields.io/github/license/opendatalab-raiser/Awesome-Multimodal-Data-Recipe?style=flat-square" alt="License">
-  <img src="https://img.shields.io/github/last-commit/opendatalab-raiser/Awesome-Multimodal-Data-Recipe?style=flat-square" alt="Last Commit">
+  <img src="https://img.shields.io/github/stars/opendatalab-raiser/awesome-multimodal-data-recipe?style=flat-square" alt="Stars">
+  <img src="https://img.shields.io/github/forks/opendatalab-raiser/awesome-multimodal-data-recipe?style=flat-square" alt="Forks">
+  <img src="https://img.shields.io/github/license/opendatalab-raiser/awesome-multimodal-data-recipe?style=flat-square" alt="License">
+  <img src="https://img.shields.io/github/last-commit/opendatalab-raiser/awesome-multimodal-data-recipe?style=flat-square" alt="Last Commit">
 </div>
 
 [English](README.md) | [中文](README_zh.md)
