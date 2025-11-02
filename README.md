@@ -1,11 +1,11 @@
 # Awesome Multimodal Data Recipe [![Awesome](https://awesome.re/badge.svg)](https://awesome.re)
 
 <div align="center">
-  <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square" alt="PRs Welcome">
-  <img src="https://img.shields.io/github/stars/opendatalab-raiser/awesome-multimodal-data-recipe?style=flat-square" alt="Stars">
-  <img src="https://img.shields.io/github/forks/opendatalab-raiser/awesome-multimodal-data-recipe?style=flat-square" alt="Forks">
-  <img src="https://img.shields.io/github/license/opendatalab-raiser/awesome-multimodal-data-recipe?style=flat-square" alt="License">
-  <img src="https://img.shields.io/github/last-commit/opendatalab-raiser/awesome-multimodal-data-recipe?style=flat-square" alt="Last Commit">
+  <img src="https://img.shields.io/github/stars/opendatalab-raiser/awesome-multimodal-data-recipe" alt="Stars">
+  <img src="https://img.shields.io/github/forks/opendatalab-raiser/awesome-multimodal-data-recipe" alt="Forks">
+  <img src="https://img.shields.io/github/license/opendatalab-raiser/awesome-multimodal-data-recipe" alt="License">
+  <img src="https://img.shields.io/github/last-commit/opendatalab-raiser/awesome-multimodal-data-recipe" alt="Last Commit">
+  <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome">
 </div>
 
 <p align="center">
