@@ -24,7 +24,7 @@
 - **Industrial Reports:** 7 (Baidu, Microsoft, Alibaba, ByteDance, Tencent)
 - **Data Synthesis Methods:** 
   - Image Generation (3): Synthesize new images from scratch
-  - Think with Image (1): Interleaved multimodal reasoning with image manipulation
+  - Think with Image - Interleaved Multimodal Reasoning (1): Image actively participates in reasoning
   - Image-Invariant Text Enhancement (16): Fixed images, enriched text only
 - **Notable Datasets:** 4 large-scale training datasets highlighted
 - **Open Source Datasets:** 19+ datasets fully open-sourced
