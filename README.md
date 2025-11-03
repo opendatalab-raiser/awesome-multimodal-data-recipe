@@ -797,8 +797,9 @@ This category focuses on **generating new images from scratch** as part of the d
     - R-CoT-8B outperforms previous SOTA open-source models by **16.6%** on MathVista and **9.2%** on GeoQA
     - Surpasses GPT-4o by average **13%** across both datasets
     - Achieves new SOTA in 2B, 7B, and 8B settings for geometric reasoning
-  - **Publication**: Under review at ICLR 2025
-  - **Institution**: Anonymous (under review)
+  - **Publication**: arXiv preprint arXiv:2410.17885, October 2024
+  - **Institution**: Baidu Inc., Huazhong University of Science and Technology
+  - **Open Source**: ✅ [Code & Models](https://github.com/dle666/r-cot)
 
 - **📄 MAVIS** [(arxiv 2407.08739)](https://arxiv.org/abs/2407.08739)
   - **Data Synthesis Method** - **Automatic Mathematical Visual Data Engine**:
