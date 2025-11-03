@@ -13,17 +13,21 @@
 </p>
 
 <p align="center">
-  <b>A curated list of multimodal data synthesis methods, tools, and resources for Vision-Language Models</b>
+  <b>A curated list of multimodal data synthesis methods and resources for Vision-Language Models</b>
 </p>
 
 ---
 
 ## 📊 Statistics
 
-- **Total Papers:** 12 (data synthesis methods)
-- **Industrial Reports:** 6 (Baidu, Microsoft, Alibaba, ByteDance)
-- **Data Synthesis Methods:** Image-Invariant (12)
-- **Open Source Datasets:** 11 datasets fully open-sourced
+- **Total Papers:** 20 (data synthesis/construction methods)
+- **Industrial Reports:** 7 (Baidu, Microsoft, Alibaba, ByteDance, Tencent)
+- **Data Synthesis Methods:** 
+  - Image Generation (3): Synthesize new images from scratch
+  - Think with Image (1): Interleaved multimodal reasoning with image manipulation
+  - Image-Invariant Text Enhancement (16): Fixed images, enriched text only
+- **Notable Datasets:** 4 large-scale training datasets highlighted
+- **Open Source Datasets:** 19+ datasets fully open-sourced
 
 ---
 
@@ -32,8 +36,10 @@
 - [Introduction](#-introduction)
 - [Industrial & Open-Source Data Synthesis](#-industrial--open-source-data-synthesis)
 - [Methods by Image Processing Type](#-methods-by-image-processing-type)
-  - [Image-Invariant Text Enhancement](#image-invariant-text-enhancement)
-- [Tools & Frameworks](#-tools--frameworks)
+  - [Image Generation - Synthesizing New Visual Content](#-image-generation---synthesizing-new-visual-content)
+  - [Think with Image - Interleaved Multimodal Reasoning](#-think-with-image---interleaved-multimodal-reasoning)
+  - [Image-Invariant Text Enhancement](#-image-invariant-text-enhancement)
+- [Notable Multimodal Datasets](#-notable-multimodal-datasets)
 - [Benchmark Datasets](#-benchmark-datasets)
 - [Resources](#-resources)
 - [Contributing](#-contributing)
@@ -344,6 +350,369 @@ Florence-2 developed an **automated data engine** to generate the large-scale **
 
 </details>
 
+### Tencent Hunyuan - Bee, HoneyPipe & DataStudio
+
+<details>
+<summary>Click to expand</summary>
+
+**Paper**: [Bee: A High-Quality Corpus and Full-Stack Suite to Unlock Advanced Fully Open MLLMs](https://arxiv.org/abs/2510.13795)
+
+**Publication**: arXiv October 2025
+
+**Institution**: Tencent Hunyuan Team & Tsinghua University
+
+**Authors**: Yi Zhang, Bolin Ni, Xin-Sheng Chen, Heng-Rui Zhang, Yongming Rao, Houwen Peng, Qinglin Lu, Han Hu, Meng-Hao Guo, Shi-Min Hu
+
+**📊 Three-Fold Contributions**:
+
+**1. Honey-Data-15M**: A 15M-sample SFT dataset meticulously cleaned and enriched with dual-level Chain-of-Thought reasoning
+
+**2. HoneyPipe + DataStudio**: The data curation pipeline and its underlying modular framework, providing transparent and adaptable methodology
+
+**3. Bee-8B**: An 8B model establishing new SOTA among fully open MLLMs, competitive with semi-open models like InternVL3.5-8B
+
+---
+
+**📊 Data Synthesis Method - HoneyPipe (Section 2)**:
+
+HoneyPipe is an **automated and reproducible workflow** built from **DataStudio's modular components**, featuring a nuanced **dual-level reasoning enrichment strategy**: a foundational path for large-scale short CoT enrichment + a specialized loop for long CoT responses to complex instructions.
+
+**🔧 Stage 1: Data Aggregation and Preparation**
+- **Initial Pool**: ~24 million image-text pairs from diverse community datasets
+  - Sources: LLaVA-OneVision, PixMo, MAmmoTH-VL, etc.
+  - Challenge: Significant content overlap
+- **Rigorous Deduplication** (pair-level):
+  - Method: Perceptual hash (images) + Simhash (instructions)
+  - Removal criteria: **BOTH** image AND instruction must be identical
+  - Purpose: Maximize diversity, enhance processing efficiency
+- **Domain Labeling**: Manual inspection and categorization
+  - Domains: General, Chart, OCR, STEM, etc.
+  - Purpose: Guide subsequent processing
+- **Output**: Clean, unique image-instruction-response triplets with domain labels
+
+**🔧 Stage 2: Noise and Irrelevance Filtering**
+- **Rule-Based Operators** (formatting issues):
+  - Remove samples with very small images
+  - Filter extreme aspect ratios
+  - Eliminate repeated text in instructions
+- **Model-Based Filtering Operator** (using **Qwen2.5-VL-72B**):
+  - Assess: Is instruction logical and answerable?
+  - Verify: Is instruction semantically related to visual content?
+  - Example: Flag "solve the function problem" as irrelevant to image of oranges
+- **Result**: Effectively pruned flawed samples, producing clean image-instruction pairs
+
+**🔧 Stage 3: Short CoT Enrichment and Verification** (Foundational Path)
+
+*This stage targets instructions requiring moderate reasoning*
+
+**Data Triage**:
+- CV tasks (OCR, object detection) → **bypass enrichment** → final dataset
+- Other samples → proceed to CoT enrichment
+
+**Short CoT Enrichment** (~12.2M samples):
+- **Preprocessing**: Remove prompts discouraging reasoning
+  - Remove: "Answer directly", and similar head/tail prompts
+  - Purpose: Elicit comprehensive, step-by-step responses
+- **Generation**: Use **Qwen2.5-VL-72B/32B** (powerful open-source MLLMs)
+  - Transform simple short-form responses → detailed reasoning paths
+  - **No extra system prompts**: Models already adept at multi-step responses
+  - Constraint avoidance: Preserve output diversity
+- **Primary source** of 12.2M short CoT samples
+
+**Fidelity Verification** (LLM-as-a-Judge):
+- **Verifier Model**: Qwen2.5-VL-72B
+- **Method**: Semantic comparison between newly generated CoT final conclusion and original response
+- **Evaluation Criteria** (twofold):
+  - **Factual queries** (objective): Final responses must match **precisely**
+  - **Descriptive queries** (subjective): Thematic relevance and semantic consistency required
+- **Pass** → added to final dataset
+- **Fail** → **NOT discarded**, routed to long CoT enrichment loop for specialized enrichment
+
+**🔧 Stage 4: Long CoT Enrichment Loop** (Specialized Path for Complex Instructions)
+
+*Designed specifically for most complex instructions demanding deep, multi-step problem-solving*
+
+**Input Sources** (3 primary types):
+1. **Samples failing** Stage 3 fidelity verification
+2. **Select data sources** identified as inherently complex
+   - Example: VisualWebInstruct
+   - Strategy: Proactively generate long CoT **in addition** to short CoT counterpart
+3. **Validated datasets** from prior research
+   - Example: Vision-R1
+   - Criterion: Particularly suitable for generating deep reasoning chains
+
+**Deep Reasoning Generation** (~2.7M samples):
+- **Models**: Leverage **top proprietary MLLMs** for more detailed solutions
+- **Process**: 
+  - First generates deep reasoning (often structured with `<think></think>` tags)
+  - Then outputs final response
+- **Capability**: Handles complex instructions beyond reach of initial open-source models
+
+**Final Fidelity Verification**:
+- Same verification process as Stage 3
+- **Pass** → constitutes ~2.7M long CoT data points in Honey-Data-15M
+- **Fail** → **discarded** (assumed erroneous, unsolvable, or too costly to annotate)
+
+---
+
+**📦 Final Dataset - Honey-Data-15M**:
+
+**Scale**: 15 million meticulously curated samples
+
+**Composition** (7 major domains):
+- General (36.8%): Foundational visual understanding
+- Chart (24.6%): Chart understanding and reasoning
+- Caption (15.1%): Image captioning
+- STEM (7.6%): Symbolic reasoning (math, science, geometry)
+- Document (5.9%): Document understanding and OCR
+- Grounding & Counting (5.1%): Object detection and counting
+- OCR (4.9%): Text recognition in various contexts
+
+**Dual-Level CoT Backbone**:
+- **~12.2M short CoT samples**: Foundational, step-by-step logical inference for moderate reasoning
+- **~2.7M long CoT samples**: Intricate, multi-step reasoning for complex problem-solving requiring deeper synthesis
+- **Targeted approach**: Tailors response depth to instruction complexity
+- **Inherent solution**: Identifies which instructions warrant elaborate multi-step solutions
+
+---
+
+**🤖 Bee-8B Model - Validation & Performance**:
+
+**Architecture**:
+- LLM: Qwen3-8B (reasoning and text generation)
+- Vision Encoder: SigLIP2-so400m-patch14-384
+- Resolution Strategy: Anyres (handles varying resolutions, preserves fine-grained details)
+- Projector: Two-layer MLP with GELU activation
+
+**Training**: 5-stage progressive process (details in Section 3.2)
+
+**Performance Highlights** (establishes new SOTA for fully open MLLMs):
+
+*General VQA*:
+- **MMMU**: 66.8 (competitive with semi-open models)
+- **MMMU-Pro**: 50.7 (**3.6% lead** over Qwen2.5-VL-7B)
+- **MMStar**: 71.4
+- **MMVet**: 83.9
+- **MMVP**: 82.0
+
+*Math & Reasoning* (standout performance):
+- **MathVista mini**: 81.4
+- **MathVerse** (vision_only): 67.0
+- **MathVision**: 50.0
+- **LogicVista**: 61.3
+- **DynaMath** (worst): 40.5
+- **WeMath**: 59.8
+
+*Key Observation*: Most significant advantages in **factual accuracy** and **complex multi-step reasoning**, directly reflecting strengths of Honey-Data-15M
+
+**Comprehensive Ablation Study**:
+- Quantifies impact of each curation stage
+- Shows significant improvements across multiple benchmarks
+- Confirms: Focus on data quality > competing on data volume
+- Evidence: Data cleaning + CoT enrichment are critical
+
+---
+
+**🎯 Core Innovation - Dual-Level CoT Strategy**:
+
+1. **Progressive Enhancement**: Gradual quality improvement instead of simple discard
+2. **Failed Sample Recovery**: Samples failing short CoT verification get specialized long CoT enrichment
+3. **Model-Driven Process**: MLLM-automated workflow (scalable, economical alternative to human annotation)
+4. **Complexity Identification**: Inherently solves challenge of identifying which instructions need deep reasoning
+
+---
+
+**✅ Open Source Resources**:
+- **Project Page**: https://open-bee.github.io
+- **Paper**: [arXiv:2510.13795](https://arxiv.org/abs/2510.13795)
+- **Promised Releases** (full-stack suite):
+  - Honey-Data-15M corpus
+  - HoneyPipe + DataStudio framework
+  - Training recipes
+  - Evaluation harness
+  - Bee-8B model weights
+
+---
+
+**💡 Significance**:
+
+- **Closing the Gap**: Demonstrates fully open MLLMs can compete with semi-open counterparts through data quality focus
+- **Transparent Methodology**: Moves beyond static dataset releases to provide evolving, adaptable curation methods
+- **Community Cornerstone**: Provides new foundation resource for fully open MLLM community
+- **Scalability**: Model-driven pipeline makes high-quality data construction feasible for open-source community
+- **Validation**: Bee-8B's SOTA performance confirms effectiveness of data curation strategy
+
+**Core Thesis Confirmed**: *A principled focus on data quality is a key pathway to developing fully open MLLMs highly competitive with semi-open counterparts*
+
+</details>
+
+### ByteDance & NTU - LLaVA-OneVision
+
+<details>
+<summary>Click to expand</summary>
+
+**Paper**: [LLaVA-OneVision: Easy Visual Task Transfer](https://arxiv.org/abs/2408.03326)
+
+**Publication**: arXiv August 2024 (v3: October 2024)
+
+**Institution**: ByteDance, S-Lab NTU, CUHK, HKUST
+
+**Authors**: Bo Li, Yuanhan Zhang, Dong Guo, Renrui Zhang, Feng Li, Hao Zhang, Kaichen Zhang, Peiyuan Zhang, Yanwei Li, Ziwei Liu, Chunyuan Li
+
+**📊 Data Construction Method (Section 4 - Comprehensive Data Strategy)**:
+
+LLaVA-OneVision represents a significant data-centric approach, emphasizing **"quality over quantity"** in multimodal training. The paper consolidates insights from the LLaVA-NeXT blog series with a carefully curated large-scale dataset collection (accumulated from January to June 2024).
+
+---
+
+**🔬 High-Quality Knowledge Learning (4.7M samples)**
+
+*Core Principle*: Focus on high-quality knowledge learning over web-scale low-quality data, given limited compute budget.
+
+**Key Insight**: **99.8% of high-quality knowledge data is synthetic**, due to high cost and copyright constraints of collecting large-scale high-quality wild data.
+
+**Three Data Categories**:
+
+**1. Re-Captioned Detailed Description Data (3.5M samples)**
+- **Method**: **Self-Improvement AI** approach
+- **Model**: Uses **LLaVA-NeXT-34B** (known for strong detailed caption ability)
+- **Process**: Generate new detailed captions for existing images
+- **Sources**: COCO118K, BLIP558K, CC3M
+- **Innovation**: Training data generated by an early version of the model itself
+
+**2. Document / OCR Data (1.1M samples)**
+- **Text Reading subset**: UReader dataset (100K), easily accessible through PDF rendering
+- **Synthetic data**: SynDOG EN/CN for document understanding
+- **Purpose**: Enhance text reading and document comprehension capabilities
+
+**3. Chinese and Language Data (235K samples)**
+- **Chinese Caption Generation (92K)**:
+  - Images: Original ShareGPT4V images
+  - Model: **GPT-4V (Azure API)** to generate detailed Chinese descriptions
+  - Goal: Improve Chinese language capabilities
+- **Language Balance (143K)**:
+  - Source: Evo-Instruct dataset
+  - Purpose: Balance language understanding ability alongside visual captioning
+
+---
+
+**📦 Visual Instruction Tuning Data (4.8M samples)**
+
+*Goal*: Enable LMM to understand and act upon visual instructions across diverse scenarios
+
+**Data Collection Strategy**:
+
+**Categorization Framework** (Three-Level Hierarchy):
+
+1. **Vision Input**: Single-image / Multi-image / Video
+2. **Language Instruction**: General QA, General OCR, Doc/Chart/Screen, Math Reasoning, Language
+3. **Language Response**: Free-form (GPT-4V/o, Gemini annotated) vs Fixed-form (academic datasets)
+
+**Curation Process**:
+- Collect from various original sources with initially unbalanced ratios
+- Incorporate new subsets from Cauldron and Cambrian collections
+- **Manual review and formatting**:
+  - Correct question/answer formats
+  - Adhere to LLaVA-1.5 prompting strategy for multiple-choice, short answer, OCR
+  - Prevent conflicts from different data sources
+  - Guide model behavior: balance QA performance, conversational ability, reasoning skills
+
+**Data Composition**:
+
+**Single-Image Data (3.2M samples)** - Five major categories:
+- **General (36.1%)**: 70+ datasets including ALLaVAInst, AOKVQA, Cambrian, LLaVA-158K, ShareGPT4V/4o, VisionFLAN, etc.
+- **Doc/Chart/Screen (20.6%)**: AI2D, ChartQA, DocVQA, UReader series, Chart2Text, etc.
+- **Math/Reasoning (20.1%)**: MAVIS series, Geo170K, GeoQA+, GeoMVerse, MathV360K, etc.
+- **General OCR (8.9%)**: ChromeWriting, HME100K, OCR-VQA, SynthDog-EN, TextCaps, TextOCR, etc.
+- **Language (14.3%)**: MagpiePro (L3MT, L3ST, Qwen2ST) - 450K samples total
+
+**OneVision Mixed Data (1.6M samples)** - Three scenarios:
+- **Single-Image (31.2%, ~500K)**: High-quality sampled portions from previous single-image data
+  - MagpiePro, VisionFLAN, ImageTextualization, Cauldron, UReader, ShareGPT4V/4o, etc.
+- **Multi-Image (43.0%, ~688K)**: 30+ datasets
+  - NLVR, Co-Instruct, ScanNet, RAVEN, IconQA, VIST, ContrastiveCaption, etc.
+- **Video (25.9%, ~415K)**: 6 datasets
+  - ShareGPT4Video (255K), Youcook2, ActivityNet, Charades, NextQA, Ego4D
+
+---
+
+**🎯 Key Innovations & Insights**:
+
+1. **Synthetic Data Dominance**: 99.8% of knowledge data is model-generated
+   - Lower cost, easier to scale
+   - "Learning from large-scale synthetic data is becoming a trend as AI models grow more powerful"
+
+2. **Self-Improvement AI**: Use LLaVA-NeXT-34B to generate training data for next generation
+   - Re-caption 3.5M images with more detailed descriptions
+   - Demonstrates feasibility of bootstrapping from own model outputs
+
+3. **Careful Data Balancing**:
+   - Task categorization to maintain skill distribution
+   - Manual review to prevent data source conflicts
+   - Unified prompting strategy across heterogeneous sources
+
+4. **Cross-Scenario Transfer Design**:
+   - Insight: Stronger image model → better transfer to multi-image/video tasks
+   - Training strategy: Single-image first, then mixed scenarios
+   - Data allocation: More tokens for single-image to mimic video representation
+
+5. **Quality Over Quantity Philosophy**:
+   - Focus on curation over volume
+   - Acknowledge pre-trained LLM/ViT knowledge base
+   - Continuous exposure to new high-quality data
+
+---
+
+**📈 Training Strategy (Section 5)**:
+
+**Three-Stage Curriculum Learning**:
+- **Stage-1**: Language-Image Alignment
+- **Stage-1.5**: High-Quality Knowledge Learning (using 4.7M synthetic data)
+- **Stage-2**: Single-Image Instruction Tuning (3.2M samples)
+- **Stage-3**: OneVision Mixed Training (1.6M samples)
+
+**Model Architecture**:
+- LLM: Qwen-2 (strong language capabilities)
+- Vision Encoder: SigLIP (higher performance among open encoders)
+- Projector: 2-Layer MLP
+- Visual Representation: Higher AnyRes strategy with bilinear interpolation
+
+---
+
+**✅ Performance & Achievements**:
+
+- **First single open model** to push performance boundaries simultaneously in three scenarios:
+  - Single-image
+  - Multi-image  
+  - Video understanding
+- Strong task transfer capabilities across modalities
+- Demonstrates emerging capabilities through cross-scenario transfer
+- Video understanding achieved through task transfer from images
+
+---
+
+**✅ Open Source Resources**:
+- **Paper**: [arXiv:2408.03326](https://arxiv.org/abs/2408.03326)
+- **Project**: https://llava-vl.github.io/blog/llava-onevision
+- **Dataset**: [🤗 HuggingFace](https://huggingface.co/datasets/lmms-lab/LLaVA-OneVision-Data)
+- **Models**: Model checkpoints released
+- **Code**: Codebase open-sourced
+- **Demo**: Visual chat demo available
+
+---
+
+**💡 Significance**:
+
+- **Data-Centric Approach**: Consolidates insights from LLaVA-NeXT blog series into comprehensive dataset
+- **Synthetic Data Validation**: Proves large-scale synthetic data (99.8%) can achieve SOTA performance
+- **Self-Improvement Path**: Demonstrates using own model outputs for next generation training
+- **Unified Multi-Scenario**: Single model excels across image/multi-image/video without trade-offs
+- **Community Impact**: Full open-source release of data, models, code enables reproducibility
+
+**Core Thesis**: *Quality over quantity in data curation, combined with strategic use of synthetic data and self-improvement, enables building versatile open LMMs competitive with proprietary models.*
+
+</details>
+
 ### LLaVA Series (Wisconsin-Madison & Microsoft)
 
 <details>
@@ -406,6 +775,119 @@ This method has been adopted or improved by almost all subsequent open-source VL
 
 ## 📂 Methods by Image Processing Type
 
+### 🎨 Image Generation - Synthesizing New Visual Content
+
+This category focuses on **generating new images from scratch** as part of the data synthesis pipeline. These methods create synthetic visual content (geometric diagrams, mathematical figures, etc.) programmatically or through generative models, paired with corresponding textual annotations.
+
+- **📄 R-CoT** [(OpenReview ICLR 2025)](https://openreview.net/pdf?id=iwVkB9zaVb)
+  - **Data Synthesis Method** - **Reverse Chain-of-Thought for Geometric Reasoning**:
+    - **Core Innovation**: Two-stage pipeline combining **engine accuracy** with **LLM diversity** for geometric problem generation
+    - **Stage 1 - GeoChain**: **Generates high-fidelity geometric images** with corresponding descriptions
+      - Produces accurate geometric images step-by-step using **code-based engine**
+      - Generates detailed descriptions highlighting **relations among geometric elements**
+      - Images have higher fidelity than existing synthetic geometric data
+    - **Stage 2 - Reverse A&Q**: Generates Q&A pairs in reverse from reasoning results
+      - **Step 1**: Description Patch Reasoning - single-step reasoning from descriptions
+      - **Step 2**: Chain-of-Thought Fusion - progressively fuse single-step reasoning into multi-step reasoning
+      - **Step 3**: Question Generation - generate questions **in reverse** from reasoning results
+      - Avoids accuracy issues of directly generating Q&A from images using LMMs
+    - **Key Advantage**: Reduces incorrect answers by generating answer **before** question
+  - **Data Scale**: Creates GeoMM dataset with high-fidelity geometric images and diverse Q&A pairs
+  - **Experimental Results**: 
+    - R-CoT-8B outperforms previous SOTA open-source models by **16.6%** on MathVista and **9.2%** on GeoQA
+    - Surpasses GPT-4o by average **13%** across both datasets
+    - Achieves new SOTA in 2B, 7B, and 8B settings for geometric reasoning
+  - **Publication**: Under review at ICLR 2025
+  - **Institution**: Anonymous (under review)
+
+- **📄 MAVIS** [(arxiv 2407.08739)](https://arxiv.org/abs/2407.08739)
+  - **Data Synthesis Method** - **Automatic Mathematical Visual Data Engine**:
+    - **Core Innovation**: Fully automated, rule-based data engine **independent of human intervention or GPT API usage**
+    - **Complete Data Generation Pipeline**:
+      - **Diagram Drawing**: **Automatically creates math diagrams** (image generation)
+      - **Caption Generation**: Generates diagram-caption pairs
+      - **Q&A Synthesis**: Creates question-answer pairs
+      - **CoT Rationale Production**: Produces chain-of-thought reasoning
+    - **Key Features**:
+      - Ensures **diagram-caption correspondence** through automated rules
+      - Guarantees **question-answer correctness** via engine-based generation
+      - Maintains **CoT reasoning quality** without relying on proprietary models
+    - **Progressive 4-Stage Training Pipeline**:
+      - Stage 1: Fine-tune **CLIP-Math** (math-specific vision encoder) with MAVIS-Caption
+      - Stage 2: Align CLIP-Math with LLM using MAVIS-Caption
+      - Stage 3: Instruction tuning with MAVIS-Instruct
+      - Stage 4: DPO to enhance CoT capabilities
+  - **Data Scale**: 
+    - **MAVIS-Caption**: 558K diagram-caption pairs for vision-language alignment
+    - **MAVIS-Instruct**: 834K visual math problems with detailed CoT rationales
+  - **Experimental Results**: 
+    - MAVIS-7B surpasses other 7B models by **+9.3%**
+    - Outperforms LLaVA-NeXT-110B by **+6.9%**
+    - Achieves leading results among open-source MLLMs on mathematical benchmarks
+  - **Publication**: arXiv July 2024
+  - **Institution**: CUHK, Peking University, Shanghai AI Lab, ByteDance, Oracle
+  - **Open Source**: ✅ [Code & Data](https://github.com/ZrrSkywalker/MAVIS)
+
+- **📄 ShareGPT-4o-Image** [(arxiv 2506.18095)](https://arxiv.org/abs/2506.18095) *[Also includes Image Editing]*
+  - **Data Synthesis Method** - **Distilling GPT-4o Image Generation Capabilities**:
+    - **Core Innovation**: First dataset distilled from **GPT-4o's image generation** for both text-to-image and text-and-image-to-image tasks
+    - **Text-to-Image Data Generation** (45K pairs) - **IMAGE GENERATION**:
+      - **Prompt-First Pipeline**: 
+        - Define 6-dimensional attribute space (Objects, Background, Style, Camera Angle, etc.)
+        - Sample attributes and use LLM (Gemini-Pro-2.5) to compose natural-language prompts
+        - Pass prompts to **GPT-4o-Image** to **generate new paired images**
+        - Ensures controlled diversity and complexity
+      - **Image-First Pipeline**:
+        - Source high-quality images from ALLaVA dataset
+        - Use LLM to generate detailed descriptive prompts from images
+        - Captures natural language needed for describing real-world scenes
+    - **Instruction-Guided Image Editing Data** (46K triplets) - **IMAGE EDITING**:
+      - Define taxonomy of **14 image editing tasks** across 5 categories (object manipulation, style transfer, conditional control, etc.)
+      - For each (source image, editing task): LLM synthesizes specific natural-language instruction
+      - **GPT-4o-Image** executes instruction to produce edited output
+      - Creates (source image, instruction, edited image) triplets
+    - **Key Features**:
+      - Synthesized entirely using **GPT-4o** capabilities (no human annotation)
+      - Covers wide range of styles and grounded visual reasoning
+      - Reflects GPT-4o's strengths in instruction-following and visual aesthetics
+  - **Data Scale**: **91K total** (45K text-to-image + 46K instruction-guided editing)
+  - **Experimental Results**: 
+    - Janus-4o (trained on this data) improves over Janus-Pro by **+4 points** on EvalGen and **+1.6 points** on DPG-Bench
+    - Achieves impressive text-and-image-to-image generation from scratch with only **91K samples** and **6 hours training** (8×A800)
+    - Human evaluations show strong preference for Janus-4o outputs
+  - **Publication**: arXiv June 2025
+  - **Institution**: The Chinese University of Hong Kong, Shenzhen
+  - **Open Source**: ✅ [Code & Data](https://github.com/FreedomIntelligence/ShareGPT-4o-Image)
+
+---
+
+### 💭 Think with Image - Interleaved Multimodal Reasoning
+
+This emerging category constructs **image-text interleaved reasoning traces** where images are actively **edited and manipulated** during the reasoning process. Unlike traditional text-only approaches, these methods treat text and images as **complementary modalities** that jointly advance problem-solving through progressive visual modifications (e.g., highlighting, overlaying, zooming, inpainting).
+
+- **📄 ThinkMorph** [(arxiv 2510.27492)](https://arxiv.org/abs/2510.27492) 🏷️ **[Think with Image]**
+  - **Data Synthesis Method** - **Multimodal Interleaved Chain-of-Thought Reasoning**:
+    - **Core Innovation**: Constructs **image-text interleaved reasoning traces** where text and images function as **complementary modalities** that mutually advance reasoning
+    - **Data Scale**: ~24K high-quality interleaved reasoning traces across 4 tasks
+    - **Task Coverage** (varying visual engagement levels):
+      - **Jigsaw Assembly** (6K): Visualizing re-arranged pieces → holistic spatial context
+      - **Spatial Navigation** (6K): Overlaying mazes with paths highlighted via red lines/arrows
+      - **Visual Search** (6,990): Drawing bounding boxes around target objects
+      - **Chart Refocus** (6K): Highlighting regions with red bounding boxes or overlays
+    - **Data Synthesis Pipeline**:
+      - **Design Principle**: Progressive text→image→text sequences
+      - **Generation Strategy**: 
+        - Jigsaw & Spatial: Custom synthesis pipeline (newly generated)
+        - Visual Search & Chart: Human-in-the-loop MLLM filtering from existing datasets
+      - **Quality Control**: Strict filtering (e.g., target object must occupy 1-30% of image area for Visual Search, reducing 144K→6,990 high-quality samples)
+    - **Reasoning Pattern**: Initial text establishes context → Visual tokens manipulate/visualize → Final text verifies solution
+    - **Key Findings**: Interleaved reasoning outperforms text-only and vision-only by 5.33% average on vision-centric tasks; exhibits emergent properties including unseen visual manipulations (zoom-in, inpainting, multi-box generation)
+  - **Publication**: arXiv October 2025
+  - **Institution**: National University of Singapore, Zhejiang University, University of Washington, Stanford, CUHK
+  - **Open Source**: ✅ [Code & Models](https://github.com/ThinkMorph/ThinkMorph) | [Dataset](https://huggingface.co/ThinkMorph)
+
+---
+
 ### Image-Invariant Text Enhancement
 
 This category of methods keeps original images fixed while enriching and improving paired text quality through various techniques. **This is currently the most mainstream multimodal data synthesis paradigm.**
@@ -423,7 +905,7 @@ This category of methods keeps original images fixed while enriching and improvi
     - Image sources: Curated images from COCO, SAM, LAION, etc.
   - **Data Scale**: 100K high-quality captions
   - **Open Source**: ✅ [Dataset](https://huggingface.co/datasets/Lin-Chen/ShareGPT4V) | [Code](https://github.com/InternLM/InternLM-XComposer/tree/main/projects/ShareGPT4V)
-  
+
 - **📄 SVIT** [(arxiv 2307.04087)](https://arxiv.org/abs/2307.04087)
   - **Data Synthesis Method** (Section 3.2):
     - Uses **GPT-4** to generate large-scale visual instruction data
@@ -439,6 +921,35 @@ This category of methods keeps original images fixed while enriching and improvi
     - Re-generates captions for DataComp-1B
   - **Data Scale**: Billion-scale recaptioning
   - **Open Source**: ✅ [Code](https://github.com/baaivision/CapsFusion)
+
+- **📄 Image Textualization** [(arxiv 2406.07502)](https://arxiv.org/abs/2406.07502)
+  - **Data Synthesis Method** - **Automatic Framework for Detailed Image Descriptions**:
+    - **Core Innovation**: Maximally converts visual information into text by combining **MLLM understanding** with **vision expert perception**
+    - **Three-Phase Pipeline**:
+      - **Phase 1 - Holistic Textualization**: 
+        - Leverage MLLM to create **Reference Description**
+        - Provides basic structure for both visual information and linguistic expression
+        - Contains the "skeleton" despite lacking details and containing hallucinations
+      - **Phase 2 - Visual Detail Textualization**:
+        - Use vision expert models (object detection, dense captioning, instance segmentation) to extract **fine-grained object-level information**
+        - Extract multiple details from image-side (trained with high-resolution images and object-level annotations)
+        - Identify and filter hallucinations in Reference Description
+        - Convert perception results into text format
+      - **Phase 3 - Textualized Recaptioning**:
+        - Integrate visual details with reference description using LLM
+        - Produce final high-quality description that is both rich in details and free from hallucinations
+    - **Key Advantages**:
+      - Addresses MLLM weaknesses: visual hallucination problem and lack of fine-grained details
+      - Vision experts provide precise perception (high-res training, object-level annotations)
+      - MLLMs provide holistic understanding capabilities
+  - **Data Scale**: Creates image description dataset (scale varies by application)
+  - **Experimental Results**: 
+    - LLaVA-7B trained on IT-curated descriptions generates **richer image descriptions**
+    - Substantially increases output length and detail with **less hallucination**
+    - Comprehensive evaluation on multiple benchmarks verifies description quality
+  - **Publication**: arXiv June 2024
+  - **Institution**: HKUST, Wuhan University, Zhejiang University, UIUC
+  - **Open Source**: ✅ [Code](https://github.com/sterzhang/image-textualization/) | [Dataset](https://huggingface.co/datasets/Sterzhang/image-textualization/)
 
 #### 🤖 VLM/LLM-based Synthetic Text Generation
 
@@ -486,7 +997,7 @@ This category of methods keeps original images fixed while enriching and improvi
     - Pipeline: Image → Segmentation+Tags → Region Description → Instruction Data
     - Builds AS-1B dataset (1.2B region-text pairs)
   - **This is true data synthesis**: Uses tool combination to generate new annotations
-  - **Open Source**: ✅ [Dataset](https://huggingface.co/datasets/OpenGVLab/all-seeing) | [Code](https://github.com/OpenGVLab/all-seeing)
+  - **Open Source**: ✅ [Dataset](https://huggingface.co/datasets/OpenGVLab/AS-V2) | [Code](https://github.com/OpenGVLab/all-seeing)
 
 
 ---
@@ -581,23 +1092,18 @@ This category of methods keeps original images fixed while enriching and improvi
 
 ---
 
-## 🛠️ Tools & Frameworks
+## 📦 Notable Multimodal Datasets
 
-### 📦 Data Synthesis Tools
+> **Note**: This section lists influential large-scale multimodal datasets that serve as foundations for training vision-language models. These are typically curated from multiple sources and represent significant data aggregation/curation efforts.
 
-| Tool | Description | Link |
-|------|-------------|------|
-| GPT-4V API | Industry standard for high-quality caption/instruction generation | [Official Docs](https://platform.openai.com/docs/guides/vision) |
-| LLaVA Toolkit | Complete instruction data generation pipeline | [GitHub](https://github.com/haotian-liu/LLaVA) |
-| SAM (Segment Anything) | For automatic segmentation annotation | [Website](https://segment-anything.com/) |
-| RAM/Tag2Text | For automatic image tagging | [GitHub](https://github.com/xinyu1205/recognize-anything) |
+### Large-Scale Training Datasets
 
-### 🔧 Data Processing Frameworks
-
-| Framework | Description | Link |
-|-----------|-------------|------|
-| MMEval | Multimodal model evaluation framework | [GitHub](https://github.com/open-compass/MMEval) |
-| LLaVA-NeXT | Next-generation vision-language assistant | [Website](https://llava-vl.github.io/) |
+| Dataset | Scale | Description | Links |
+|---------|-------|-------------|-------|
+| **FineVision** | 24.3M samples<br/>17.3M images | Comprehensive multimodal dataset from 200+ sources, covering 9 categories: General VQA, OCR, Chart/Table, Document, Grounding, Math, Science, Vision-Centric, and World Knowledge | [🤗 HuggingFace](https://huggingface.co/datasets/HuggingFaceM4/FineVision) \| [📄 Paper](https://arxiv.org/abs/2510.17269) |
+| **LLaVA-OneVision** | ~4M samples | Unified high-quality dataset covering single-image, multi-image, and video scenarios | [🤗 HuggingFace](https://huggingface.co/datasets/lmms-lab/LLaVA-OneVision-Data) \| [📄 Paper](https://arxiv.org/abs/2408.03326) |
+| **PixMo** | Multiple subsets | Suite of datasets (PixMo-Cap, PixMo-AskModelAnything, etc.) for training open vision-language models | [🤗 HuggingFace](https://huggingface.co/collections/allenai/pixmo-674746ea613028006285687b) \| [📄 Paper](https://arxiv.org/abs/2409.17146) |
+| **MAmmoTH-VL** | 12M samples | Large-scale multimodal instruction tuning dataset for enhancing reasoning abilities of MLLMs | [🤗 HuggingFace](https://huggingface.co/datasets/MAmmoTH-VL/MAmmoTH-VL-Instruct-12M) \| [📄 Paper](https://arxiv.org/abs/2412.05237) |
 
 ---
 
@@ -609,7 +1115,7 @@ This category of methods keeps original images fixed while enriching and improvi
 |-----------|-------------|------|
 | MMBench | Comprehensive multimodal capability evaluation | [GitHub](https://github.com/open-compass/MMBench) |
 | SEED-Bench | Hierarchical multimodal understanding evaluation | [GitHub](https://github.com/AILab-CVC/SEED-Bench) |
-| LLaVA-Bench | In-the-wild instruction-following evaluation | [GitHub](https://github.com/haotian-liu/LLaVA) |
+| LLaVA-Bench | Evaluates conversation, detailed description, and complex reasoning in-the-wild | [🤗 HuggingFace](https://huggingface.co/datasets/lmms-lab/llava-bench-in-the-wild) |
 
 ### 📝 Task-Specific Benchmarks
 
@@ -617,7 +1123,7 @@ This category of methods keeps original images fixed while enriching and improvi
 |-----------|-------------|------|
 | VQAv2 | Visual question answering | [Website](https://visualqa.org/) |
 | GQA | Compositional reasoning evaluation | [Website](https://cs.stanford.edu/people/dorarad/gqa/) |
-| MMMU | Multimodal multi-task understanding | [Website](https://mmmu-benchmark.github.io/) |
+| MMMU | Massive multi-discipline multimodal understanding and reasoning | [Website](https://mmmu-benchmark.github.io/) |
 
 ---
 
@@ -688,7 +1194,7 @@ We welcome contributions of all forms! Including but not limited to:
 
 If this project helps you, please give us a Star ⭐️!
 
-[![Star History Chart](https://api.star-history.com/svg?repos=opendatalab-raiser/Awesome-Multimodal-Data-Recipe&type=Date)](https://star-history.com/#opendatalab-raiser/Awesome-Multimodal-Data-Recipe&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=opendatalab-raiser/awesome-multimodal-data-recipe&type=Date)](https://star-history.com/#opendatalab-raiser/awesome-multimodal-data-recipe&Date)
 
 ---
 
