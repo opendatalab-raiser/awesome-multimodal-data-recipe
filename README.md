@@ -23,9 +23,9 @@
 - **Total Papers:** 20 (data synthesis/construction methods)
 - **Industrial Reports:** 7 (Baidu, Microsoft, Alibaba, ByteDance, Tencent)
 - **Data Synthesis Methods:** 
-  - Image Generation (3): Synthesize new images from scratch
-  - Think with Image - Interleaved Multimodal Reasoning (1): Image actively participates in reasoning
-  - Image-Invariant Text Enhancement (16): Fixed images, enriched text only
+  - Image Generation - Synthesizing New Visual Content (3): Synthesize new images from scratch
+  - Think with Image (1): Interleaved multimodal reasoning with image manipulation
+  - Image-Invariant - Text Enhancement (16): Fixed images, enriched text only
 - **Notable Datasets:** 4 large-scale training datasets highlighted
 - **Open Source Datasets:** 19+ datasets fully open-sourced
 
@@ -37,8 +37,8 @@
 - [Industrial & Open-Source Data Synthesis](#-industrial--open-source-data-synthesis)
 - [Methods by Image Processing Type](#-methods-by-image-processing-type)
   - [Image Generation - Synthesizing New Visual Content](#-image-generation---synthesizing-new-visual-content)
-  - [Think with Image - Interleaved Multimodal Reasoning](#-think-with-image---interleaved-multimodal-reasoning)
-  - [Image-Invariant Text Enhancement](#-image-invariant-text-enhancement)
+  - [Think with Image](#-think-with-image)
+  - [Image-Invariant - Text Enhancement](#-image-invariant---text-enhancement)
 - [Notable Multimodal Datasets](#-notable-multimodal-datasets)
 - [Benchmark Datasets](#-benchmark-datasets)
 - [Resources](#-resources)
@@ -861,7 +861,7 @@ This category focuses on **generating new images from scratch** as part of the d
 
 ---
 
-### 💭 Think with Image - Interleaved Multimodal Reasoning
+### 💭 Think with Image
 
 This emerging category constructs **image-text interleaved reasoning traces** where images are actively **edited and manipulated** during the reasoning process. Unlike traditional text-only approaches, these methods treat text and images as **complementary modalities** that jointly advance problem-solving through progressive visual modifications (e.g., highlighting, overlaying, zooming, inpainting).
 
