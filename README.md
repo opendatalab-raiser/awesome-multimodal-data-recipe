@@ -20,14 +20,21 @@
 
 ## 📊 Statistics
 
-- **Total Papers:** 20 (data synthesis/construction methods)
-- **Industrial Reports:** 7 (Baidu, Microsoft, Alibaba, ByteDance, Tencent)
+- **Total Papers:** 30+ (data synthesis/construction methods)
+- **Industrial Reports:** 9 (Baidu, Microsoft, Alibaba, ByteDance, Tencent, etc.)
 - **Data Synthesis Methods:** 
-  - Image Generation - Synthesizing New Visual Content (3): Synthesize new images from scratch
+  - Image Generation - Synthesizing New Visual Content (4): Geometric/mathematical + document/text-dense scenes
+  - Image Editing (4): Non-rigid motion, unified editing, referring expression-guided editing
+  - Compositionality / Preference-Guided Synthesis (1): Enhancing compositional understanding
+  - Interleaved Image-Text · Coherence & Consistency (1): Multi-perspective quality filtering
   - Think with Image (1): Interleaved multimodal reasoning with image manipulation
   - Image-Invariant - Text Enhancement (16): Fixed images, enriched text only
-- **Notable Datasets:** 4 large-scale training datasets highlighted
-- **Open Source Datasets:** 19+ datasets fully open-sourced
+- **Notable Datasets:** 
+  - 4 interleaved image-text datasets (OmniCorpus, OBELICS, MMC4, CoMM)
+  - 2 domain-specific datasets (MMM-RS, MESED)
+  - 4 image editing datasets (ByteMorph-6M, ImgEdit, RefEdit, RefCOCO-Edit)
+  - 4 large-scale general training datasets
+- **Open Source Datasets:** 25+ datasets fully open-sourced
 
 ---
 
@@ -37,9 +44,19 @@
 - [Industrial & Open-Source Data Synthesis](#-industrial--open-source-data-synthesis)
 - [Methods by Image Processing Type](#-methods-by-image-processing-type)
   - [Image Generation - Synthesizing New Visual Content](#-image-generation---synthesizing-new-visual-content)
+    - [Geometric & Mathematical Reasoning](#-geometric--mathematical-reasoning)
+    - [Document / Text-Dense Scenes](#-document--text-dense-scenes)
   - [Think with Image](#-think-with-image)
-  - [Image-Invariant - Text Enhancement](#-image-invariant---text-enhancement)
+  - [Image Editing (Method + Data)](#-image-editing-method--data)
+  - [Compositionality / Preference-Guided Synthesis](#-compositionality--preference-guided-synthesis)
+  - [Interleaved Image-Text · Coherence & Consistency](#-interleaved-image-text--coherence--consistency)
+  - [Image-Invariant Text Enhancement](#image-invariant-text-enhancement)
+- [Cross-Domain Methodology Insights](#-cross-domain-methodology-insights)
 - [Notable Multimodal Datasets](#-notable-multimodal-datasets)
+  - [Interleaved Image-Text Datasets](#-interleaved-image-text-datasets)
+  - [Domain-Specific & Knowledge-Oriented Datasets](#-domain-specific--knowledge-oriented-datasets)
+  - [Large-Scale General Training Datasets](#-large-scale-general-training-datasets)
+  - [Image Editing Datasets](#-image-editing-datasets)
 - [Benchmark Datasets](#-benchmark-datasets)
 - [Resources](#-resources)
 - [Contributing](#-contributing)
@@ -546,6 +563,156 @@ HoneyPipe is an **automated and reproducible workflow** built from **DataStudio'
 
 </details>
 
+### ByteDance - ByteMorph
+
+<details>
+<summary>Click to expand</summary>
+
+**Paper**: [ByteMorph: Benchmarking Instruction-Guided Image Editing with Non-Rigid Motions](https://arxiv.org/abs/2506.03107)
+
+**Publication**: arXiv June 2025 (v2: June 2025)
+
+**Institution**: ByteDance Seed, USC, University of Tokyo, UC Berkeley, Stanford, UCLA
+
+**Authors**: Di Chang*, Mingdeng Cao*, Yichun Shi, Bo Liu, Shengqu Cai, Shijie Zhou, Weilin Huang, Gordon Wetzstein, Mohammad Soleymani, Peng Wang (*Equal Contribution)
+
+**📊 Data Synthesis Method - Automated Motion-Guided Data Engine**:
+
+ByteMorph addresses a critical gap in instruction-guided image editing: **non-rigid motion editing**. While existing datasets focus on static edits (object manipulation, style transfer), ByteMorph targets dynamic transformations involving camera motion, object deformation, and human articulation.
+
+**1. Core Innovation - Motion-Guided Layered Compositing Pipeline**
+
+**Four Motion Categories** (systematically defined):
+- **Camera Motion (CM)**: Zoom in/out, perspective shifts, pan, tilt, rotate
+- **Object Deformation (OD)**: Stretch, bend, squeeze, twist
+- **Human Articulation (HA)**: Body pose changes, facial expressions
+- **Human-Object Interaction (HOI)**: Grasping, using, manipulating objects
+
+**Automated Data Engine Components**:
+
+**Stage 1 - Video Source Collection & Filtering**:
+- **Source**: Web-scale video corpora
+- **Filtering Criteria**: 
+  - High-resolution (≥720p)
+  - Stable scenes with clear foreground objects
+  - Minimal blur and artifacts
+- **Motion Detection**: Optical flow analysis to identify motion-rich segments
+- **Result**: Curated video clips exhibiting target motion types
+
+**Stage 2 - Layered Compositing with Motion Transfer**:
+- **Method**: Inspired by professional VFX workflows
+- **Pipeline**:
+  1. Extract consecutive frames from filtered videos
+  2. **Foreground Segmentation**: Use segmentation models to isolate moving objects/subjects
+  3. **Background Stabilization**: Apply motion compensation to background
+  4. **Layer Composition**: Overlay foreground onto new backgrounds with motion preserved
+  5. **Quality Control**: Filter composites with visible artifacts
+- **Key Advantage**: Preserves realistic motion dynamics while enabling diverse background combinations
+- **Innovation**: Automates traditional manual compositing at scale
+
+**Stage 3 - GPT-4o-Assisted Caption Generation**:
+- **Model**: GPT-4o (multimodal understanding)
+- **Input**: Source + edited image pairs
+- **Output Generation**:
+  - **Detailed Image Descriptions**: Comprehensive scene understanding for both images
+  - **Motion-Aware Instructions**: Natural language commands describing the motion transformation
+    - Examples: "make the person raise their right arm", "zoom in on the cat", "bend the tree to the left"
+  - **Consistency Verification**: GPT-4o validates instruction-image alignment
+- **Prompt Engineering**: Custom prompts emphasizing motion semantics and spatial relationships
+- **Scale**: Processes 6M image pairs
+
+**Stage 4 - Quality Assurance & Filtering**:
+- **Multi-dimensional Filtering**:
+  - **Visual Quality**: CLIP-based aesthetic scoring
+  - **Motion Coherence**: Optical flow consistency checks
+  - **Instruction Relevance**: LLM-based verification of instruction-edit alignment
+  - **Diversity Metrics**: Clustering to ensure coverage across motion types and scene categories
+- **Human Validation**: Sample-based quality audits on 5K randomly selected triplets
+- **Threshold Calibration**: Iterative refinement of filtering thresholds
+
+**2. ByteMorph-6M Dataset Characteristics**
+
+**Scale & Composition**:
+- **Total Size**: 6 million high-resolution image editing triplets
+- **Format**: (source image, natural language instruction, edited image)
+- **Resolution**: Minimum 512×512, majority 1024×1024
+- **Distribution**:
+  - Camera Motion: ~1.8M samples
+  - Object Deformation: ~1.5M samples
+  - Human Articulation: ~1.8M samples
+  - Human-Object Interaction: ~0.9M samples
+
+**Quality Attributes**:
+- **Instruction Diversity**: Average 15.3 unique words per instruction
+- **Motion Granularity**: Both coarse (e.g., "zoom in") and fine-grained (e.g., "tilt camera 15 degrees left") instructions
+- **Background Diversity**: 500K+ unique background scenes
+- **Object Categories**: 2,000+ object types across 50+ semantic categories
+
+**3. ByteMorph-Bench - Evaluation Benchmark**
+
+**Benchmark Design**:
+- **Size**: 613 carefully curated test samples
+- **Difficulty Levels**: Easy, Medium, Hard (based on motion complexity)
+- **Coverage**: Balanced distribution across four motion categories
+- **Annotation**: Expert-verified ground truth edits
+- **Metrics**: CLIP similarity, motion accuracy (via optical flow), human evaluation scores
+
+**Challenging Aspects**:
+- Complex multi-step motions (e.g., "person waves hand while turning head")
+- Fine-grained articulation (e.g., specific finger positions)
+- Physics-aware deformations (e.g., realistic cloth bending)
+- Contextual interactions (e.g., "person picks up cup from table")
+
+**4. ByteMorpher Model - Diffusion Transformer Baseline**
+
+**Architecture**:
+- **Base**: Diffusion Transformer (DiT) architecture
+- **Conditioning**: Multi-modal conditioning on both text instructions and source images
+- **Training Strategy**:
+  - Pre-training on ByteMorph-6M (full dataset)
+  - Fine-tuning on ByteMorph-Bench training split
+- **Inference**: Classifier-free guidance for instruction adherence
+
+**Performance Highlights**:
+- **ByteMorph-Bench**: Outperforms existing instruction-guided editing models (InstructPix2Pix, MagicBrush) by **18.3%** on motion-related metrics
+- **Generalization**: Successfully transfers to out-of-domain motion editing tasks
+- **Human Evaluation**: Preferred over baselines in **73.5%** of pairwise comparisons
+
+**5. Experimental Results & Insights**
+
+**Key Findings**:
+- **Motion-Specific Training Critical**: Models trained on static editing datasets fail on motion tasks (avg. 32.1% success rate)
+- **Scale Matters**: Performance scales logarithmically with dataset size (1M→3M→6M)
+- **Layered Compositing Superiority**: Outperforms diffusion-based synthesis (+12.7% realism score)
+- **GPT-4o Caption Quality**: Human evaluation shows 91.2% instruction accuracy vs. 67.4% for automated VLM captioning
+
+**Benchmark Comparison**:
+| Model | CLIP-Sim ↑ | Motion Acc ↑ | Human Pref ↑ |
+|-------|------------|--------------|--------------|
+| InstructPix2Pix | 0.652 | 0.423 | 21.3% |
+| MagicBrush | 0.681 | 0.457 | 24.8% |
+| **ByteMorpher** | **0.743** | **0.612** | **73.5%** |
+
+**✅ Open Source Resources**:
+- **Paper**: [arXiv:2506.03107](https://arxiv.org/abs/2506.03107)
+- **Dataset**: ByteMorph-6M (6M triplets) - Release planned on OpenDataLab
+- **Benchmark**: ByteMorph-Bench (613 test samples) - Available with paper
+- **Model**: ByteMorpher checkpoints - HuggingFace release promised
+- **Code**: Data engine pipeline code - GitHub release promised
+
+**💡 Significance**:
+
+- **Novel Problem Formulation**: First large-scale dataset addressing non-rigid motion in instruction-guided editing
+- **Industrial-Scale Automation**: Demonstrates layered compositing approach scalable to millions of samples
+- **Motion-Aware Pipeline**: Introduces motion detection and preservation into automated data synthesis
+- **Benchmark Contribution**: ByteMorph-Bench fills critical gap in evaluating motion editing capabilities
+- **Multimodal LLM Integration**: Showcases effective use of GPT-4o for motion-semantic caption generation
+- **Open Science**: Commitment to open-sourcing dataset, benchmark, model, and code
+
+**Research Impact**: ByteMorph expands the scope of instruction-guided image editing from static transformations to dynamic motion-based edits, enabling new applications in video editing, animation, and augmented reality.
+
+</details>
+
 ### ByteDance & NTU - LLaVA-OneVision
 
 <details>
@@ -777,7 +944,9 @@ This method has been adopted or improved by almost all subsequent open-source VL
 
 ### 🎨 Image Generation - Synthesizing New Visual Content
 
-This category focuses on **generating new images from scratch** as part of the data synthesis pipeline. These methods create synthetic visual content (geometric diagrams, mathematical figures, etc.) programmatically or through generative models, paired with corresponding textual annotations.
+This category focuses on **generating new images from scratch** as part of the data synthesis pipeline. These methods create synthetic visual content (geometric diagrams, mathematical figures, text-dense scenes, etc.) programmatically or through generative models, paired with corresponding textual annotations.
+
+#### 📐 Geometric & Mathematical Reasoning
 
 - **📄 R-CoT** [(OpenReview ICLR 2025)](https://openreview.net/pdf?id=iwVkB9zaVb)
   - **Data Synthesis Method** - **Reverse Chain-of-Thought for Geometric Reasoning**:
@@ -860,6 +1029,77 @@ This category focuses on **generating new images from scratch** as part of the d
   - **Institution**: The Chinese University of Hong Kong, Shenzhen
   - **Open Source**: ✅ [Code & Data](https://github.com/FreedomIntelligence/ShareGPT-4o-Image)
 
+#### 📄 Document / Text-Dense Scenes
+
+- **📄 TextSSR** [(arXiv 2505.20275)](https://arxiv.org/abs/2505.20275) 🏷️ **[Method + Data]** - **ICCV 2025**
+  - **Focus**: **Diffusion-based data synthesis for Scene Text Recognition (STR)** - Generates training data for text-in-the-wild recognition
+  - **Data Synthesis Method** - **Three-Pillar Diffusion Pipeline: Accuracy, Realism, Scalability**:
+    - **Core Innovation**: End-to-end diffusion-based synthesis addressing limitations of rendering-based methods (lack of realism) and purely generative approaches (lack of control)
+    - **Pillar 1: Accuracy - Region-Centric Text Generation + Position-Glyph Enhancement**:
+      1. **Region-Centric Generation**:
+         - Unlike image-level text generation (prone to hallucination), generates text **within specified bounding boxes**
+         - Uses **region-conditioned diffusion** (inspired by layout-to-image methods)
+         - Ensures precise control over text location and prevents unwanted text elsewhere
+      2. **Position-Glyph Enhancement (PGE)**:
+         - **Problem**: Diffusion models struggle with accurate character generation and sequence order
+         - **Solution**: Dual-stream conditioning
+           - **Glyph Stream**: Renders target text as clean glyph image (character shapes)
+           - **Position Stream**: Encodes character positions within bounding box
+         - **Fusion**: Inject both glyph + position information into diffusion UNet via cross-attention
+         - **Result**: Character-level accuracy while maintaining natural appearance
+    - **Pillar 2: Realism - Contextual Hints for Natural Styling**:
+      - **Challenge**: Purely text-controlled generation yields generic styles; direct style transfer from real images causes overfitting
+      - **Method - Contextual Hint Mechanism**:
+        1. **Real Scene Sampling**: Select real scene text images from STR datasets (e.g., COCO-Text, MLT)
+        2. **Text Inpainting**: Remove original text from selected images using inpainting models
+        3. **Hint Extraction**: Extract **low-resolution contextual hints** from original text regions (color, texture, orientation, degradation patterns)
+        4. **Conditional Generation**: Condition diffusion model on:
+           - Target text content (via PGE)
+           - Bounding box location
+           - **Contextual hints** (low-res texture/color guidance)
+        5. **Result**: Generated text inherits realistic styles (distortion, blur, lighting, perspective) without memorizing specific instances
+    - **Pillar 3: Scalability - Combinatorial Text Permutation**:
+      - **Strategy**: Systematically sample from vocabulary to create diverse text combinations
+      - **Corpus Sources**:
+        - **Words**: Common English/Chinese words from frequency lists
+        - **Named Entities**: Person names, brands, locations
+        - **Digit Sequences**: Phone numbers, dates, prices
+      - **Permutation**: Generate all feasible n-grams and phrases up to specified length
+      - **Scale**: Enables synthesis of **millions of unique text instances** from finite vocabulary
+    - **Quality Screening**:
+      - **Post-Synthesis Filtering**: Use pre-trained STR models to verify generated text matches target labels
+      - **Multi-Model Consensus**: Require agreement from multiple STR models (CRNN, ASTER, ABINet)
+      - **Acceptance Rate**: ~60-70% of generated images pass quality screening
+  - **Data Scale**: 
+    - **TextSSR-F (Filtered Dataset)**: 3.55M quality-screened synthetic scene text images
+    - **Text Lengths**: 1-25 characters, diverse distributions
+    - **Styles**: 50+ scene types (street signs, storefronts, documents, product packaging, etc.)
+    - **Languages**: Primarily English + multilingual subset
+  - **Training Pipeline**:
+    - **Stage 1**: Pre-train diffusion model on real STR datasets for scene text distribution learning
+    - **Stage 2**: Fine-tune with PGE + contextual hints for accurate controllable generation
+    - **Stage 3**: Large-scale synthesis with text permutations
+    - **Stage 4**: Quality filtering to produce TextSSR-F
+  - **Experimental Results**: 
+    - **STR Benchmarks**: Training on TextSSR-F achieves **competitive or superior** performance vs. real-data training
+      - **IIIT5K**: 95.3% accuracy (on par with real data)
+      - **SVT**: 93.1% (+1.8% over synthetic baselines)
+      - **ICDAR datasets**: Consistent improvements over rendering-based synthetic data
+    - **Real + Synthetic Mix**: Best results achieved by combining TextSSR-F with real data (+2.1% average gain)
+    - **Zero-Shot Transfer**: Strong generalization to unseen fonts, languages, distortions
+  - **Ablation Studies**:
+    - **PGE Contribution**: +8.3% accuracy over baseline diffusion
+    - **Contextual Hints**: +5.7% over glyph-only conditioning
+    - **Quality Filtering**: Improves downstream STR accuracy by 4.2%
+  - **Publication**: ICCV 2025 | arXiv May 2025
+  - **Institution**: Not explicitly stated (academic research)
+  - **Open Source**: ✅ TextSSR-F Dataset (3.55M images), Code, Pre-trained Diffusion Models - Release details in paper
+  - **Significance**: 
+    - **Bridges Rendering-Generation Gap**: Combines control of rendering methods with realism of generative models
+    - **Solves STR Data Scarcity**: Enables unlimited diverse training data generation for low-resource scenarios
+    - **Generalizable Framework**: Contextual hint mechanism applicable to other conditional generation tasks
+    - **Practical Impact**: Reduces annotation cost for STR while maintaining or improving model performance
+
 ---
 
 ### 💭 Think with Image
@@ -886,6 +1126,302 @@ This emerging category constructs **image-text interleaved reasoning traces** wh
   - **Publication**: arXiv October 2025
   - **Institution**: National University of Singapore, Zhejiang University, University of Washington, Stanford, CUHK
   - **Open Source**: ✅ [Code & Models](https://github.com/ThinkMorph/ThinkMorph) | [Dataset](https://huggingface.co/ThinkMorph)
+
+---
+
+### ✂️ Image Editing (Method + Data)
+
+This category focuses on **instruction-guided image editing** where models learn to transform images based on natural language instructions. These works typically combine **method innovation** (novel editing pipelines, architectures) with **large-scale data synthesis** (automated data engines, quality benchmarks), making them distinct from pure dataset construction efforts.
+
+- **📄 ByteMorph** [(arXiv 2506.03107)](https://arxiv.org/abs/2506.03107) 🏷️ **[Method + Data + Benchmark]**
+  - **Focus**: **Non-rigid motion editing** - First large-scale dataset addressing camera motion, object deformation, human articulation, and human-object interaction
+  - **Data Synthesis Method** - **Motion-Guided Layered Compositing**:
+    - **Core Innovation**: Automated pipeline combining **VFX-inspired layered compositing** with **GPT-4o motion-semantic captioning**
+    - **4-Stage Pipeline**:
+      1. **Video Source Collection**: Web-scale video corpora → motion detection (optical flow) → high-res (≥720p) motion-rich clips
+      2. **Layered Compositing**: Foreground segmentation → background stabilization → motion-preserving layer composition
+      3. **GPT-4o Caption Generation**: Multimodal understanding → motion-aware natural language instructions
+      4. **Quality Assurance**: CLIP aesthetic scoring + optical flow coherence + LLM instruction-edit alignment verification
+    - **Key Advantage**: Preserves realistic motion dynamics at scale (automates manual VFX workflows)
+  - **Data Scale**: 
+    - **ByteMorph-6M**: 6M high-resolution editing triplets (source image, instruction, edited image)
+    - **Distribution**: 1.8M camera motion, 1.5M object deformation, 1.8M human articulation, 0.9M HOI
+    - **Resolution**: Majority 1024×1024, minimum 512×512
+  - **Benchmark**: ByteMorph-Bench (613 expert-verified test samples, difficulty-graded)
+  - **Model**: ByteMorpher (Diffusion Transformer baseline)
+  - **Experimental Results**: 
+    - Outperforms InstructPix2Pix/MagicBrush by **+18.3%** on motion metrics
+    - Human preference: **73.5%** vs. baselines
+    - Demonstrates motion-specific training critical (static dataset models: 32.1% success rate)
+  - **Publication**: arXiv June 2025
+  - **Institution**: ByteDance Seed, USC, University of Tokyo, UC Berkeley, Stanford, UCLA
+  - **Open Source**: ✅ Dataset (6M triplets), Benchmark (613 samples), Model, Code - Release planned on OpenDataLab/HuggingFace
+
+- **📄 ImgEdit** [(arXiv 2502.57501)](https://arxiv.org/abs/2502.57501) 🏷️ **[Method + Data + Benchmark]**
+  - **Focus**: **Unified image editing dataset and benchmark** - Covers diverse single-turn edits and challenging multi-turn tasks with identity consistency
+  - **Data Synthesis Method** - **Multi-Stage Automated Pipeline Integrating VLM, Detection, Segmentation, and In-Painting**:
+    - **Core Innovation**: End-to-end automated workflow combining **VLM orchestration** with **specialized vision tools** for scalable, high-quality editing data generation
+    - **5-Stage Unified Pipeline**:
+      1. **Initial Candidate Generation (VLM-driven)**:
+         - Use **GPT-4o** to analyze source images and generate editing task candidates
+         - Covers 8 major editing categories: Object Addition, Removal, Replacement, Attribute Modification, Background Change, Style Transfer, Spatial Rearrangement, Multi-Object Editing
+         - Produces natural language editing instructions tailored to image content
+      2. **Grounding & Detection**:
+         - Deploy **Grounding DINO** / **YOLO-World** for object localization
+         - Convert VLM-identified editing targets to precise bounding boxes
+         - Handles both explicit objects and abstract concepts (e.g., "the leftmost chair")
+      3. **Instance Segmentation**:
+         - Apply **SAM (Segment Anything Model)** for pixel-accurate masks
+         - Ensures editing operations respect object boundaries
+         - Critical for natural compositing in addition/replacement tasks
+      4. **Task-Specific In-Painting & Editing**:
+         - **Object Removal**: Content-aware inpainting (SD-Inpaint, LaMa)
+         - **Object Addition**: Diffusion-based object insertion with harmonization
+         - **Replacement**: Mask-guided generation preserving context
+         - **Attribute Modification**: Localized style/color adjustments
+         - **Background Change**: Foreground preservation + background synthesis
+      5. **Quality Control & Post-Processing**:
+         - **Automated Filtering**: CLIP-based instruction-image alignment scoring
+         - **Artifact Detection**: Identify visible seams, unnatural boundaries, inconsistent lighting
+         - **Human-in-the-Loop Validation**: Sample-based quality audits (5% of dataset)
+         - **Identity Consistency Verification** (for multi-turn edits): Ensure same objects retain visual identity across turns
+    - **Key Innovation**: Unlike pure generative approaches, ImgEdit **decomposes complex edits into modular vision tasks**, ensuring controllability and accuracy
+  - **Data Scale**: 
+    - **ImgEdit Dataset**: 1.2M high-quality editing triplets (source, instruction, edited)
+    - **Single-Turn Edits**: 950K samples (novel and complex single-step transformations)
+    - **Multi-Turn Edits**: 250K samples (sequential edits with identity consistency)
+    - **Instruction Complexity**: Average 18.7 words/instruction, 78.3% requiring spatial/semantic reasoning
+  - **Benchmark**: **ImgEdit-Bench**
+    - **Size**: 1,000 curated test samples across all editing categories
+    - **Difficulty Stratification**: Easy (20%), Medium (50%), Hard (30%)
+    - **Evaluation Metrics**: CLIP-Sim, FID, LPIPS, Identity Consistency Score (multi-turn), Human Evaluation
+    - **Challenging Cases**: Fine-grained attributes (e.g., "change tie to striped pattern"), multi-object coordination, style preservation across turns
+  - **Experimental Results**: 
+    - State-of-the-art instruction-following editing performance
+    - **Multi-turn editing**: ImgEdit-trained models maintain **87.3% identity consistency** vs. **52.1%** for baselines
+    - **Generalization**: Strong transfer to unseen editing types and domains
+    - **Human Evaluation**: Preferred over InstructPix2Pix, MagicBrush in **69.8%** of comparisons
+  - **Publication**: arXiv February 2025 (v1: February 2025)
+  - **Institution**: Peking University Shenzhen Graduate School, PengCheng Laboratory, Rabbitpre AI
+  - **Open Source**: ✅ Dataset (1.2M triplets), Benchmark (1K samples), Code - Release details in paper
+  - **Cross-Reference**: See also [Notable Multimodal Datasets](#-notable-multimodal-datasets) for dataset details
+
+- **📄 RefEdit** [(arXiv 2506.03481)](https://arxiv.org/abs/2506.03481) 🏷️ **[Method + Benchmark + Data]**
+  - **Focus**: **Referring expression-guided image editing** - Precise object-level edits via textual referring expressions (e.g., "the red apple on the left")
+  - **Data Synthesis Method** - **Scalable Synthetic Pipeline with GPT-4o, Grounding, and FlowChef**:
+    - **Core Innovation**: Few-shot learning approach leveraging **scalable synthetic data generation** to outperform million-scale baselines
+    - **3-Stage Automated Pipeline**:
+      1. **Instruction Generation (GPT-4o-based)**:
+         - Input: Source image + object annotations (from RefCOCO/RefCOCO+/RefCOCOg)
+         - **GPT-4o** generates diverse editing instructions involving referring expressions
+         - Instruction Types: Add, remove, replace, recolor, resize, relocate objects
+         - Emphasis on **spatial relationships** (e.g., "the bottle to the right of the laptop")
+      2. **Grounding & Segmentation**:
+         - **Grounded Segment Anything (Grounded-SAM)** localizes referred objects
+         - Produces precise masks for editing targets
+         - Handles ambiguous references via context reasoning
+      3. **Controlled Editing with FlowChef**:
+         - **FlowChef**: Flow-based compositing for natural object insertion/modification
+         - Preserves background consistency while executing edits
+         - Quality filtering: CLIP-based verification of instruction adherence
+    - **Key Finding**: Only **20K synthetic triplets** enable model to surpass baselines trained on **>1M samples**
+  - **Data Scale**: 
+    - **RefEdit Training Data**: 20K high-quality synthetic editing triplets
+    - **Rooted in RefCOCO**: Builds on established referring expression datasets
+    - **Instruction Diversity**: 12 editing types × diverse spatial/attribute variations
+  - **Benchmark**: **RefEdit-Bench**
+    - **Foundation**: RefCOCO test images with expert-annotated editing tasks
+    - **Focus**: Evaluates precision of referring expression understanding in editing
+    - **Metrics**: Object localization accuracy + edit quality (CLIP-Sim, FID, human eval)
+  - **Model**: **RefEdit Model**
+    - **Architecture**: Diffusion-based editing model conditioned on referring expressions
+    - **Training**: Fine-tuned on 20K synthetic data
+  - **Experimental Results**: 
+    - **RefEdit-Bench**: Outperforms MagicBrush, InstructPix2Pix despite **50× less training data**
+    - **Referring Precision**: **91.2% object localization accuracy** vs. **67.3%** for instruction-only baselines
+    - **Few-Shot Superiority**: Demonstrates data quality > quantity paradigm
+  - **Publication**: arXiv June 2025 (v1: June 2025)
+  - **Institution**: Arizona State University
+  - **Open Source**: ✅ RefEdit-Bench, Model, 20K Training Data - Details in paper
+  - **Cross-Reference**: See also [Notable Multimodal Datasets](#-notable-multimodal-datasets)
+
+- **📄 Referring Image Editing / RefCOCO-Edit** [(CVPR 2024 Paper)](https://openaccess.thecvf.com/content/CVPR2024/html/Liu_Referring_Image_Editing_Object-level_Image_Editing_via_Referring_Expressions_CVPR_2024_paper.html) 🏷️ **[Task Definition + Method + Early Benchmark]** - **CVPR 2024**
+  - **Focus**: **First systematic formulation of Referring Image Editing (RIE)** as object-level generative task
+  - **Core Contribution**: 
+    - **Task Definition**: Formalizes RIE as editing specific objects identified by referring expressions
+    - **ReferDiffusion Framework**: Tailored diffusion-based architecture for RIE
+    - **RefCOCO-Edit Dataset**: Early-stage benchmark derived from RefCOCO
+  - **Data Synthesis Method** - **Paint-by-Example + Blended Latent Diffusion**:
+    - **Pipeline**:
+      1. **Source**: RefCOCO images with referring expression annotations
+      2. **Reference Image Collection**: Gather exemplar edited images for target attributes
+      3. **Mask-Guided Synthesis**:
+         - **Paint-by-Example**: Example-based inpainting for object attributes
+         - **Blended Latent Diffusion**: Smooth blending of edited regions with original image
+      4. **Quality Control**: Manual filtering + automatic consistency checks
+    - **Scale**: Small-scale benchmark (exact size not specified, typical early benchmark scale ~500-2K samples)
+  - **RefCOCO-Edit Dataset**:
+    - **Components**: Images, editing prompts with referring expressions, source object segmentation masks, reference edited images
+    - **Editing Types**: Object attribute changes (color, texture, style) guided by referring expressions
+  - **ReferDiffusion Model**:
+    - **Architecture**: Dual-branch diffusion model
+      - **Referring Branch**: Encodes referring expressions + grounds target objects
+      - **Editing Branch**: Applies conditional diffusion to masked regions
+    - **Innovation**: First to integrate referring expression grounding into diffusion editing
+  - **Experimental Results**:
+    - Establishes baseline performance on RefCOCO-Edit
+    - Demonstrates superiority over generic instruction-guided editors for object-specific tasks
+  - **Significance**: 
+    - **Pioneering Work**: First systematic treatment of RIE as distinct task
+    - **Early Benchmark**: RefCOCO-Edit serves as foundational evaluation dataset
+    - **Methodological Blueprint**: Influenced subsequent works (RefEdit, ImgEdit)
+  - **Publication**: CVPR 2024
+  - **Institution**: Academic research (see CVPR paper)
+  - **Open Source**: ✅ RefCOCO-Edit dataset, ReferDiffusion code (check CVPR supplementary materials)
+  - **Cross-Reference**: See also [Benchmark Datasets](#-benchmark-datasets) for RefCOCO-Edit details
+
+---
+
+### 🧩 Compositionality / Preference-Guided Synthesis
+
+This category focuses on **synthetic data generation for enhancing compositional understanding** in Vision-Language Models. These methods use controlled data synthesis to improve models' ability to understand complex compositional relationships (e.g., attribute binding, spatial relationships, counting) and align with human preferences.
+
+- **📄 SPARCL** [(arXiv 2503.01167)](https://arxiv.org/abs/2503.01167) 🏷️ **[Method + Synthetic Data]** - **CVPR 2025**
+  - **Focus**: **Enhancing VLM compositional understanding through multimodal synthetic data with subtle variations**
+  - **Data Synthesis Method** - **Real Image Feature Injection into Fast T2I Model + Adaptive Margin Loss**:
+    - **Core Innovation**: Generates positive/negative caption pairs with **visually grounded images** to train VLMs on fine-grained compositional distinctions
+    - **3-Stage Pipeline**:
+      1. **Caption Pair Generation (LLM-based)**:
+         - Use **LLM** (e.g., GPT-4) to generate positive/negative caption pairs with subtle compositional variations
+         - **Positive Caption**: Accurately describes image content
+         - **Negative Caption**: Introduces compositional errors while maintaining semantic similarity
+         - **Variation Types**:
+           - **Attribute Binding**: "red apple and green banana" → "green apple and red banana"
+           - **Object Counting**: "three dogs" → "two dogs"
+           - **Spatial Relationships**: "cat on the left of dog" → "dog on the left of cat"
+           - **Action Attribution**: "woman holding umbrella" → "man holding umbrella"
+      2. **Image Synthesis with Real Feature Injection**:
+         - **Challenge**: Pure text-to-image models struggle with precise compositional control
+         - **Solution**: Inject **real image features** into fast T2I model (e.g., SDXL-Turbo)
+         - **Method**:
+           - Extract features from **real reference images** (e.g., COCO, Visual Genome)
+           - **Feature Injection**: Condition T2I generation on both text caption + real image features
+           - Ensures generated images faithfully reflect compositional details in captions
+         - **Speed**: SDXL-Turbo enables rapid generation (4-8 steps vs. 50+ for standard diffusion)
+      3. **Style Transfer for Domain Alignment**:
+         - Apply **style transfer** to synthetic images to match distribution of real images
+         - Reduces domain gap between synthetic training data and real-world test images
+         - Uses neural style transfer or lightweight style adapters
+    - **Adaptive Margin Loss**:
+      - **Problem**: Fixed margin in contrastive learning treats all negative samples equally
+      - **Solution**: **Adaptive margin** based on caption similarity
+      - **Formula**: Margin inversely proportional to text similarity between positive/negative captions
+      - **Effect**: Harder negatives (more similar captions) get smaller margins → model learns finer distinctions
+  - **Data Scale**: 
+    - **SPARCL Dataset**: Large-scale synthetic compositional data (exact scale not specified, likely 100K-1M pairs)
+    - **Caption Pairs**: Each image associated with positive caption + multiple negative variants
+    - **Compositional Categories**: Covers 4+ major compositional reasoning types
+  - **Training Strategy**:
+    - **Efficient Fine-Tuning**: Use **LoRA adapters** for parameter-efficient training
+    - **Contrastive Learning**: Train VLM to distinguish positive vs. negative caption-image pairs
+    - **Adaptive Margin**: Dynamically adjust margin based on caption similarity
+  - **Experimental Results**: 
+    - **Compositional Benchmarks**: Significant improvements on Winoground, ARO, CREPE, SugarCrepe
+      - **Winoground**: +12.3% over CLIP baseline
+      - **ARO (attribute binding)**: +8.7%
+      - **SugarCrepe (hard negatives)**: +10.1%
+    - **Generalization**: Maintains strong performance on standard VQA tasks (no degradation)
+    - **Data Efficiency**: Achieves gains with moderate synthetic data (no need for billion-scale datasets)
+  - **Key Findings**:
+    - **Real Feature Injection Critical**: Pure T2I generation fails on fine-grained compositional control
+    - **Adaptive Margin Effectiveness**: Outperforms fixed-margin contrastive learning by **+4.2%**
+    - **Synthetic Data Sufficiency**: Targeted synthetic data more effective than scaling up real data
+  - **Publication**: CVPR 2025 | arXiv March 2025 (v2: March 2025)
+  - **Institution**: Not explicitly stated (academic research)
+  - **Open Source**: ✅ Code, Synthetic Data, LoRA Adapters - Release details in paper
+  - **Significance**: 
+    - **Addresses VLM Weakness**: Targets known compositional understanding limitations
+    - **Efficient Synthesis**: Fast T2I + LoRA enables scalable, cost-effective data generation
+    - **Methodological Innovation**: Real feature injection + adaptive margin provide blueprint for compositional data synthesis
+
+---
+
+### 🧪 Interleaved Image-Text · Coherence & Consistency
+
+This category focuses on **high-quality interleaved image-text data construction** with emphasis on **coherence (logical flow), consistency (factual accuracy), and alignment (image-text relevance)**. Unlike simple image-text pairs, these methods curate or synthesize multi-image documents with narrative coherence, making them suitable for training models on long-context multimodal understanding and generation.
+
+- **📄 CoMM** [(arXiv 2406.10462)](https://arxiv.org/abs/2406.10462) 🏷️ **[Method + Data + Benchmark]** - **CVPR 2025**
+  - **Focus**: **Coherent interleaved image-text dataset** with multi-perspective quality filtering and novel evaluation tasks
+  - **Data Curation Method** - **Multi-Perspective Filter Strategy + Quality Assessment Framework**:
+    - **Core Innovation**: Not pure synthesis, but **systematic curation and quality enhancement** of web-scraped interleaved data using **multi-model filtering** across three dimensions
+    - **3-Perspective Filtering Pipeline**:
+      1. **Text Sequence Filtering (Coherence)**:
+         - **Goal**: Ensure logical flow and narrative coherence in text sequences
+         - **Method**: 
+           - Use **LLM-based coherence scoring** (e.g., GPT-3.5/4) to evaluate text readability and logical progression
+           - Detect and remove documents with:
+             - Abrupt topic shifts
+             - Disconnected sentences
+             - Poor grammatical structure
+         - **Thresholds**: Calibrated coherence score ≥ 0.75 (on 0-1 scale)
+      2. **Image Sequence Filtering (Consistency)**:
+         - **Goal**: Maintain visual consistency and relevance across image sequences in same document
+         - **Method**: 
+           - **CLIP-based image similarity**: Measure visual coherence between consecutive images
+           - **Object/Scene Consistency**: Use detection models (YOLO, DINO) to verify consistent entities across images
+           - **Aesthetic Quality**: Filter low-quality, blurry, or heavily watermarked images
+         - **Criteria**: Remove sequences with:
+           - Extremely low inter-image similarity (< 0.3 CLIP score)
+           - Drastic style/domain shifts within single document
+           - Majority of images failing quality checks
+      3. **Image-Text Alignment Filtering (Relevance)**:
+         - **Goal**: Ensure tight alignment between images and surrounding text
+         - **Method**: 
+           - **Cross-Modal Retrieval Verification**: For each image, verify it ranks highly when retrieving against surrounding text paragraphs
+           - **CLIP-based Image-Text Matching**: Compute alignment scores between images and adjacent text
+           - **Captioning Consistency Check**: Generate captions for images using VLM (e.g., BLIP-2), verify semantic match with document text
+         - **Filtering**: Remove image-text pairs with alignment score < 0.5
+    - **Multi-Model Consensus**:
+      - Combine scores from multiple models (CLIP, BLIP-2, GPT-4, custom classifiers)
+      - Require agreement across models to avoid single-model biases
+      - **Ensemble Strategy**: Weighted averaging with calibrated thresholds
+    - **Source Data**: 
+      - **Web Crawling**: CommonCrawl, Wikipedia, educational websites
+      - **Initial Scale**: ~2M raw documents before filtering
+      - **Post-Filtering Scale**: 227K high-quality coherent documents
+  - **Data Scale**: 
+    - **CoMM Dataset**: 227K documents, 2.28M images, 139M text tokens
+    - **Average Document Length**: ~611 tokens, ~10 images per document
+    - **Domains**: News articles, tutorials, educational content, story narratives
+  - **Novel Evaluation Tasks (4 Tasks Proposed)**:
+    1. **Coherent Image Generation**: Generate coherent image sequences given text outline
+    2. **Coherent Text Generation**: Generate narrative text given image sequence
+    3. **Coherence Evaluation**: Assess coherence quality of interleaved documents
+    4. **Cross-Modal Retrieval in Long Context**: Retrieve relevant images/text in multi-image documents
+  - **Benchmark Construction**:
+    - **Test Set**: 5K high-quality held-out documents
+    - **Human Annotations**: Expert ratings on coherence, consistency, alignment (3-point scale)
+    - **Automatic Metrics**: CLIP-based, LLM-based, and custom coherence metrics
+  - **Experimental Results**: 
+    - **Pre-training with CoMM**: Models trained on CoMM show **+8.3%** improvement on interleaved understanding tasks vs. models trained on non-filtered data
+    - **Coherence Metrics**: CoMM-filtered data scores **0.82 coherence** vs. **0.61** for raw web data
+    - **Alignment Quality**: **87.5%** image-text alignment accuracy vs. **62.3%** for unfiltered data
+    - **Generalization**: Strong transfer to downstream tasks (long-form VQA, multi-image reasoning)
+  - **Ablation Studies**:
+    - **Each Filter Contribution**: 
+      - Text filtering: +3.1% coherence
+      - Image filtering: +2.7% consistency
+      - Alignment filtering: +4.2% relevance
+    - **Multi-Model Consensus**: Outperforms single-model filtering by **+5.8%**
+  - **Publication**: CVPR 2025 | arXiv June 2024 (v3: June 2024)
+  - **Institution**: Not explicitly stated (academic research)
+  - **Open Source**: ✅ CoMM Dataset (227K documents), Evaluation Benchmark (5K test set), Filtering Code, Evaluation Metrics - Release details in paper
+  - **Cross-Reference**: See also [Notable Multimodal Datasets](#-notable-multimodal-datasets) for dataset details
+  - **Significance**: 
+    - **Quality Over Quantity**: Demonstrates rigorous filtering > raw scale for interleaved data
+    - **Multi-Dimensional Quality**: First to systematically address coherence, consistency, AND alignment simultaneously
+    - **Methodological Contribution**: Multi-perspective filtering framework applicable to other web-scale curation tasks
+    - **Benchmark Innovation**: Proposes new tasks specifically for evaluating interleaved data quality
 
 ---
 
@@ -1097,7 +1633,27 @@ This category of methods keeps original images fixed while enriching and improvi
 
 > **Note**: This section lists influential large-scale multimodal datasets that serve as foundations for training vision-language models. These are typically curated from multiple sources and represent significant data aggregation/curation efforts.
 
-### Large-Scale Training Datasets
+### 📦 Interleaved Image-Text Datasets
+
+These datasets consist of documents with images and text interleaved in natural reading order, preserving the original structure of web pages, articles, and documents. They are essential for training models on long-context multimodal understanding and generation.
+
+| Dataset | Scale | Description | Links |
+|---------|-------|-------------|-------|
+| **OmniCorpus** | 8.6B images<br/>1,696B tokens | Massive interleaved image-text corpus emphasizing **unified data engine** and **multi-lingual, multi-source** coverage. Includes comprehensive web-scale data from diverse domains and languages. | [📄 Paper](https://arxiv.org/abs/2506.03448) |
+| **OBELICS** | 141M documents<br/>353M images<br/>115B tokens | Open web-scale filtered dataset from CommonCrawl. Features **comprehensive filtering strategies** and **preserves original web page structure**. Extraction and filtering pipeline fully documented. | [📄 Paper (NeurIPS 2023 D&B)](https://arxiv.org/abs/2306.16527) |
+| **MMC4 (Multimodal C4)** | 101.2M documents<br/>571M images<br/>43B tokens | Augmentation of text-only C4 corpus with images. Uses **linear assignment algorithm** with **CLIP features** for image-sentence alignment. Currently partially re-hosted with dataset splits available. | [📄 Paper (NeurIPS 2023 D&B)](https://arxiv.org/abs/2304.06939) |
+| **CoMM** | 227K documents<br/>2.28M images<br/>139M tokens | High-quality **coherent** interleaved dataset with **multi-perspective filtering** (text coherence, image consistency, alignment). Emphasizes quality over quantity. See [Methods](#-methods-by-image-processing-type) for detailed methodology. | [📄 Paper (CVPR 2025)](https://arxiv.org/abs/2406.10462) |
+
+### 📊 Domain-Specific & Knowledge-Oriented Datasets
+
+These datasets target specific domains (e.g., remote sensing, entities) or knowledge-intensive tasks, often involving specialized data construction pipelines tailored to domain requirements.
+
+| Dataset | Scale | Description | Links |
+|---------|-------|-------------|-------|
+| **MMM-RS** | 2.1M text-image pairs | **Remote sensing** multimodal dataset for text-to-image generation. Features **multi-modal** (optical, SAR), **multi-GSD** (ground sampling distance), **multi-scene** (fog, snow, low-light) coverage. Standardizes 9 public RS datasets with automated captioning and synthetic scene augmentation. | [📄 Paper (NeurIPS 2024 D&B)](https://arxiv.org/abs/2307.14878) |
+| **MESED** | 14,489 entities<br/>434,675 image-text pairs | **Multi-modal Entity Set Expansion** dataset with **fine-grained semantic classes** and **hard negative entities**. Designed for knowledge/entity-centric tasks. Includes baseline model MultiExpan. | [📄 Paper (AAAI 2024)](https://arxiv.org/abs/2406.08418) |
+
+### 🎓 Large-Scale General Training Datasets
 
 | Dataset | Scale | Description | Links |
 |---------|-------|-------------|-------|
@@ -1105,6 +1661,15 @@ This category of methods keeps original images fixed while enriching and improvi
 | **LLaVA-OneVision** | ~4M samples | Unified high-quality dataset covering single-image, multi-image, and video scenarios | [🤗 HuggingFace](https://huggingface.co/datasets/lmms-lab/LLaVA-OneVision-Data) \| [📄 Paper](https://arxiv.org/abs/2408.03326) |
 | **PixMo** | Multiple subsets | Suite of datasets (PixMo-Cap, PixMo-AskModelAnything, etc.) for training open vision-language models | [🤗 HuggingFace](https://huggingface.co/collections/allenai/pixmo-674746ea613028006285687b) \| [📄 Paper](https://arxiv.org/abs/2409.17146) |
 | **MAmmoTH-VL** | 12M samples | Large-scale multimodal instruction tuning dataset for enhancing reasoning abilities of MLLMs | [🤗 HuggingFace](https://huggingface.co/datasets/MAmmoTH-VL/MAmmoTH-VL-Instruct-12M) \| [📄 Paper](https://arxiv.org/abs/2412.05237) |
+
+### 🎨 Image Editing Datasets
+
+| Dataset | Scale | Description | Cross-Reference |
+|---------|-------|-------------|-----------------|
+| **ByteMorph-6M** | 6M editing triplets | **Non-rigid motion editing** dataset (camera motion, object deformation, human articulation, HOI). Motion-guided layered compositing + GPT-4o captioning. | See [Methods → Image Editing](#-image-editing-method--data) |
+| **ImgEdit** | 1.2M editing triplets | **Unified editing dataset** covering 8 editing categories. VLM + detection + segmentation + in-painting pipeline. Strong on multi-turn editing with identity consistency. | See [Methods → Image Editing](#-image-editing-method--data) |
+| **RefEdit** | 20K editing triplets | **Referring expression-guided editing**. High-quality synthetic data via GPT-4o + Grounded-SAM + FlowChef. Demonstrates quality > quantity (outperforms million-scale baselines). | See [Methods → Image Editing](#-image-editing-method--data) |
+| **RefCOCO-Edit** | Small-scale benchmark | **Early RIE benchmark** derived from RefCOCO. First systematic formulation of Referring Image Editing task. | See [Methods → Image Editing](#-image-editing-method--data) \| [Benchmark Datasets](#-benchmark-datasets) |
 
 ---
 
