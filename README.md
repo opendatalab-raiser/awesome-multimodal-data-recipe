@@ -1201,7 +1201,7 @@ If this project helps you, please give us a Star ⭐️!
 
 ## 📄 License
 
-This project is licensed under [CC0-1.0 License](LICENSE).
+This project is licensed under [MIT License](LICENSE).
 
 ---
 
