@@ -1031,7 +1031,7 @@ This category focuses on **generating new images from scratch** as part of the d
 
 #### 📄 Document / Text-Dense Scenes
 
-- **📄 TextSSR** [(arXiv 2505.20275)](https://arxiv.org/abs/2505.20275) 🏷️ **[Method + Data]** - **ICCV 2025**
+- **📄 TextSSR** [(arXiv 2412.01137)](https://arxiv.org/abs/2412.01137) 🏷️ **[Method + Data]** - **ICCV 2025**
   - **Focus**: **Diffusion-based data synthesis for Scene Text Recognition (STR)** - Generates training data for text-in-the-wild recognition
   - **Data Synthesis Method** - **Three-Pillar Diffusion Pipeline: Accuracy, Realism, Scalability**:
     - **Core Innovation**: End-to-end diffusion-based synthesis addressing limitations of rendering-based methods (lack of realism) and purely generative approaches (lack of control)
@@ -1157,7 +1157,7 @@ This category focuses on **instruction-guided image editing** where models learn
   - **Institution**: ByteDance Seed, USC, University of Tokyo, UC Berkeley, Stanford, UCLA
   - **Open Source**: ✅ Dataset (6M triplets), Benchmark (613 samples), Model, Code - Release planned on OpenDataLab/HuggingFace
 
-- **📄 ImgEdit** [(arXiv 2502.57501)](https://arxiv.org/abs/2502.57501) 🏷️ **[Method + Data + Benchmark]**
+- **📄 ImgEdit** [(arXiv 2505.20275)](https://arxiv.org/abs/2505.20275) 🏷️ **[Method + Data + Benchmark]**
   - **Focus**: **Unified image editing dataset and benchmark** - Covers diverse single-turn edits and challenging multi-turn tasks with identity consistency
   - **Data Synthesis Method** - **Multi-Stage Automated Pipeline Integrating VLM, Detection, Segmentation, and In-Painting**:
     - **Core Innovation**: End-to-end automated workflow combining **VLM orchestration** with **specialized vision tools** for scalable, high-quality editing data generation
