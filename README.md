@@ -1031,6 +1031,131 @@ This category focuses on **generating new images from scratch** as part of the d
 
 #### 📄 Document / Text-Dense Scenes
 
+- **📄 CoSyn** [(arXiv 2502.14846)](https://arxiv.org/abs/2502.14846) 🏷️ **[Method + Data]**
+  - **Focus**: **Code-Guided Synthetic Text-Rich Multimodal Data Generation** - Leverages text-only LLM coding capabilities to automatically create diverse text-dense image data
+  - **Data Synthesis Method** - **Code-Driven Image Rendering + Text Annotation Generation**:
+    - **Core Innovation**: Uses code as intermediate representation bridging images and text, fully leveraging strong programming capabilities of text-only LLMs
+    - **Three-Stage Generation Process**:
+      1. **Code Generation Stage** (P_LLM(C|q)):
+         - Input: User query q (e.g., "generate nutrition label dataset")
+         - Output: Executable code C
+         - LLM: Claude-3.5-Sonnet (strong coding ability)
+         - **Supports 11 Rendering Tools**: Matplotlib, Plotly, VegaLite, LaTeX, HTML, Mermaid, Graphviz, SVG, Asymptote, Lilypond, RDKit
+      2. **Image Rendering Stage** (P(I|C)):
+         - Executes generated code C to render image I
+         - Precise control over image content (text, layout, style)
+         - Guarantees reproducibility (code traceable)
+      3. **Instruction Generation Stage** (P_LLM(T|C)):
+         - Generates textual instruction T based on code C (without image)
+         - LLM: GPT-4o-mini (cost-effective)
+         - Produces Q&A pairs, explanations (supports CoT reasoning)
+    - **20 Generation Pipelines** - Built on 11 rendering tools:
+      - **Charts**: Matplotlib, VegaLite, Plotly, LaTeX, HTML
+      - **Documents**: LaTeX, HTML
+      - **Tables**: LaTeX, Matplotlib, Plotly, HTML
+      - **Diagrams**: Graphviz, LaTeX, Mermaid
+      - **Math Problems**: LaTeX
+      - **Vector Graphics**: SVG, Asymptote
+      - **Sheet Music**: LilyPond
+      - **Circuits**: LaTeX
+      - **Chemical Structures**: RDKit
+    - **Diversity Enhancement Strategy - Persona-Driven**:
+      - **Problem**: LLM sampling parameters struggle to generate diverse data
+      - **Solution**: Introduce **200K personas** (personality/identity descriptions) at Topic Generation stage
+      - **Effect**: Generate topics from varied perspectives, significantly improve content diversity
+      - **Example**: Persona "sci-fi novelist likes alien worlds" → Topic "Illustrated Guide to Extraterrestrial Flora & Fauna"
+    - **4-Stage Pipeline Example** (HTML Document):
+      1. **Topic Generation**: Generate document topic based on query + persona (e.g., "January utility bill")
+      2. **Data Generation**: Populate detailed content (fee breakdown, dates, user info)
+      3. **Code Generation**: Convert data to executable code (HTML+CSS)
+      4. **Instruction Generation**: Generate Q&A pairs based on code (question + explanation + concise answer)
+    - **Key Technical Advantages**:
+      - **High Fidelity**: Code rendering ensures text accuracy (no hallucination)
+      - **Strong Controllability**: Precise control over image structure and content via code
+      - **High Diversity**: Supports 11 tools, 9 categories, 100+ fine-grained queries
+      - **Scalable**: Language-controlled queries, easy to customize for new domains
+      - **Cost-Effective**: Text-only LLM cost far lower than multimodal models
+  - **Data Scale**:
+    - **CoSyn-400K**: 400K synthetic images, 2.7M instruction-tuning data
+    - **9 Category Distribution**:
+      - Charts: 118K | Documents: 73K | Math: 68K
+      - Tables: 48K | Diagrams: 36K | Vector Graphics: 28K
+      - Sheet Music: 12K | Circuits: 10K | Chemical Structures: 9K
+    - **Query Diversity**:
+      - Charts: 51 types | Documents: 107 types | Math: 110 types
+      - Tables: 35 types | Diagrams: 34 types | Vector Graphics: 36 types
+    - **Extended Application - Synthetic Pointing Data**: 65K images with click coordinate annotations
+  - **Model**: Based on **Molmo Architecture** (CLIP-ViT-L + Mistral-7B)
+    - Vision Encoder: OpenAI CLIP (ViT-L/14 336px)
+    - Language Model: Mistral-7B
+    - Connection: MLP projection layer
+  - **Experimental Results** - **SOTA on 7 Text-Rich Benchmarks**:
+    - **Best Among Open Models**: Average 80.9% (surpasses 2nd-place Llama 3.2 11B 77.0%, +3.9%)
+    - **Surpasses Closed Models**: GPT-4V (72.8%), Gemini 1.5 Flash (76.2%)
+    - **Individual Scores**:
+      - ChartQA: **86.3%** (vs GPT-4V 78.1%, +8.2%)
+      - DocVQA: **90.0%** (vs GPT-4V 87.2%, +2.8%)
+      - InfoVQA: **70.5%** (vs GPT-4V 75.1%, -4.6%)
+      - TableVQA: **65.8%** (vs GPT-4V 60.5%, +5.3%)
+      - AI2D: **91.9%** (vs GPT-4V 89.4%, +2.5%)
+      - TextVQA: **82.0%** (vs GPT-4V 78.0%, +4.0%)
+      - ScreenQA: **80.1%** (vs GPT-4V 41.6%, +38.5%)
+    - **Zero-Shot Performance** (only auxiliary + synthetic data, no eval set training):
+      - Average **74.7%**, surpasses GPT-4V (72.8%)
+      - Outperforms most open and closed models (no real training data)
+  - **Novel Domain Adaptation** - **NutritionQA Benchmark**:
+    - **Problem**: Open-source VLMs perform poorly on novel tasks (nutrition label Q&A)
+    - **Zero-Shot Adaptation**: Only trained on CoSyn-400K → matches GPT-4V performance
+    - **Target Domain Fine-Tuning**: Only **7K synthetic nutrition label data** → surpasses most open VLMs trained on millions
+    - **Data Efficiency**: Demonstrates extremely high sample efficiency of targeted synthetic data
+  - **Synthetic Data Advantages Analysis**:
+    - **Ablation Study** (see Figure 4):
+      - Auxiliary-only data (1M images): 58.7%
+      - Synthetic-only data (400K images): **70.5%** (matches GPT-4V)
+      - Auxiliary + Synthetic (zero-shot): **74.7%** (surpasses GPT-4V)
+      - Eval + Auxiliary + Synthetic (supervised): **80.9%** (SOTA)
+      - **Conclusion**: 400K synthetic data contributes more than 1M real auxiliary data
+    - **CoT Reasoning Enhancement**:
+      - Synthetic data includes (question, explanation, concise answer) triplets
+      - ChartQA: +3.2% | TableVQA: +1.5% | NutritionQA: +14.0%
+      - Significant improvements for tasks requiring multi-step reasoning
+    - **Mitigating Data Bias** (ChartQA case):
+      - **Problem**: ChartQA training set 73.9% T5-machine-generated, test set 50% human-annotated
+      - **Overfitting**: PaliGemma 88.5% on machine questions, only 54.2% on human questions (34.3% gap)
+      - **CoSyn Training**: 93.4% machine, 79.1% human (**14.2% gap**, reduced by 20.1%)
+      - **Conclusion**: Synthetic data mitigates overfitting to benchmark biases
+    - **Data Diversity Quantification** (vs existing chart datasets):
+      - **Image Diversity**: CoSyn 0.596 vs ChartQA 0.340 (+75.3%)
+      - **Text Diversity**: CoSyn 0.823 vs ChartQA 0.742 (+10.9%)
+      - **Tool Diversity**: Using 5 tools vs Matplotlib-only → +1.3% ChartQA accuracy
+    - **Scalability Analysis**:
+      - Synthetic chart count from 5K → 116K, ChartQA zero-shot from 64.2% → 78.2%
+      - Performance continuously improves, not saturated (suggest future scaling)
+  - **Synthetic Pointing Data** - **SOTA Click Prediction**:
+    - **Method**: LLM edits code to explicitly draw points on images → extract coordinates
+    - **Data Volume**: 65K images with pointing annotations
+    - **ScreenSpot Benchmark**:
+      - Synthetic-only data: Average 68.0%
+      - Human-only data (PixMo-point 155K): 68.5%
+      - Synthetic + Human: **74.9%** (SOTA, surpasses UGround trained on 1.3M, 73.3%)
+    - **Data Efficiency**: 65K synthetic data matches 155K human annotation performance
+  - **Implementation Details**:
+    - **Infrastructure**: DataDreamer library (supports parallel generation, response caching, full logging)
+    - **LLM Selection**: Claude-3.5-Sonnet (strong code generation) vs GPT-4o (higher failure rate)
+    - **Cost**: CoSyn-400K dataset costs approximately **$8,000**
+    - **Training**: TPU v3-128, batch size 32, 60K steps (~30 hours)
+  - **Publication**: arXiv February 2025
+  - **Institution**: University of Pennsylvania, Allen Institute for AI (Ai2)
+  - **Authors**: Yue Yang, Ajay Patel, Matt Deitke, Tanmay Gupta, et al.
+  - **Open Source**: ✅ **Fully Open-Source** - CoSyn-400K dataset, code, models
+  - **Project Page**: [yueyang1996.github.io/cosyn](https://yueyang1996.github.io/cosyn)
+  - **Significance**:
+    - **Text-Only LLM Drives Multimodal**: First systematic use of text-only LLM programming capabilities for large-scale multimodal data synthesis
+    - **Code as Intermediate Representation**: Innovative use of code as image-text bridge ensuring accuracy and controllability
+    - **Beyond Rendering Limitations**: Overcomes diversity bottleneck of traditional template-based rendering methods
+    - **Broad Applicability**: 9 categories, 20 pipelines demonstrate framework versatility
+    - **Practical Impact**: Demonstrates strong potential of synthetic data for text-rich understanding tasks, providing new paradigm for VLM training
+
 - **📄 TextSSR** [(arXiv 2412.01137)](https://arxiv.org/abs/2412.01137) 🏷️ **[Method + Data]** - **ICCV 2025**
   - **Focus**: **Diffusion-based data synthesis for Scene Text Recognition (STR)** - Generates training data for text-in-the-wild recognition
   - **Data Synthesis Method** - **Three-Pillar Diffusion Pipeline: Accuracy, Realism, Scalability**:
@@ -1099,6 +1224,100 @@ This category focuses on **generating new images from scratch** as part of the d
     - **Solves STR Data Scarcity**: Enables unlimited diverse training data generation for low-resource scenarios
     - **Generalizable Framework**: Contextual hint mechanism applicable to other conditional generation tasks
     - **Practical Impact**: Reduces annotation cost for STR while maintaining or improving model performance
+
+#### 🔄 Contrastive Learning & Image Difference
+
+- **📄 Img-Diff** [(CVPR 2025)](https://github.com/modelscope/data-juicer/tree/ImgDiff) 🏷️ **[Method + Data]**
+  - **Focus**: **Contrastive Data Synthesis for MLLMs** - Enhances fine-grained image recognition through object differences in similar image pairs
+  - **Data Synthesis Method** - **Three-Stage Contrastive Data Pipeline: Image Pair Generation + Difference Area Localization + Difference Caption Generation**:
+    - **Core Innovation**: Draws from contrastive learning principles to generate similar image pairs with fine-grained difference annotations, training models to identify subtle differences in similar images
+    - **Stage 1: Image Pair Generation - Object Replacement Paradigm**:
+      - **Generation Tools**: Stable-Diffusion-XL + Prompt-to-Prompt image editing technique
+      - **Pipeline**:
+        1. Obtain image captions from caption databases (MS-COCO, LLaVA pre-training data)
+        2. Use LLM to perform object replacement in captions (prompt: "Only replace one object in this sentence")
+        3. Based on caption pairs, use SDXL + Prompt-to-Prompt to generate similar image pairs
+      - **Result**: Highly similar image pairs with different objects
+    - **Stage 2: Difference Area Generator**:
+      - **Goal**: Locate precise bounding boxes of object differences in image pairs
+      - **Three Components**:
+        1. **Image Similarity Filter** (used twice):
+           - **First use** (on generated pairs): Extract features via CLIP, compute cosine similarity, keep highly similar but not identical pairs
+           - **Second use** (on cropped sub-images): Filter out bbox regions with actual differences
+        2. **Image-Text Matching Filter**:
+           - Extract image features using BLIP, compare with object name text features
+           - Determine whether cropped sub-images contain valid objects (replaced or replacing objects)
+        3. **Difference Detector**:
+           - Based on given bbox, crop two sub-images from image A and B
+           - Use image similarity filter to determine if differences are significant
+           - Apply IoU filtering to remove overlapping bboxes, keep only bboxes with higher difference degree
+      - **Flow**: FastSAM segmentation → crop based on bbox → image-text matching filter → difference detection + IoU filter
+      - **Output**: Maximum 5 valid difference bboxes per image pair
+    - **Stage 3: Difference Captions Generator**:
+      - **Feature**: Generates difference captions for **specific regions** (not whole image), ensuring accuracy
+      - **Two-Stage Process**:
+        - **Stage 1 - Object Labeling & Filtering**:
+          1. Select N (default 5) bboxes with lowest similarity as candidates
+          2. Use MLLM (LLaVA-NEXT) to describe each bbox region content
+          3. **Image-Text Matching Filter**: Check if region content matches captions
+          4. **Caption Similarity Filter**: Use CLIP text features to assess whether two captions differ
+        - **Stage 2 - Difference Caption Generation**:
+          1. Mark difference areas with red boxes on images for enhanced localization
+          2. Provide LLaVA-NEXT with bbox content captions and marked images
+          3. MLLM generates targeted difference descriptions based on this information
+      - **Advantage**: Region-focused strategy avoids inaccuracy when single description can't capture all image differences
+    - **Key Technical Advantages**:
+      - **Fine-Grained Localization**: Bboxes precisely locate difference areas
+      - **Contrastive Learning Principles**: Simulates positive-negative sample comparison mechanism of contrastive learning
+      - **High-Quality Filtering**: Multiple filtering ensures data quality (image similarity, image-text matching, caption difference)
+      - **Automated Scalability**: Fully automated pipeline, expandable as needed
+  - **Data Scale**:
+    - **Img-Diff (Main Evaluation Version)**: 12,688 high-quality "object replacement" samples
+      - Source captions: MS-COCO (generated 118K image pairs → filtered to 38,533 pairs → 117,779 valid bboxes → 12,688 final samples)
+    - **Extended Version**: 34,538 "object replacement" samples (based on LLaVA pre-training dataset)
+    - **Object Diversity**:
+      - Covers 1,203 object categories
+      - 3,680 unique "object replacement pairs"
+      - Object365 dataset objects appear 13,164 times in this dataset (52.06% of total occurrences)
+  - **Models**: Fine-tuned based on SOTA MLLMs
+    - Main evaluation: LLaVA-1.5-7B, MGM-7B, InternVL2-8B
+    - Supplementary evaluation: InternVL2-1B, LLaVA-1.5-13B
+  - **Experimental Results** - **Significant Improvements on Image Difference Benchmarks**:
+    - **MMVP Benchmark** (evaluating MLLM visual capabilities):
+      - LLaVA-1.5-7B + Img-Diff: 27.3% (original 24.0%, +3.3%, surpasses LLaVA-1.5-13B 24.7%)
+      - MGM-7B + Img-Diff: **50.7%** (original 40.0%, +10.7%, **surpasses GPT-4V 38.7% and Gemini 40.7%**)
+      - InternVL2-8B + Img-Diff: 43.3% (original 38.7%, +4.6%)
+    - **Spot-the-Diff Benchmark** (street scene difference detection):
+      - LLaVA-1.5-7B + Img-Diff: CIDEr-D **43.2** (original 38.3, +4.9)
+      - MGM-7B + Img-Diff: CIDEr-D **53.5** (original 46.3, +7.2, **surpasses previous specialized model VACC 41.5**)
+      - InternVL2-8B + Img-Diff: CIDEr-D **32.2** (original 26.5, +5.7)
+    - **Image-Edit-Request Benchmark** (image editing differences):
+      - LLaVA-1.5-7B + Img-Diff: CIDEr-D **60.9** (original 60.6, further improves SOTA)
+      - MGM-7B + Img-Diff: CIDEr-D **68.1** (original 66.8, new SOTA)
+      - InternVL2-8B + Img-Diff: CIDEr-D **56.0** (original 51.5, +4.5)
+  - **General MLLM Benchmark Improvements** (average across 8 benchmarks):
+    - **LLaVA-1.5-7B**: Average improvement **+3.06%** (comprehensive improvements)
+    - **MGM-7B**: Average improvement **+1.28%**
+    - **InternVL2-8B**: Average improvement **+1.01%**
+    - **Key Improvements**: VQAv2, GQA, POPE (localization), MMBench, MM-Vet, ScienceQA, SEED-Bench
+  - **Data Quality Assessment** (1000 samples human annotation):
+    - **Bounding Box Difference**: 78.9% high (different objects), 16.6% medium (different features), 4.5% low
+    - **Content Caption Accuracy**: 80.1% high (completely correct), 14.1% medium, 5.8% low
+    - **Difference Caption Accuracy**: 70.4% high (completely accurate), 21.8% medium (correct objects but wrong features), 7.8% low
+  - **Extended Exploration** - **Object Removal Data** (supplementary materials):
+    - Generated "object removal" dataset (prompts models to analyze which image contains specific object)
+    - Further improves fine-tuned MLLM performance
+  - **Publication**: CVPR 2025
+  - **Institution**: Sun Yat-sen University, Alibaba Group
+  - **Authors**: Qirui Jiao, Daoyuan Chen, Yilun Huang, Bolin Ding, Yaliang Li, Ying Shen
+  - **Open Source**: ✅ **Fully Open-Source** - Code, dataset
+  - **Code Repository**: [github.com/modelscope/data-juicer/tree/ImgDiff](https://github.com/modelscope/data-juicer/tree/ImgDiff)
+  - **Significance**:
+    - **Contrastive Learning Dataification**: First systematic application of contrastive learning principles to MLLM data synthesis
+    - **Fine-Grained Difference Recognition**: Significantly improves MLLM's ability to identify subtle differences in similar images
+    - **Region-Focused Strategy**: Innovative region-level difference annotation avoids inaccuracy of whole-image descriptions
+    - **Surpasses Closed-Source Models**: Fine-tuned open 7B models surpass GPT-4V and Gemini on MMVP
+    - **General Capability Enhancement**: Not only enhances difference recognition but also comprehensively improves VQA and localization capabilities
 
 ---
 
@@ -1431,6 +1650,92 @@ This category of methods keeps original images fixed while enriching and improvi
 
 > **Note**: Only includes papers that explicitly describe data synthesis/generation methods, with specific synthesis components annotated.
 
+#### 🔀 Cross-Modal Representation Transfer (No Real Images Required)
+
+- **📄 Unicorn** [(arXiv 2503.22655)](https://arxiv.org/abs/2503.22655) 🏷️ **[Method + Data]**
+  - **Focus**: **Text-Only Multimodal Data Synthesis** - Synthesizes VLM training data purely from text without relying on real or generated images
+  - **Data Synthesis Method** - **Cross-Integrated Three-Stage Text-to-Image-Representation Pipeline**:
+    - **Core Innovation**: Leverages geometric structure of cross-modal representation space (modality gap theory) to generate synthetic image representations from text representations, **completely bypassing image generation**
+    - **Stage 1: Diverse Caption Data Synthesis**:
+      - **Input**: 1.2M sparse caption seeds (sampled from multiple sources)
+        - **Open-Domain**: MS-COCO, Flickr30K, CC3M, CC-YFCC, etc.
+        - **Domain-Specific**: Conceptual Captions, Chart2Text, PlotQA, etc.
+      - **Method**: Use LLM (Qwen2.5-72B-Instruction) to add detailed information to sparse captions
+      - **Prompt Design**: "Add more details (object attributes, spatial relationships, background info, etc.) while preserving original semantics"
+      - **Output**: 1.2M semantically rich, diverse detailed captions
+      - **Quality Assurance**: Multi-round iterative optimization ensuring caption detail and accuracy
+    - **Stage 2: Instruction-Tuning Data Generation**:
+      - **Input**: Sample 471K captions from Stage 1
+      - **Method**: Use Qwen2.5-72B-Instruction to generate three task types
+      - **Three Task Types**:
+        1. **Multiple-Choice**: 
+           - Generate questions and 4 options based on caption content
+           - Test detail understanding and reasoning abilities
+        2. **Question-Answering**: 
+           - Generate open-ended questions and detailed answers
+           - Cover descriptive, factual, and reasoning questions
+        3. **Complex Reasoning**: 
+           - Complex questions requiring multi-step reasoning
+           - Combine visual understanding and logical reasoning
+      - **Output**: 471K multi-task instruction-tuning data
+    - **Stage 3: Modality Representation Transfer (Key Innovation)**:
+      - **Theoretical Foundation - Modality Gap Geometric Structure**:
+        - For paired image-text (x_img, x_text), their representations satisfy: **e_x - e_y = c + ε**
+        - **c**: Constant orthogonal vector (modality gap)
+        - **ε**: Alignment noise (approximated by Gaussian distribution)
+      - **Transfer Process - Mean Shift**:
+        1. Use text encoder (LLM2CLIP) to encode Stage 1/2 captions as text representations e_text
+        2. Calculate modality gap vector c (statistically derived from small paired data)
+        3. Apply mean shift: **e_synthetic_img = e_text + c**
+        4. Obtain synthetic image representations without generating real images
+      - **Key Techniques**:
+        - Use **LLM2CLIP** (specially optimized text encoder) to ensure text representation quality
+        - **Training-Free**: No additional training needed, purely exploits geometric structure
+        - **Scalable**: Applicable to arbitrary scale text data
+      - **Advantages**: 
+        - **No Images Needed**: Completely skips image generation/storage, saving API costs, time, storage space
+        - **Efficient**: Reduces API cost by **44×**, time by **4×**, storage by **27×**
+        - **Quality**: Synthetic representations consistent with real image representation distribution in shared space
+    - **Key Technical Advantages**:
+      - **Extremely Low Cost**: Drastically reduces costs vs traditional methods (API: $6.84 vs $12, Storage: 4GB vs 109GB)
+      - **No Hallucination Risk**: No dependence on visual generation models, avoids image generation hallucinations
+      - **Strong Scalability**: Text data abundant and cheap, easy to scale
+      - **Privacy-Friendly**: No need to collect/store real images
+  - **Data Scale**:
+    - **Unicorn-1.2M** (pretraining dataset): 1.2M detailed captions + corresponding synthetic image representations
+    - **Unicorn-471K-Instruction** (instruction-tuning dataset): 471K multi-task instruction data + corresponding synthetic image representations
+    - **Caption Source Diversity**:
+      - Open-domain: MS-COCO, Flickr30K, CC3M, CC-YFCC, etc.
+      - Domain-specific: Conceptual Captions, Chart2Text, PlotQA, FigureQA, DVQA, etc.
+  - **Model**: **Unicorn-8B VLM**
+    - **Architecture**: Based on mainstream VLM architecture (vision encoder + projection layer + LLM)
+    - **Training Strategy**:
+      - **Pretraining**: Use Unicorn-1.2M for modality alignment
+      - **Instruction-Tuning**: Use Unicorn-471K-Instruction for fine-tuning
+    - **Feature**: Trained completely without real images
+  - **Experimental Results** - **Comparable Performance to Real Image-Based Methods**:
+    - **Multimodal Benchmark Evaluation**: Achieves competitive performance across multiple VLM benchmarks
+    - **Cost-Effectiveness**: Significantly reduces training cost while maintaining performance
+    - **Ablation Studies**:
+      - **Stage 1 Diversity**: Detailed captions significantly improve model performance
+      - **Stage 2 Task Types**: Multi-task mixed training outperforms single-task
+      - **Stage 3 Representation Transfer**: Mean shift method effectively bridges modality gap
+  - **Cost Comparison** (vs traditional image-text synthesis methods):
+    - **API Cost**: $6.84 vs $12 (44% reduction)
+    - **Synthesis Time**: 0.3 days vs 4 days (92.5% reduction)
+    - **Storage**: 4GB vs 109GB (96.3% reduction)
+  - **Publication**: arXiv March 2025
+  - **Institution**: Xreal, Westlake University, Zhejiang University, Shanghai AI Lab, Nanyang Technological University, Beihang University, Great Bay University
+  - **Authors**: Xiaomin Yu, Pengxiang Ding, Wenjie Zhang, et al.
+  - **Open Source**: ✅ **Fully Open-Source** - Code, datasets
+  - **Code Repository**: [github.com/Yu-xm/Unicorn](https://github.com/Yu-xm/Unicorn)
+  - **Significance**:
+    - **Paradigm Breakthrough**: First framework to synthesize multimodal data completely without real/generated images
+    - **Theoretical Innovation**: Systematically applies modality gap theory to large-scale data synthesis
+    - **Cost Revolution**: Drastically reduces cost, time, and storage overhead for multimodal data synthesis
+    - **Scalability**: Leverages abundant text resources, easily scalable to larger scale
+    - **Practical Value**: Provides viable solution for VLM training in resource-constrained scenarios
+
 #### 🔬 Large Model-based Text Generation
 
 > **Core Idea**: Use powerful VLMs (e.g., GPT-4V) or LLMs (e.g., GPT-4) to generate higher quality captions/dialogue data for images
@@ -1523,6 +1828,167 @@ This category of methods keeps original images fixed while enriching and improvi
   - **Experimental Results**: Substantial improvements on unseen questions, largest gains on reasoning-heavy and compositional questions, good transfer across datasets
   - **Publication**: arXiv October 2025
   - **Institution**: MIT, IBM Research, etc.
+
+- **📄 MegaPairs** [(arXiv 2412.14475)](https://arxiv.org/abs/2412.14475) 🏷️ **[Method + Data]**
+  - **Focus**: **Large-Scale Data Synthesis for Universal Multimodal Retrieval** - Scalable multimodal retrieval training data construction via heterogeneous KNN triplets and open-ended instruction generation
+  - **Data Synthesis Method** - **Heterogeneous Similarity Mining + MLLM/LLM Annotation Pipeline**:
+    - **Core Innovation**: Uses **multiple similarity models** to mine diverse image pairs from open-domain image corpora, paired with MLLM/LLM generated open-ended retrieval instructions
+    - **Two-Stage Pipeline**:
+      1. **Heterogeneous Image Pair Mining** (diversity key):
+         - **Three Types of Similarity Models in Parallel**:
+           - a) **Visual-Semantic Correlation** (EVA-CLIP image encoder): Captures semantic correlation regardless of visual similarity (e.g., different views of same car)
+           - b) **Visual-Pattern Correlation** (DINOv2): Captures visual similarity regardless of semantic correlation (e.g., different cars in similar backgrounds)
+           - c) **Caption Correlation** (EVA-CLIP text encoder): Based on textual similarity between image captions
+         - **Similarity Filtering**: Keeps pairs with scores in (0.8, 0.96) range, eliminates weak associations and near-duplicates
+         - **Hard Negatives**: Automatically introduces hard negative samples from retrieval set (other retrieved non-target images)
+         - **Scale**: Mines relationships from 20M image subset of RecapDataComp-1B
+      2. **Open-Ended Instruction Generation** (based on MLLM/LLM):
+         - **Relationship Description Generation** (InternVL2-26B):
+           - Takes image pair (Iq, Iti) as input
+           - MLLM generates detailed description Di explaining commonalities and differences between images
+           - Captures visual and semantic relationships
+         - **Instruction Synthesis** (LLaMA3-8B):
+           - LLM generates diverse textual instructions Tq→ti based on description Di
+           - At least 3 different instructions per image pair
+           - Instructions designed as open-ended search queries (e.g., "show interior of this car")
+         - **Final Triplets**: (Iq, Tq→ti, Iti) + 5 hard negatives
+    - **Key Advantages**:
+      - **Scalability**: Leverages general image corpora (not reliant on multi-image webpages), infinitely scalable
+      - **Quality Assurance**: Similarity filtering + MLLM/LLM annotation ensures high quality
+      - **Diversity**: Three types of heterogeneous similarity introduce different image relationship types
+      - **Low Cost**: Uses open-source MLLM/LLM (InternVL2-26B, LLaMA3-8B)
+  - **Data Scale**:
+    - **MegaPairs**: 26.235M image pairs
+    - **Source Corpus**: 20M image subset from RecapDataComp-1B
+    - **Instruction Diversity**: At least 3 instructions per pair
+    - **Hard Negatives**: 5 hard negatives per query
+  - **Models**: **MMRet Series** - Universal multimodal retrievers trained on MegaPairs
+    - **MMRet-Base**: CLIP-B architecture (149M parameters)
+    - **MMRet-Large**: CLIP-L architecture (428M parameters)
+    - **MMRet-MLLM**: LLaVA-1.6 Mistral 7B architecture (7.57B parameters)
+  - **Experimental Results** - **SOTA Zero-Shot Performance**:
+    - **Composed Image Retrieval (CIR) Benchmarks** (4 mainstream benchmarks):
+      - **CIRCO** (main benchmark): 
+        - MMRet-MLLM: **42.2% mAP@5** (surpasses previous SOTA CoCa-based MagicLens-L 34.1%, **+8.1%**)
+        - MMRet-Large: **39.2% mAP@5** (CLIP-L scale SOTA)
+        - MMRet-Base: **34.3% mAP@5** (outperforms most larger models)
+      - **CIRR Test Set**: 
+        - MMRet-MLLM: **46.7% R@1, 75.4% Rs@1** (surpasses SOTA **+7.4% R@1, +4.5% Rs@1**)
+        - MMRet-Large: **38.0% R@1** (CLIP-L scale SOTA)
+      - **FashionIQ**: MMRet-MLLM **35.6% R@10**
+      - **GeneCIS**: MMRet-MLLM **21.1% Rs@1** (surpasses SOTA **+3.7%**)
+    - **MMEB Benchmark** (36 datasets, 4 meta-tasks):
+      - **Zero-Shot Overall**: MMRet-MLLM **44.0%** (SOTA, surpasses UniIR 42.8%)
+      - **Classification**: 47.2%
+      - **VQA**: 18.4%
+      - **Retrieval**: 56.5% (significantly better than other methods)
+      - **Visual Grounding**: 62.2%
+    - **Supervised Fine-Tuning Performance** (MMEB):
+      - **Overall**: **64.1%** (surpasses VLM2Vec Phi-3.5-V 60.1%)
+      - **IND Datasets**: 68.0%
+      - **OOD Datasets**: 59.1% (strong generalization, surpasses VLM2Vec LLaVA-1.6 **+7.1%**)
+  - **Data Quality Validation**:
+    - **Data Efficiency**: Just **500K MegaPairs samples** outperform MagicLens trained on **36.7M data** (**1/70 data size**)
+    - **Scalability**: Performance continues to improve with data scale (from 128K to 26M)
+    - **Heterogeneous Strategy Effect**: Using all three similarity types outperforms single strategy (ablation study validated)
+    - **Hard Negative Importance**: Including hard negatives significantly improves performance (+5-10% across benchmarks)
+  - **Publication**: arXiv December 2024
+  - **Institution**: Beijing University of Posts and Telecommunications, Beijing Academy of Artificial Intelligence, USTC, Shanghai Jiao Tong University, Hong Kong Polytechnic University
+  - **Authors**: Junjie Zhou, Zheng Liu, Ze Liu, Shitao Xiao, et al.
+  - **Open Source**: ✅ **Fully Open-Source** - Dataset, models, and data synthesis pipeline will all be publicly available
+  - **Significance**:
+    - **Breakthrough Data Bottleneck**: First to achieve large-scale multimodal retrieval data synthesis from general image corpora
+    - **Quality Over Scale**: Demonstrates high-quality synthetic data is more effective than large-scale low-quality data
+    - **Heterogeneous Similarity Innovation**: Multi-type similarity mining introduces diverse image relationships
+    - **Open-Source Ecosystem Contribution**: Complete open-sourcing of data, models, pipeline to advance the field
+    - **Universal Retrieval Capability**: Achieves SOTA on both CIR and broad multimodal tasks
+
+- **📄 CtrlSynth** [(arXiv 2410.11963)](https://arxiv.org/abs/2410.11963) 🏷️ **[Method + Data]**
+  - **Focus**: **Controllable Image-Text Synthesis Pipeline** - Fine-grained controllable multimodal data generation via visual tag decomposition-recomposition
+  - **Data Synthesis Method** - **Decompose-Recompose Paradigm for Controllable Data Synthesis**:
+    - **Core Innovation**: Decompose image semantics into basic elements (objects, attributes, relations), manipulate via user-defined control policies, then recompose to generate synthetic data
+    - **Three Core Components**:
+      1. **Vision Tagging Model (VTM)**:
+         - Extracts basic visual elements from images (**visual tags**)
+         - **Objects & Attributes**: Multi-label classifier (CatLIP-Huge) + top-20 classes via sigmoid prediction
+         - **Relations**: Multimodal captioning model (Florence-large) generates detailed descriptions + LLM (Qwen2-7B) extracts relations
+         - **Hybrid Approach**: Combines CatLIP object/attribute predictions with Florence+LLM relation extraction for comprehensive visual tag set
+      2. **Text Controller**:
+         - Takes visual tags + user policy + optional original text
+         - Generates text synthesis instructions to guide LLM
+         - **Three Predefined Policy Types**:
+           - a) **Edit Visual Tags** (remove, add, replace) for fine-grained content control
+           - b) **Constrain Semantic Meaning** to improve fidelity of noisy captions
+           - c) **Stylize Output** (e.g., JSON format) for enhanced downstream usability
+         - **10 text control policies** for caption synthesis (see paper Appendix A.1)
+      3. **Image Controller**:
+         - Takes text prompts + user policy
+         - Outputs image synthesis instructions to guide diffusion models
+         - **Two Policy Types**: 
+           - Tag weighting adjustments (emphasize specific objects/attributes)
+           - Style prompts (cinematic, realistic, artistic)
+    - **Flexible Synthesis Paths** (supports 4 main paths):
+      - **SP(1) Image→Text**: Original image → VTM → visual tags → text controller → LLM → synthetic text
+      - **SP(2) Image+Original Text→Improved Text**: Includes original caption as constraint, generates faithful improved text
+      - **SP(3) Image→Text+Image**: Generate text → image controller → diffusion model → synthetic image+text pair
+      - **SP(4) Text→Image**: Original text → image controller → diffusion model → synthetic image
+    - **Closed-Loop Self-Filtering**:
+      - **Quality Validation**: Checks if synthetic text contains at least pf fraction of visual tags (default 20%)
+      - **Image Validation**: Synthetic images re-processed through VTM to extract tags, verified against source text alignment
+      - **Advantage**: Automatic filtering of low-quality samples without manual rules
+    - **Key Technical Advantages**:
+      - **Fine-grained Controllability**: Precise data synthesis via tag-level manipulation
+      - **Training-Free**: Fully leverages pretrained models (LLM, diffusion models) without additional training
+      - **Modular**: Easy to swap LLM, diffusion model, or VTM components
+      - **Closed-Loop Design**: Automatic quality verification and filtering capabilities
+  - **Data Scale**:
+    - **CC3M Synthetic Data**:
+      - CtrlSynth-cap: 2.6M captions (filtered from 2.8M original)
+      - CtrlSynth-img: 2.4M images
+      - CtrlSynth-mix: 5.1M image-text pairs (mixing cap+capimg)
+    - **CC12M Synthetic Data**:
+      - CtrlSynth-cap: 10.2M captions (from 11.3M original)
+      - CtrlSynth-img: 9.5M images
+      - CtrlSynth-mix: 19.7M image-text pairs
+  - **Experimental Results** - **Comprehensive Evaluation on CLIP Pretraining**:
+    - **Zero-Shot Classification** (31 datasets):
+      - CC3M training: Average accuracy from 19.4% to **27.1% (+7.7%)**
+      - CC12M training: From 33.9% to **36.6% (+2.5%)**
+      - ImageNet variants: From 11.3% to **20.7% (+9.4%)** [CC3M]
+    - **Image-Text Retrieval** (COCO, Flickr30k):
+      - CC3M training: recall@1 from 13.7% to **37.1% (+23.4%)**
+      - Flickr I2T: From 21.3% to **57.3% (+36%)**
+      - CC12M training: recall@1 from 45.4% to **54.4% (+9.0%)**
+    - **Compositional Reasoning** (SugarCrepe benchmark):
+      - CC3M training: From 64.0% to **68.5% (+4.5%)**
+      - CC12M training: From 72.3% to **75.3% (+3.0%)**
+      - **Notable Gains**: REPLACE relation +4.3%, SWAP attribute +14.8%
+    - **Long-Tail Task Performance**:
+      - **ImageNet-LT**: Tail class accuracy +21.3%, overall +5.4%
+      - **Places-LT**: Tail class accuracy +16.2%, overall +3.7%
+    - **Comparison with Prior Work**:
+      - Outperforms **VeCLIP**: +4.8% average on VTAB, +7.9% on ImageNet 1K
+      - Outperforms **LaCLIP**: +3.4% average on 15 datasets, +2.3% on ImageNet 1K
+  - **Ablation Study Key Findings**:
+    - **Importance of Visual Relations**: Including relation tags improves compositional reasoning by 4% over objects/attributes only
+    - **LLM Comparison**: Mistral-NeMo outperforms Qwen2-7B (+3% SugarCrepe)
+    - **Filtering Threshold**: 20% achieves optimal performance balance (stable in 10%-30% range)
+    - **Mixing Ratio**: 50% synthetic data reaches best gains, diminishing returns at higher ratios
+    - **Data Efficiency**: Synthetic data improves CLIP training efficiency by 40% (iterations needed to reach 20% accuracy)
+  - **Synthetic Quality Analysis**:
+    - **Text Length**: Synthetic captions average 60 words vs original 8 words
+    - **Information Density**: Contains richer visual details and relationship descriptions
+    - **Diversity**: Control policies generate diverse phrasings
+  - **Publication**: arXiv October 2024
+  - **Institution**: Apple, Meta
+  - **Authors**: Qingqing Cao, Mahyar Najibi, Sachin Mehta
+  - **Open Source**: ⚠️ Paper does not explicitly mention dataset/code release status
+  - **Significance**:
+    - **First Controllable Image-Text Synthesis System**: Provides fine-grained control vs black-box generation
+    - **Decompose-Recompose Paradigm**: Innovative visual semantics manipulation approach
+    - **Closed-Loop Self-Verification**: No manual filtering rule design needed
+    - **Cross-Task Generalization**: Comprehensive improvements across classification, retrieval, compositional reasoning, and long-tail tasks
+    - **Data Efficiency**: Demonstrates sample efficiency of synthetic data over pure real data scaling
 
 #### 🛠️ Tool-Assisted Annotation Generation (For Data Synthesis)
 
