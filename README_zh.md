@@ -20,15 +20,15 @@
 
 ## 📊 统计信息
 
-- **论文总数：** 30+篇（数据合成/构建方法）
+- **论文总数：** 36+篇（数据合成/构建方法）
 - **大厂报告：** 9篇（百度、微软、阿里巴巴、字节跳动、腾讯等）
 - **数据合成方法：** 
-  - 图像生成 - 合成新视觉内容(4篇): 几何/数学推理 + 文档/文本密集场景
+  - 图像生成 - 合成新视觉内容(6篇): 几何/数学推理 + 文档/文本密集场景 + 场景文本检测 + 多模态对话
   - 图像编辑(4篇): 非刚性运动、统一编辑、指称表达式引导编辑
   - 组合性/偏好导向合成(1篇): 增强组合理解能力
   - 交错图文·连贯性与一致性(1篇): 多视角质量过滤
   - 图像介入推理(1篇): 图像主动参与推理过程
-  - 图像不变 - 文本增强(16篇): 固定图像，仅丰富文本
+  - 图像不变 - 文本增强(20篇): 固定图像，仅丰富文本
 - **典型数据集：** 
   - 4个交错图文数据集（OmniCorpus、OBELICS、MMC4、CoMM）
   - 2个领域特定数据集（MMM-RS、MESED）
@@ -1225,6 +1225,69 @@ LLaVA-OneVision代表了一种重要的以数据为中心的方法，在多模�
     - **可泛化框架**: 上下文提示机制可应用于其他条件生成任务
     - **实用影响**: 降低STR标注成本的同时保持或提升模型性能
 
+- **📄 Synthetic Text Localisation** [(arXiv 1604.06646)](https://arxiv.org/abs/1604.06646) 🏷️ **[方法 + 数据]**
+  - **聚焦**: **自然场景中的文本检测合成数据** - 生成高质量场景文本图像用于训练文本检测模型
+  - **数据合成方法** - **几何感知的场景文本叠加Pipeline**:
+    - **核心创新**: 将合成文本自然地叠加到真实场景中，**考虑局部3D场景几何**，而非简单的2D叠加
+    - **核心技术要点**:
+      - **场景几何理解**: 使用CNN预测dense depth map，估计局部表面法线
+      - **文本对齐**: 根据估计的平面方向进行透视变换，使文本与表面对齐
+      - **区域约束**: 使用gPb-UCM分割，确保文本限制在具有统一颜色和纹理的区域内
+      - **颜色自适应**: 从IIIT5K数据集学习文本-背景颜色对，自适应匹配目标区域
+      - **泊松融合**: 使用Poisson image editing自然融合文本，保留光照梯度
+    - **三阶段Pipeline**:
+      1. **场景分析**:
+         - 输入背景图像（需无文本，通过关键词过滤+人工检查）
+         - CNN预测dense depth map（使用Liu等人[30]的方法）
+         - gPb-UCM分割生成局部颜色/纹理一致的区域
+         - 区域过滤：排除过小、极端长宽比、表面法线垂直视角、高纹理的区域
+      2. **文本渲染与变换**:
+         - 从Newsgroup20数据集采样文本（单词、行、段落）
+         - 随机选择字体
+         - **关键步骤**：透视变换以匹配局部表面方向
+         - 颜色选择：从学习的颜色对中选择最匹配的前景-背景颜色对
+         - 20%的文本实例随机添加边框
+      3. **泊松图像编辑融合**:
+         - 使用泊松编辑将文本与背景图像融合
+         - 保留场景中的光照梯度
+         - 创建自然外观的合成场景文本图像
+    - **关键技术优势**:
+      - **几何准确性**: 文本遵循真实表面方向，避免不自然的平坦叠加
+      - **边界尊重**: 文本不跨越强烈的图像不连续性（如物体边缘）
+      - **光照一致性**: 泊松融合保持场景光照特性
+      - **可扩展性**: 完全自动化，可生成无限数据
+  - **数据规模**:
+    - **SynthText in the Wild**: 800,000张合成场景文本图像
+    - **背景来源**: 8,000张通过Google Image Search收集的无文本图像
+    - **文本来源**: Newsgroup20数据集
+    - **标注**: 每张图像配word-level的axis-aligned bounding boxes
+  - **配套文本检测器** - **FCRN (Fully-Convolutional Regression Network)**:
+    - **架构**: 受FCN和YOLO启发的密集预测网络
+    - **创新**: 每个位置(u,v)预测文本存在 + bounding box参数(x,y,w,h,cosθ)
+    - **优势**: 30× less参数 than YOLO，无需重训练即可处理多尺度
+    - **速度**: 15 images/sec on GPU，**45×快于当时SOTA**
+  - **实验结果** - **SOTA文本检测性能**:
+    - **训练策略**: 在SynthText上预训练 → 在小规模真实数据集上fine-tune
+    - **ICDAR 2013结果**:
+      - 仅合成数据预训练显著提升性能
+      - 加上fine-tuning: 达到F-measure **84.2%**，竞争力SOTA水平
+    - **Multi-Oriented Text (MSRA-TD500)**: 在复杂多方向文本场景中表现有效
+    - **关键发现**: 几何建模的合成数据有效迁移到真实场景文本检测
+  - **消融研究**:
+    - **几何感知**: 使用几何感知合成的模型优于平面文本叠加
+    - **颜色自适应**: 自适应颜色选择优于随机颜色
+    - **Poisson融合**: 无缝融合对逼真外观至关重要
+  - **发布时间**: arXiv 2016年4月
+  - **机构**: University of Oxford, Dept. of Engineering Science
+  - **作者**: Ankush Gupta, Andrea Vedaldi, Andrew Zisserman
+  - **开源**: ✅ 数据集（SynthText in the Wild，800K图像） - 官网: [robots.ox.ac.uk/~vgg/data/scenetext](http://www.robots.ox.ac.uk/~vgg/data/scenetext)
+  - **重要意义**:
+    - **首创几何感知合成**: 首次系统性地将3D场景理解引入文本合成
+    - **解决数据瓶颈**: 解决了场景文本检测标注昂贵的问题
+    - **奠定范式**: 影响了后续大量场景文本合成工作
+    - **实用价值**: 合成数据训练的模型达到当时SOTA，证明合成数据的有效性
+    - **开创性工作**: 在深度学习文本检测领域具有里程碑意义
+
 #### 🔄 持续学习场景的数据重现
 
 - **📄 GIFT** [(arXiv 2503.04229)](https://arxiv.org/abs/2503.04229) 🏷️ **[方法 + 合成数据]** - **CVPR 2025**
@@ -1782,6 +1845,286 @@ LLaVA-OneVision代表了一种重要的以数据为中心的方法，在多模�
 
 > **核心思想**: 使用强大的VLMs（如GPT-4V）或LLMs（如GPT-4）为图像生成更高质量的captions/对话数据
 
+- **📄 Synthesize Step-by-Step** [(CVPR 2024)](https://openaccess.thecvf.com/content/CVPR2024/papers/Li_Synthesize_Step-by-Step_Tools_Templates_and_LLMs_as_Data_Generators_for_CVPR_2024_paper.pdf) 🏷️ **[方法 + 数据]** - **CVPR 2024**
+  - **聚焦**: **Chart VQA的推理数据生成** - 使用LLM作为自动数据标注器，为图表图像生成step-by-step推理问答对
+  - **数据合成方法** - **Template引导 + LLM生成 + 工具辅助执行**:
+    - **核心创新**: **Synthesize Step-by-Step**策略 - LLM学习将复杂问题分解为逐步子问题，使用外部工具（Python）执行并推导最终答案
+    - **三阶段Pipeline**:
+      1. **Template-based QA生成（训练语料）**:
+         - **输入**: ChartQA图像的SVG标注（标题、图例、数据点值、颜色等）
+         - **方法**: 手工设计28个模板，定义推理程序（领域特定语言DSL）
+         - **输出**: 357K template QA with rationales（问题、逐步rationale程序、答案）
+         - **关键**: 通过template确保推理的正确性和可验证性
+      2. **LLM-based数据生成器训练**:
+         - **架构**: ViT (CLIP) + Linear projection + LLM (MPT-7B) + DEPLOT表格预测
+         - **输入**: 图像features + 预测的数据表格 + prompt
+         - **训练**: 在template QA上训练，学习生成：问题 → rationale程序 → 执行得到答案
+         - **关键创新**: 
+           - **不是直接生成答案**，而是生成可执行的rationale程序
+           - Rationale程序包含：atom VQA调用（如`ans_0=VQA("What is the value of 2002?")`）+ Python数学计算
+           - 使用DEPLOT预测的表格作为OCR输入，解决CLIP-ViT对文本的弱感知
+      3. **大规模数据合成与过滤**:
+         - **生成**: LLM为图像生成问题+rationale程序
+         - **执行**: Python parser解析并执行rationale程序，推导答案
+         - **过滤**: 基于decoding score（threshold=-10）后处理过滤低质量问题
+         - **输出**: LaMenDa数据集 (LLM-augmented Data)
+    - **关键技术优势**:
+      - **准确性**: 通过执行程序而非直接生成，答案更准确
+      - **可解释性**: Rationale提供step-by-step推理路径
+      - **可扩展**: 一旦训练完成，可为任意chart图像生成数据
+      - **领域灵活**: 可通过prompt控制生成特定类型的问题
+  - **数据规模**:
+    - **Template QA**: 357K（训练LLM生成器）
+    - **LaMenDa（ChartQA）**: 326K（403K生成后执行+过滤）
+    - **LaMenDa（PlotQA）**: 1.7M（3M生成后执行+过滤）
+    - **Chart Captioning数据集**: 1.6M（基于137K图像生成）
+  - **实验结果** - **ChartQA数据集上的SOTA**:
+    - **Human-written questions**: 准确率从38%提升至**54%**（MATCHA基线）
+    - **整体ChartQA**: 显著超越之前SOTA
+    - **PlotQA**: 在合成数据集上也取得SOTA
+    - **消融研究**: Step-by-step生成优于直接生成答案
+  - **发布时间**: CVPR 2024
+  - **机构**: Johns Hopkins University & AWS AI Labs
+  - **作者**: Zhuowan Li, Bhavan Jasani, Peng Tang, Shabnam Ghadar
+  - **开源**: 待确认（CVPR论文通常开源代码和数据）
+  - **重要意义**:
+    - **首次系统化Chart推理数据合成**: 为Chart VQA领域引入step-by-step推理数据生成范式
+    - **工具辅助执行**: 结合LLM生成与工具执行，确保答案准确性
+    - **模板引导训练**: 创新性地使用template数据训练LLM生成器
+    - **大幅性能提升**: 在难度最高的human-written问题上提升16个百分点
+
+- **📄 ChartInstruct** [(arXiv 2403.09028)](https://arxiv.org/abs/2403.09028) 🏷️ **[方法 + 数据]**
+  - **聚焦**: **Chart理解的指令调优数据** - 构建大规模、多样化的chart指令数据集，用于训练通用chart理解模型
+  - **数据合成方法** - **LLM驱动的多任务指令生成**:
+    - **核心创新**: 利用GPT-3.5/GPT-4生成覆盖广泛chart理解任务的指令数据，支持instruction tuning
+    - **数据收集**:
+      - **Chart语料**: 从多个在线来源收集真实图表，涵盖多样化视觉风格
+        - **UniChart数据集**: 611K charts（来源：Pew, Statista, OECD, OWID）
+        - **WebCharts（新贡献）**: 41K charts（网络爬取，使用Gemini Pro Vision提取数据表）
+      - **最终用于instruction生成**: 70,882个独特charts
+    - **指令生成Pipeline**:
+      - **任务选择**: 定义6大任务类别
+        1. **Chart Summarization**: 生成图表caption，捕获关键洞察（趋势、模式）
+        2. **Open-ended QA**: 生成解释性问答（需要详细回答）
+        3. **Fact Checking**: 给定claim，生成verdict（accept/refute）+ explanation
+        4. **Chain-of-Thought (CoT) Reasoning**: 
+           - **Variable Dependent**: 使用工具（受ToolFormer启发）计算统计值
+           - **Variable Independent**: 检索、比较、基础数学分析
+        5. **Code Generation**: 生成可执行Python脚本回答查询（受PAL启发）
+        6. **Novel Tasks**: 让LLM提议新任务（未来值预测、模式检测等）
+      - **Prompt设计**: 
+        - 每个任务设计专门的prompt模板
+        - 输入：图表数据表 + 元数据（标题）
+        - 输出：指令-响应对
+      - **生成策略**:
+        - **GPT-4**: 用于复杂推理任务（CoT、Novel tasks）
+        - **GPT-3.5 Turbo**: 用于中等复杂度任务
+        - 每次调用生成多个样本以增加多样性和降低成本
+    - **关键技术优势**:
+      - **任务多样性**: 覆盖6大类、多个子任务，避免task-specific overfitting
+      - **真实图表**: 基于真实在线图表，而非合成数据
+      - **自动化流程**: 完全自动化的LLM驱动pipeline，可扩展
+  - **数据规模**:
+    - **ChartInstruct数据集**: 191K指令，对应70,882个charts
+    - **分布**:
+      - Chart Summarization: 53,876 (28.24%)
+      - Open-ended QA: 42,470 (22.26%)
+      - CoT Reasoning: 27,271 (14.3%)
+      - Fact Checking: 24,175 (12.67%)
+      - Code Generation: 19,572 (10.26%)
+      - Novel Tasks: 23,410 (12.27%)
+    - **Charts来源分布**（unique charts数量）:
+      - WebCharts: 41,742 (58.9%)
+      - OECD/OWID: 10,949 (15.4%)
+      - Statista: 9,992 (14.1%)
+      - PlotQA: 8,199 (11.6%)
+    - **Instructions分布**: WebCharts贡献157,190 instructions，占总数的67.5%
+  - **模型**: 两种系统设计
+    1. **End-to-end**: UniChart vision encoder + LLM（Llama2-7B / Flan-T5-XL-3B）
+    2. **Pipeline**: Chart-to-table model (DEPLOT) → LLM
+  - **实验结果** - **4个benchmark上的SOTA**:
+    - **ChartQA**: 超越之前SOTA
+    - **Chart2Text**: summarization任务SOTA
+    - **OpenCQA**: open-ended QA SOTA
+    - **ChartFC**: fact-checking SOTA
+    - **Human evaluation**: 在真实chart理解场景中表现出色
+  - **数据质量**:
+    - **专家评估**: 100个样本人工标注
+      - 87%的指令描述有效任务
+      - 86%的输入与任务描述匹配
+      - 61%的输出完全正确，8%部分正确
+    - **多样性**: 动词-名词对分析显示广泛的理解和推理任务
+  - **发布时间**: arXiv 2024年3月
+  - **机构**: York University (Canada), Qatar Computing Research Institute, Salesforce Research, NTU Singapore
+  - **作者**: Ahmed Masry, Mehrad Shahmohammadi, Md Rizwan Parvez, Enamul Hoque, Shafiq Joty
+  - **开源**: ✅ [代码和数据](https://github.com/vis-nlp/ChartInstruct)
+  - **重要意义**:
+    - **首个大规模chart指令数据集**: 为chart领域instruction tuning奠定基础
+    - **任务全面性**: 覆盖chart理解的多个方面，避免narrow task focus
+    - **真实数据**: 基于真实在线图表，更接近实际应用场景
+    - **开放贡献**: 完全开源数据、代码，推动chart理解研究
+
+- **📄 CompCap** [(arXiv 2412.05243)](https://arxiv.org/abs/2412.05243) 🏷️ **[方法 + 数据]**
+  - **聚焦**: **Composite Images的Caption生成** - 为合成图像（拼贴、图表、表格、代码、图示等）生成高质量captions
+  - **问题背景**: 
+    - **Composite Images (CI)**: 合成视觉内容，由多种元素组合（照片、文本、图形等）
+    - **现状**: 现有MLLM训练数据主要关注自然图像(NI) captions，CI captions稀缺
+    - **影响**: MLLMs在CI上表现差，captioning和VQA准确率明显低于NI
+  - **数据合成方法** - **CompCap框架：Metadata驱动的CI-caption合成**:
+    - **核心创新**: 利用metadata（图像-caption对、布局、表格数据、文本）+ LLMs + 自动化工具，合成CI及其详细captions
+    - **CompCap框架（通用）**:
+      - **输入**: Metadata（原始数据 + 配置/定制）
+      - **图像合成**: 使用各种工具（渲染库、代码）基于metadata生成CI
+      - **Caption生成**: LLM基于metadata生成准确、详细的caption
+      - **灵活性**: 可为不同CI类型实现定制化pipeline
+    - **6种CI类型的实现**:
+      1. **Collage（拼贴）**:
+         - **原始数据**: 图像-caption对数据集
+         - **配置**: 随机生成布局（行列结构）
+         - **图像合成**: 根据布局排列图像
+         - **Caption生成**: LLM基于单个图像captions + 布局信息生成整体caption
+         - **检索策略**: 随机检索、相似度检索、实体检索（3种）
+      2. **Image-Text**:
+         - 在图像上叠加文本
+         - LLM生成描述图像内容和文本的caption
+      3. **Chart（图表）**:
+         - **原始数据**: 表格数据
+         - **图像合成**: 使用Matplotlib/Plotly渲染图表
+         - **Caption生成**: LLM基于表格数据生成图表描述（数据分析、趋势）
+      4. **Diagram（图示）**:
+         - 使用Mermaid等工具生成流程图、架构图
+      5. **Code（代码）**:
+         - **原始数据**: 代码片段
+         - **图像合成**: 代码渲染为图像（syntax highlighting）
+         - **Caption生成**: 描述代码功能、结构
+      6. **Table（表格）**:
+         - 表格数据渲染为图像
+         - LLM生成表格内容描述
+    - **Caption质量标准**:
+      - **Accuracy**: 忠实反映图像内容，无误导信息
+      - **Detailedness**: 提供具体洞察，超越基础描述
+    - **关键技术优势**:
+      - **Metadata驱动**: 确保caption准确性（基于结构化数据而非视觉推测）
+      - **模块化**: 易于扩展到新的CI类型
+      - **可扩展**: 利用丰富的原始数据（图像数据集、表格等）
+  - **数据规模**:
+    - **CompCap-118K**: 118K CI-caption pairs
+    - **组成**:
+      - Collage: 42.3%
+      - Image-Text: 31.4%
+      - Chart: 18.7%
+      - Table: 3.4%
+      - Diagram: 2.5%
+      - Code: 1.7%
+  - **实验结果** - **CI理解基准上的显著提升**:
+    - **训练**: 在xGen-MM-inst.-4B、LLaVA-NeXT-Vicuna-7B/13B上SFT
+    - **11个benchmark平均提升**:
+      - xGen-MM-4B: +1.7%
+      - LLaVA-NeXT-7B: +2.0%
+      - LLaVA-NeXT-13B: +2.9%
+    - **CI-specific benchmark显著提升**:
+      - ChartQA: +8.0% (LLaVA-13B)
+      - DocVQA: +6.2%
+      - InfoVQA: +4.5%
+      - TextVQA: +3.8%
+    - **NI benchmark保持性能**: 在自然图像任务上无退化
+  - **消融研究**:
+    - **Caption vs VQA数据**: Caption数据对CI理解更有效
+    - **数据量**: 性能随CompCap数据量增加而提升
+    - **CI类型**: Chart和Image-Text类型贡献最大
+  - **发布时间**: arXiv 2024年12月
+  - **机构**: Meta, Tufts University, Georgia Tech
+  - **作者**: Xiaohui Chen, Satya Narayan Shukla, Mahmoud Azab等
+  - **开源**: 待确认
+  - **重要意义**:
+    - **填补CI数据空白**: 首次系统性地为CI生成高质量captions
+    - **通用框架**: CompCap框架可应用于多种CI类型
+    - **实用影响**: 显著提升MLLMs对真实世界合成图像的理解能力
+    - **数据效率**: 11.8万数据即可带来显著提升
+
+- **📄 Infinity-MM** [(arXiv 2410.18558)](https://arxiv.org/abs/2410.18558) 🏷️ **[方法 + 数据]**
+  - **聚焦**: **大规模多模态指令数据构建** - 收集、整合和合成40M+多模态指令数据，同时提出基于tagging system的合成方法
+  - **核心贡献**: 数据规模 + 合成方法创新
+    - **数据规模**: 44.8M多模态指令数据（开源最大规模之一）
+    - **合成方法**: 基于tagging system的数据合成，支持持续扩展
+  - **数据构建方法**:
+    - **阶段1: 数据收集**:
+      - **统一预处理**: 收集可用的多模态指令数据集，进行格式统一
+      - **质量过滤**: 去重、质量检查
+      - **来源**: 整合多个公开数据集（LLaVA系列、ShareGPT4V、Cambrian等）
+    - **阶段2: 数据合成（创新点）**:
+      - **Tagging System设计**:
+        - **Image Tagging**: 使用RAM++模型提取图像tags（对象、动作、场景）
+        - **Instruction Tagging**: 设计三层指令tag系统
+          - **一层**: 6大类（Coarse Perception, Fine-grained Perception-single, Fine-grained Perception-cross, Relation Reasoning, Attribute Reasoning, Logic Reasoning）
+          - **二层**: 细化任务特征
+          - **三层**: 基于具体任务需求的详细分类，总计199个sub-tasks
+      - **Image-Instruction Mapping**:
+        - 统计seed data中image tags与instruction tags的共现频率
+        - 计算TF-IDF值，建立image tag → instruction type的映射
+        - **作用**: 指导新图像应该生成什么类型的指令
+      - **Instruction Synthesis Pipeline**:
+        1. **Question Generation**: 
+           - 输入：图像 + 目标instruction type + few-shot examples
+           - 模型：MiniCPM-V2.6（开源VLM）
+           - 输出：符合目标type的问题
+        2. **Answer Generation**:
+           - 使用不同prompt生成多样化答案格式
+           - 确保答案准确性和格式多样性
+        3. **Quality Filtering**:
+           - 重新输入图像+问题到VLM，评估相关性
+           - 过滤低质量问题
+    - **关键技术优势**:
+      - **Tagging System**: 系统化的指令分类，确保数据多样性
+      - **Image-Instruction对应**: 自动识别哪类图像适合哪类指令
+      - **开源VLM合成**: 使用MiniCPM-V2.6而非GPT-4，成本低且可复现
+      - **持续扩展**: 框架支持持续添加新数据
+  - **数据规模**:
+    - **Infinity-MM**: 44.8M samples
+    - **组成**（按数据类别）:
+      - **图像-文本描述数据**: 10M
+      - **综合视觉指令数据**: 25.8M
+        - General Instruction: 7.1M
+        - OCR Data: 2.6M
+        - Doc/Chart/Screen: 5.8M
+        - Math/Reasoning: 1.3M
+        - Text Instruction: 9M
+      - **精选视觉指令数据**: 6M
+        - General Instruction: 1.3M
+        - OCR Data: 0.3M
+        - Doc/Chart/Screen: 1.9M
+        - Math/Reasoning: 0.7M
+        - Text Instruction: 1.8M
+      - **GPT4 & 合成数据**: 3M
+        - General Instruction: 1M
+        - OCR Data: 0.5M
+        - Doc/Chart/Screen: 0.1M
+        - Math/Reasoning: 0.3M
+        - Text Instruction: 0.3M
+        - 新合成数据（使用开源VLM）: 0.8M
+  - **模型**: **Aquila-VL-2B**
+    - **架构**: 2B parameter VLM
+    - **训练**: 基于Infinity-MM训练
+  - **实验结果** - **2B模型SOTA**:
+    - **平均得分**: 在多个benchmark上超越同规模模型
+    - **优于其他开源数据训练的模型**: 
+      - 超越OneVision-SI训练的模型
+      - 超越部分闭源数据训练的模型（见Figure 1）
+    - **关键发现**: 大规模高质量数据 + 合理混合比例 = SOTA性能
+  - **消融研究**:
+    - **数据规模**: 性能随数据量增加而提升
+    - **数据类型混合**: 不同任务类型的最优混合比例
+    - **Tagging System**: 验证image-instruction mapping的有效性
+  - **发布时间**: arXiv 2024年10月（v2: 2025年1月）
+  - **机构**: BAAI (北京智源人工智能研究院), BJTU, BUPT, ICT/CAS, HKUST(GZ), PKU, DLUT
+  - **作者**: Shuhao Gu, Jialing Zhang, Siyuan Zhou, Kevin Yu等（大团队）
+  - **开源**: ✅ [数据集](https://huggingface.co/datasets/BAAI/Infinity-MM)
+  - **重要意义**:
+    - **规模突破**: 44.8M样本，开源数据中规模最大之一
+    - **合成方法创新**: Tagging system提供系统化的数据合成指导
+    - **开源VLM合成**: 首次用开源VLM进行大规模高质量合成
+    - **持续扩展**: 框架支持持续数据扩展，而非一次性数据集
+
 - **📄 ShareGPT4V** [(arxiv 2311.12793)](https://arxiv.org/abs/2311.12793)
   - **数据合成方法**（Section 3.1）:
     - 使用**GPT-4V**为100K图像生成高质量captions
@@ -1870,6 +2213,76 @@ LLaVA-OneVision代表了一种重要的以数据为中心的方法，在多模�
   - **实验结果**: 在未见问题上大幅提升，推理密集型和组合性问题提升最大，跨数据集迁移效果好
   - **发布时间**: arXiv 2025年10月
   - **机构**: MIT、IBM Research等
+
+- **📄 MAGID** [(arXiv 2403.03194)](https://arxiv.org/abs/2403.03194) 🏷️ **[方法 + 数据]**
+  - **聚焦**: **多模态对话数据自动生成** - 将text-only对话自动增强为多模态对话（文本+图像）
+  - **问题背景**:
+    - **现有方法局限**: 检索式方法（从固定图像库检索）导致图像多样性受限、匹配度低
+    - **数据稀缺**: 多模态对话数据难以获取，隐私和质量问题严重
+    - **单图限制**: 现有数据集通常每对话只有一张图像
+  - **数据合成方法** - **生成式多模态对话Pipeline + 质量保证模块**:
+    - **核心创新**: 从text-only对话出发，使用LLM识别需要图像的utterances，使用扩散模型生成图像，配合反馈循环确保质量
+    - **三大核心模块**:
+      1. **LLM-based Scanner（扫描器）**:
+         - **任务**: 识别对话中需要图像的utterances，并生成图像描述
+         - **输入**: Text-only对话
+         - **输出**: 选定的utterances + 对应的图像描述
+         - **Prompt工程**: 测试三种策略
+           - **Zero-shot**: 仅提供格式和问题描述
+           - **Few-shot**: 提供输入-输出示例
+           - **Chain-of-Thought (CoT)**: 提供推理步骤（最优选择）
+         - **输出格式控制**: 使用HTML-like标签（`<result>` 和 `<reason>`）结构化输出
+         - **关键**: CoT提供可调试的推理路径，避免上下文不一致（如"give it a look"生成无意义图像）
+      2. **Diffusion-based Image Generator（图像生成器）**:
+         - **模型选择**: Stable Diffusion XL 1.0（SDXL）
+         - **优势**: 在数十亿图像上训练，生成多样化、高质量图像
+         - **输入**: LLM生成的图像描述
+         - **输出**: 合成图像
+         - **关键**: 超越检索式方法的多样性瓶颈
+      3. **Quality Assurance Module（质量保证模块）**:
+         - **三大评估维度**:
+           a) **Image-Text Matching（图文匹配）**: 
+              - 使用CLIP score验证图像与utterance的匹配度
+              - 低分触发重新生成（最多2次）
+           b) **Image Quality（图像质量）**: 
+              - 使用aesthetic score（基于CLIP embedding + MLP）
+              - 检测扩散模型artifacts
+              - 阈值：0.51（有效检测大部分artifacts）
+           c) **Image Safety（图像安全）**: 
+              - NSFW内容检测
+              - 数据集中极少发现不安全图像，验证pipeline可靠性
+         - **反馈循环**: 若图像不满足标准，回到LLM重新生成图像描述
+    - **关键技术优势**:
+      - **生成式而非检索式**: 图像多样性不受限于图像库大小
+      - **自动化**: 完全自动化pipeline，无需人工标注
+      - **质量保证**: 多维度质量控制确保数据可用性
+      - **多图像支持**: 不限制每对话只有一张图像
+      - **隐私友好**: 不依赖真实用户数据
+  - **数据规模**:
+    - **MAGID数据集**: Medium-sized dataset（论文作为概念验证）
+    - **来源**: Text-only对话数据集（如DailyDialog等）
+  - **实验结果** - **自动化和人工评估**:
+    - **定量评估**: 
+      - 在3个对话数据集上与SOTA baselines对比
+      - 使用自动指标（CLIP score、FID等）
+    - **人工评估**: 
+      - MAGID显著优于检索式baseline（特别是图像库小时）
+      - 图像-对话一致性评分高
+      - 图像质量和多样性获得高分
+    - **消融研究**: 
+      - CoT prompting优于zero-shot和few-shot
+      - 质量保证模块对最终数据质量至关重要
+      - 反馈循环有效提升图像-文本对齐
+  - **发布时间**: arXiv 2024年3月
+  - **机构**: AWS AI Labs, University of Waterloo
+  - **作者**: Hossein Aboutalebi, Hwanjun Song, Yusheng Xie, Arshit Gupta等
+  - **开源**: ✅ [代码](https://github.com/amazon-science/MAGID)
+  - **重要意义**:
+    - **范式转变**: 从检索式到生成式多模态对话数据构建
+    - **质量保证设计**: 多维度质量控制+反馈循环的系统化设计
+    - **解决实际挑战**: 应对隐私、多样性、质量三大挑战
+    - **可扩展性**: 自动化pipeline易于扩展到大规模
+    - **多图像对话**: 支持per conversation多张图像，更贴近真实场景
 
 - **📄 MegaPairs** [(arXiv 2412.14475)](https://arxiv.org/abs/2412.14475) 🏷️ **[方法 + 数据]**
   - **聚焦**: **通用多模态检索器的大规模数据合成** - 利用异构KNN三元组和开放指令生成实现可扩展的多模态检索训练数据构建

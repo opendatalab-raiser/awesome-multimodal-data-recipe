@@ -20,21 +20,23 @@
 
 ## 📊 Statistics
 
-- **Total Papers:** 30+ (data synthesis/construction methods)
+- **Total Papers:** 36+ (data synthesis/construction methods)
 - **Industrial Reports:** 9 (Baidu, Microsoft, Alibaba, ByteDance, Tencent, etc.)
 - **Data Synthesis Methods:** 
-  - Image Generation - Synthesizing New Visual Content (4): Geometric/mathematical + document/text-dense scenes
+  - Image Generation - Synthesizing New Visual Content (6): Geometric/mathematical reasoning + document/text-dense scenes + scene text detection + multimodal dialogue
   - Image Editing (4): Non-rigid motion, unified editing, referring expression-guided editing
   - Compositionality / Preference-Guided Synthesis (1): Enhancing compositional understanding
   - Interleaved Image-Text · Coherence & Consistency (1): Multi-perspective quality filtering
   - Think with Image (1): Interleaved multimodal reasoning with image manipulation
-  - Image-Invariant - Text Enhancement (16): Fixed images, enriched text only
+  - Image-Invariant - Text Enhancement (20): Fixed images, enriched text only
 - **Notable Datasets:** 
   - 4 interleaved image-text datasets (OmniCorpus, OBELICS, MMC4, CoMM)
   - 2 domain-specific datasets (MMM-RS, MESED)
   - 4 image editing datasets (ByteMorph-6M, ImgEdit, RefEdit, RefCOCO-Edit)
   - 4 large-scale general training datasets
-- **Open Source Datasets:** 25+ datasets fully open-sourced
+  - 2 chart reasoning datasets (ChartInstruct, Synthesize Step-by-Step)
+  - 1 multimodal dialogue dataset (MAGID)
+- **Open Source Datasets:** 28+ datasets fully open-sourced
 
 ---
 
@@ -1225,6 +1227,59 @@ This category focuses on **generating new images from scratch** as part of the d
     - **Generalizable Framework**: Contextual hint mechanism applicable to other conditional generation tasks
     - **Practical Impact**: Reduces annotation cost for STR while maintaining or improving model performance
 
+- **📄 Synthetic Text Localisation** [(arXiv 1604.06646)](https://arxiv.org/abs/1604.06646) 🏷️ **[Method + Data]**
+  - **Focus**: **Synthetic Data for Scene Text Detection** - Generates high-quality scene text images for training text detection models
+  - **Data Synthesis Method** - **Geometry-Aware Scene Text Overlaying Pipeline**:
+    - **Core Innovation**: Naturally overlays synthetic text onto real scenes, **considering local 3D scene geometry** rather than simple 2D overlaying
+    - **Key Technical Components**:
+      - **Scene Geometry Understanding**: Uses CNN to predict dense depth map, estimates local surface normals
+      - **Text Alignment**: Performs perspective transformation based on estimated plane orientation, aligning text with surfaces
+      - **Region Constraints**: Uses gPb-UCM segmentation to ensure text is confined to regions with uniform color and texture
+      - **Color Adaptation**: Learns text-background color pairs from IIIT5K dataset, adaptively matches target regions
+      - **Poisson Fusion**: Uses Poisson image editing for seamless text-background integration, appears naturally embedded
+    - **Key Technical Advantages**:
+      - **3D Geometry Awareness**: Text perspective naturally matches surface orientation, not flat overlay
+      - **Region-Constrained**: Avoids unrealistic placement across heterogeneous areas
+      - **Adaptive Coloring**: Text color naturally harmonizes with background
+      - **Seamless Fusion**: Poisson blending removes synthetic artifacts
+    - **Synthesis Pipeline**:
+      1. **Input**: Natural scene image (8,000 background images collected via Google Image Search)
+      2. **Depth Estimation**: CNN predicts dense depth map
+      3. **Surface Normal Estimation**: Calculates local surface orientation from depth
+      4. **Segmentation**: gPb-UCM generates candidate regions
+      5. **Region Selection**: Filters regions by size, aspect ratio, uniformity
+      6. **Color Sampling**: Selects text-background color pair matching region
+      7. **Text Rendering**: Renders word with selected color (text sampled from Newsgroup20 dataset)
+      8. **Perspective Transform**: Applies perspective warp based on surface normal
+      9. **Poisson Blending**: Seamlessly integrates text into scene
+      10. **Output**: Synthetic scene text image + bounding box annotations
+  - **Data Scale**:
+    - **SynthText Dataset**: 800K synthetic scene text images
+    - **Annotations**: Word-level and character-level bounding boxes
+    - **Background Images**: 8,000 images collected via Google Image Search (filtered to ensure no text)
+    - **Text Sources**: Newsgroup20 dataset (words, lines, paragraphs)
+  - **Experimental Results** - **State-of-the-art Text Detection**:
+    - **Training Strategy**: Pre-train on SynthText → fine-tune on small real datasets
+    - **Results on ICDAR 2013**:
+      - Synthetic-only pre-training significantly boosts performance
+      - With fine-tuning: Achieves **F-measure 84.2%**, competitive SOTA level
+    - **Results on Multi-Oriented Text (MSRA-TD500)**:
+      - Demonstrates effectiveness on complex multi-oriented text scenarios
+    - **Key Finding**: Synthetic data with proper geometric modeling effectively transfers to real-world text detection
+  - **Ablation Studies**:
+    - **Geometry Awareness**: Models using geometry-aware synthesis outperform flat text overlays
+    - **Color Adaptation**: Adaptive coloring improves detection compared to random colors
+    - **Poisson Fusion**: Seamless blending crucial for realistic appearance
+  - **Publication**: CVPR 2016 | arXiv April 2016
+  - **Institution**: University of Oxford
+  - **Authors**: Ankush Gupta, Andrea Vedaldi, Andrew Zisserman
+  - **Open Source**: ✅ [Code](https://github.com/ankush-me/SynthText) and [Dataset](https://www.robots.ox.ac.uk/~vgg/data/scenetext/)
+  - **Significance**:
+    - **Pioneering Work**: One of the first to systematically address synthetic data for scene text detection with geometry awareness
+    - **Geometry-Aware Synthesis**: Introduced 3D geometric considerations to text synthesis, significantly improving realism
+    - **Impact**: SynthText dataset widely used in text detection research as pre-training data
+    - **Transfer Learning**: Demonstrated effective synthetic-to-real transfer for text detection tasks
+
 #### 🔄 Contrastive Learning & Image Difference
 
 - **📄 Img-Diff** [(CVPR 2025)](https://github.com/modelscope/data-juicer/tree/ImgDiff) 🏷️ **[Method + Data]**
@@ -1740,6 +1795,288 @@ This category of methods keeps original images fixed while enriching and improvi
 
 > **Core Idea**: Use powerful VLMs (e.g., GPT-4V) or LLMs (e.g., GPT-4) to generate higher quality captions/dialogue data for images
 
+- **📄 Synthesize Step-by-Step** [(CVPR 2024)](https://openaccess.thecvf.com/content/CVPR2024/papers/Li_Synthesize_Step-by-Step_Tools_Templates_and_LLMs_as_Data_Generators_for_CVPR_2024_paper.pdf) 🏷️ **[Method + Data]** - **CVPR 2024**
+  - **Focus**: **Chart VQA Reasoning Data Generation** - Uses LLM as automatic data annotator to generate step-by-step reasoning QA pairs for chart images
+  - **Data Synthesis Method** - **Template-Guided + LLM Generation + Tool-Assisted Execution**:
+    - **Core Innovation**: **Synthesize Step-by-Step Strategy** - LLM learns to decompose complex questions into step-by-step sub-questions, uses external tools (Python) to execute and derive final answers
+    - **Three-Stage Pipeline**:
+      1. **Template-based QA Generation (Training Corpus)**:
+         - **Input**: SVG annotations of ChartQA images (title, legend, data point values, colors, etc.)
+         - **Method**: Hand-designed 28 templates defining reasoning programs (Domain-Specific Language - DSL)
+         - **Output**: 357K template-generated QA pairs covering 7 reasoning types
+         - **Reasoning Types**: Value retrieval, comparisons, ranges, averages, sorting, math operations, multi-step inference
+         - **Purpose**: Provides training data for teaching LLM how to decompose problems and use tools
+      2. **LLM-based Data Generator Training**:
+         - **Architecture**: ViT (CLIP) + Linear projection + LLM (MPT-7B) + DEPLOT table prediction
+         - **Input**: Image features + predicted data table + prompt
+         - **Training**: Trained on template QA to learn generating: question → rationale program → execute to get answer
+         - **Key Innovation**: 
+           - **Does not directly generate answers**, but generates executable rationale programs
+           - Rationale programs contain: atom VQA calls (e.g., `ans_0=VQA("What is the value of 2002?")`) + Python math computations
+           - Uses DEPLOT-predicted tables as OCR input to address CLIP-ViT's weak text perception
+      3. **Large-Scale Data Synthesis & Filtering**:
+         - **Generation**: LLM generates question + rationale program for images
+         - **Execution**: Python parser parses and executes rationale program to derive answers
+         - **Filtering**: Post-processing filtering based on decoding score (threshold=-10) for low-quality questions
+         - **Output**: LaMenDa dataset (LLM-augmented Data)
+    - **Key Technical Advantages**:
+      - **Accuracy**: More accurate answers by executing programs rather than direct generation
+      - **Interpretability**: Rationales provide step-by-step reasoning paths
+      - **Scalability**: Once trained, can generate data for arbitrary chart images
+      - **Domain Flexibility**: Can control generation of specific question types via prompts
+      - **Cost-Effective**: Uses open-source LLM (MPT-7B) rather than proprietary API
+  - **Data Scale**:
+    - **Template QA**: 357K (training LLM generator)
+    - **LaMenDa (ChartQA)**: 326K (403K generated, filtered after execution)
+    - **LaMenDa (PlotQA)**: 1.7M (3M generated, filtered after execution)
+    - **Chart Captioning Datasets**: 1.6M (generated from 137K images)
+  - **Experimental Results** - **SOTA on ChartQA Dataset**:
+    - **Human-written questions**: Accuracy improved from 38% to **54%** (MATCHA baseline)
+    - **Overall ChartQA**: Significantly surpasses previous SOTA
+    - **PlotQA**: Also achieves SOTA on synthetic dataset
+    - **Ablation Studies**: Step-by-step generation outperforms direct answer generation
+  - **Publication**: CVPR 2024
+  - **Institution**: Johns Hopkins University & AWS AI Labs
+  - **Authors**: Zhuowan Li, Bhavan Jasani, Peng Tang, Shabnam Ghadar
+  - **Open Source**: To be confirmed (CVPR papers typically open-source code and data)
+  - **Significance**:
+    - **First Systematic Chart Reasoning Data Synthesis**: Introduces step-by-step reasoning data generation paradigm for Chart VQA
+    - **Tool-Assisted Execution**: Combines LLM generation with tool execution to ensure answer accuracy
+    - **Template-Guided Training**: Innovatively uses template data to train LLM generator
+    - **Significant Performance Boost**: 16 percentage point improvement on most challenging human-written questions
+
+- **📄 ChartInstruct** [(arXiv 2403.09028)](https://arxiv.org/abs/2403.09028) 🏷️ **[Method + Data]**
+  - **Focus**: **Instruction Tuning Data for Chart Comprehension** - Builds large-scale, diverse chart instruction dataset for training general chart understanding models
+  - **Data Synthesis Method** - **LLM-Driven Multi-Task Instruction Generation**:
+    - **Core Innovation**: Leverages GPT-3.5/GPT-4 to generate instruction data covering broad chart understanding tasks, supporting instruction tuning
+    - **Data Collection**:
+      - **Chart Corpus**: Collects real charts from multiple online sources, covering diverse visual styles
+        - **UniChart Dataset**: 611K charts (sources: Pew, Statista, OECD, OWID)
+        - **WebCharts (New Contribution)**: 41K charts (web-crawled, data tables extracted using Gemini Pro Vision)
+      - **Final for instruction generation**: 70,882 unique charts
+    - **Instruction Generation Pipeline**:
+      - **Task Selection**: Defines 6 major task categories
+        1. **Chart Summarization**: Generates chart captions capturing key insights (trends, patterns)
+        2. **Open-ended QA**: Generates explanatory Q&A (requiring detailed answers)
+        3. **Fact Checking**: Given claim, generates verdict (accept/refute) + explanation
+        4. **Chain-of-Thought (CoT) Reasoning**: 
+           - **Variable Dependent**: Uses tools (inspired by ToolFormer) to compute statistics
+           - **Variable Independent**: Retrieval, comparison, basic math analysis
+        5. **Code Generation**: Generates executable Python scripts to answer queries (inspired by PAL)
+        6. **Novel Tasks**: LLM proposes new tasks (future value prediction, pattern detection, etc.)
+      - **Prompt Design**: 
+        - Each task has dedicated prompt template
+        - Input: Chart data table + metadata (title)
+        - Output: Instruction-response pairs
+      - **Generation Strategy**:
+        - **GPT-4**: For complex reasoning tasks (CoT, Novel tasks)
+        - **GPT-3.5 Turbo**: For moderate complexity tasks
+        - Multiple samples generated per call to increase diversity and reduce cost
+    - **Key Technical Advantages**:
+      - **Task Diversity**: Covers 6 major categories, multiple sub-tasks, avoids task-specific overfitting
+      - **Real Charts**: Based on real online charts, not synthetic data
+      - **Automated Pipeline**: Fully automated LLM-driven pipeline, scalable
+  - **Data Scale**:
+    - **ChartInstruct Dataset**: 191K instructions corresponding to 70,882 charts
+    - **Distribution**:
+      - Chart Summarization: 53,876 (28.24%)
+      - Open-ended QA: 42,470 (22.26%)
+      - CoT Reasoning: 27,271 (14.3%)
+      - Fact Checking: 24,175 (12.67%)
+      - Code Generation: 19,572 (10.26%)
+      - Novel Tasks: 23,410 (12.27%)
+    - **Charts Source Distribution** (unique charts count):
+      - WebCharts: 41,742 (58.9%)
+      - OECD/OWID: 10,949 (15.4%)
+      - Statista: 9,992 (14.1%)
+      - PlotQA: 8,199 (11.6%)
+    - **Instructions Distribution**: WebCharts contributes 157,190 instructions, 67.5% of total
+  - **Models**: Two system designs
+    1. **End-to-end**: UniChart vision encoder + LLM (Llama2-7B / Flan-T5-XL-3B)
+    2. **Pipeline**: Chart-to-table model (DEPLOT) → LLM
+  - **Experimental Results** - **SOTA on 4 Benchmarks**:
+    - **ChartQA**: Surpasses previous SOTA
+    - **Chart2Text**: SOTA on summarization task
+    - **OpenCQA**: SOTA on open-ended QA
+    - **ChartFC**: SOTA on fact-checking
+    - **Human evaluation**: Excellent performance in real chart understanding scenarios
+  - **Data Quality**:
+    - **Expert Evaluation**: Manual annotation of 100 random samples
+      - 87% instructions describe valid tasks
+      - 86% inputs match task descriptions
+      - 61% outputs fully correct, 8% partially correct
+    - **Diversity**: Verb-noun pair analysis shows broad spectrum of comprehension and reasoning tasks
+  - **Publication**: arXiv March 2024
+  - **Institution**: York University (Canada), Qatar Computing Research Institute, Salesforce Research, NTU Singapore
+  - **Authors**: Ahmed Masry, Mehrad Shahmohammadi, Md Rizwan Parvez, Enamul Hoque, Shafiq Joty
+  - **Open Source**: ✅ [Code and Data](https://github.com/vis-nlp/ChartInstruct)
+  - **Significance**:
+    - **First Large-Scale Chart Instruction Dataset**: Establishes foundation for instruction tuning in chart domain
+    - **Task Comprehensiveness**: Covers multiple aspects of chart comprehension, avoids narrow task focus
+    - **Real Data**: Based on real online charts, closer to real-world applications
+    - **Open Contribution**: Fully open-source data and code, advancing chart comprehension research
+
+- **📄 CompCap** [(arXiv 2412.05243)](https://arxiv.org/abs/2412.05243) 🏷️ **[Method + Data]**
+  - **Focus**: **Caption Generation for Composite Images** - Generates high-quality captions for composite images (collages, charts, tables, code, diagrams, etc.)
+  - **Problem Background**: 
+    - **Composite Images (CI)**: Synthetic visual content combining multiple elements (photos, text, graphics, etc.)
+    - **Current Status**: Existing MLLM training data primarily focuses on natural image (NI) captions, CI captions are scarce
+    - **Impact**: MLLMs perform poorly on CIs, captioning and VQA accuracy significantly lower than NIs
+  - **Data Synthesis Method** - **CompCap Framework: Metadata-Driven CI-Caption Synthesis**:
+    - **Core Innovation**: Leverages metadata (image-caption pairs, layouts, tabular data, text) + LLMs + automated tools to synthesize CIs with detailed captions
+    - **CompCap Framework (General)**:
+      - **Input**: Metadata (raw data + configuration/customization)
+      - **Image Synthesis**: Uses various tools (rendering libraries, code) to generate CIs based on metadata
+      - **Caption Generation**: LLM generates accurate, detailed captions based on metadata
+      - **Flexibility**: Customizable pipelines for different CI types
+    - **6 CI Type Implementations**:
+      1. **Collage**:
+         - **Raw Data**: Image-caption pair datasets
+         - **Configuration**: Randomly generated layouts (row-column structure)
+         - **Image Synthesis**: Arranges images according to layout
+         - **Caption Generation**: LLM generates overall caption based on individual image captions + layout info
+         - **Retrieval Strategies**: Random retrieval, similarity-based retrieval, entity-based retrieval (3 types)
+      2. **Image-Text**:
+         - Overlays text on images
+         - LLM generates captions describing both image content and text
+      3. **Chart**:
+         - **Raw Data**: Tabular data
+         - **Image Synthesis**: Renders charts using Matplotlib/Plotly
+         - **Caption Generation**: LLM generates chart descriptions based on tabular data (data analysis, trends)
+      4. **Diagram**:
+         - Uses tools like Mermaid to generate flowcharts, architecture diagrams
+      5. **Code**:
+         - **Raw Data**: Code snippets
+         - **Image Synthesis**: Renders code as images (syntax highlighting)
+         - **Caption Generation**: Describes code functionality, structure
+      6. **Table**:
+         - Renders tabular data as images
+         - LLM generates table content descriptions
+    - **Caption Quality Standards**:
+      - **Accuracy**: Faithfully represents image content without misleading information
+      - **Detailedness**: Provides specific insights beyond basic descriptions
+    - **Key Technical Advantages**:
+      - **Metadata-Driven**: Ensures caption accuracy (based on structured data rather than visual speculation)
+      - **Modular**: Easy to extend to new CI types
+      - **Scalable**: Leverages abundant raw data (image datasets, tables, etc.)
+  - **Data Scale**:
+    - **CompCap-118K**: 118K CI-caption pairs
+    - **Composition**:
+      - Collage: 42.3%
+      - Image-Text: 31.4%
+      - Chart: 18.7%
+      - Table: 3.4%
+      - Diagram: 2.5%
+      - Code: 1.7%
+  - **Experimental Results** - **Significant Improvements on CI Understanding Benchmarks**:
+    - **Training**: SFT on xGen-MM-inst.-4B, LLaVA-NeXT-Vicuna-7B/13B
+    - **Average gains across 11 benchmarks**:
+      - xGen-MM-4B: +1.7%
+      - LLaVA-NeXT-7B: +2.0%
+      - LLaVA-NeXT-13B: +2.9%
+    - **Significant improvements on CI-specific benchmarks**:
+      - ChartQA: +8.0% (LLaVA-13B)
+      - DocVQA: +6.2%
+      - InfoVQA: +4.5%
+      - TextVQA: +3.8%
+    - **Maintains performance on NI benchmarks**: No degradation on natural image tasks
+  - **Ablation Studies**:
+    - **Caption vs VQA data**: Caption data more effective for CI understanding
+    - **Data volume**: Performance improves with increasing CompCap data
+    - **CI types**: Chart and Image-Text types contribute most
+  - **Publication**: arXiv December 2024
+  - **Institution**: Meta, Tufts University, Georgia Tech
+  - **Authors**: Xiaohui Chen, Satya Narayan Shukla, Mahmoud Azab, et al.
+  - **Open Source**: To be confirmed
+  - **Significance**:
+    - **Fills CI Data Gap**: First systematic approach to generate high-quality captions for CIs
+    - **General Framework**: CompCap framework applicable to multiple CI types
+    - **Practical Impact**: Significantly improves MLLMs' understanding of real-world composite images
+    - **Data Efficiency**: 118K data brings significant improvements
+
+- **📄 Infinity-MM** [(arXiv 2410.18558)](https://arxiv.org/abs/2410.18558) 🏷️ **[Method + Data]**
+  - **Focus**: **Large-Scale Multimodal Instruction Data Construction** - Collects, integrates, and synthesizes 40M+ multimodal instruction data with tagging system-based synthesis method
+  - **Core Contributions**: Data scale + synthesis method innovation
+    - **Data Scale**: 44.8M multimodal instruction data (among largest open-source)
+    - **Synthesis Method**: Tagging system-based data synthesis supporting continuous expansion
+  - **Data Construction Method**:
+    - **Stage 1: Data Collection**:
+      - **Unified Preprocessing**: Collects available multimodal instruction datasets with format standardization
+      - **Quality Filtering**: Deduplication, quality checks
+      - **Sources**: Integrates multiple public datasets (LLaVA series, ShareGPT4V, Cambrian, etc.)
+    - **Stage 2: Data Synthesis (Innovation)**:
+      - **Tagging System Design**:
+        - **Image Tagging**: Uses RAM++ model to extract image tags (objects, actions, scenes)
+        - **Instruction Tagging**: Three-layer instruction tag system
+          - **Layer 1**: 6 major categories (Coarse Perception, Fine-grained Perception-single, Fine-grained Perception-cross, Relation Reasoning, Attribute Reasoning, Logic Reasoning)
+          - **Layer 2**: Refined task features
+          - **Layer 3**: Detailed classification based on specific task needs, totaling 199 sub-tasks
+      - **Image-Instruction Mapping**:
+        - Calculates co-occurrence frequency of image tags and instruction tags in seed data
+        - Computes TF-IDF values to establish image tag → instruction type mapping
+        - **Purpose**: Guides what instruction types should be generated for new images
+      - **Instruction Synthesis Pipeline**:
+        1. **Question Generation**: 
+           - Input: Image + target instruction type + few-shot examples
+           - Model: MiniCPM-V2.6 (open-source VLM)
+           - Output: Questions matching target type
+        2. **Answer Generation**:
+           - Uses different prompts to generate diverse answer formats
+           - Ensures answer accuracy and format diversity
+        3. **Quality Filtering**:
+           - Re-inputs image+question to VLM to evaluate relevance
+           - Filters low-quality questions
+    - **Key Technical Advantages**:
+      - **Tagging System**: Systematic instruction classification ensures data diversity
+      - **Image-Instruction Correspondence**: Automatically identifies which image types suit which instruction types
+      - **Open-Source VLM Synthesis**: Uses MiniCPM-V2.6 instead of GPT-4, low cost and reproducible
+      - **Continuous Expansion**: Framework supports continuous data addition
+  - **Data Scale**:
+    - **Infinity-MM**: 44.8M samples
+    - **Composition** (by data category):
+      - **Image Caption Data**: 10M
+      - **Comprehensive Visual Instruction Data**: 25.8M
+        - General Instruction: 7.1M
+        - OCR Data: 2.6M
+        - Doc/Chart/Screen: 5.8M
+        - Math/Reasoning: 1.3M
+        - Text Instruction: 9M
+      - **Selective Visual Instruction Data**: 6M
+        - General Instruction: 1.3M
+        - OCR Data: 0.3M
+        - Doc/Chart/Screen: 1.9M
+        - Math/Reasoning: 0.7M
+        - Text Instruction: 1.8M
+      - **GPT4 & Synthetic Data**: 3M
+        - General Instruction: 1M
+        - OCR Data: 0.5M
+        - Doc/Chart/Screen: 0.1M
+        - Math/Reasoning: 0.3M
+        - Text Instruction: 0.3M
+        - Newly Synthesized Data (using open-source VLM): 0.8M
+  - **Model**: **Aquila-VL-2B**
+    - **Architecture**: 2B parameter VLM
+    - **Training**: Based on Infinity-MM
+  - **Experimental Results** - **2B Model SOTA**:
+    - **Average Score**: Outperforms similar-scale models on multiple benchmarks
+    - **Surpasses Other Open-Source Data Trained Models**: 
+      - Outperforms OneVision-SI trained models
+      - Surpasses some closed-source data trained models (see Figure 1)
+    - **Key Finding**: Large-scale high-quality data + proper mixing ratio = SOTA performance
+  - **Ablation Studies**:
+    - **Data Scale**: Performance improves with data volume
+    - **Data Type Mixing**: Optimal mixing ratios for different task types
+    - **Tagging System**: Validates effectiveness of image-instruction mapping
+  - **Publication**: arXiv October 2024 (v2: January 2025)
+  - **Institution**: BAAI (Beijing Academy of Artificial Intelligence), BJTU, BUPT, ICT/CAS, HKUST(GZ), PKU, DLUT
+  - **Authors**: Shuhao Gu, Jialing Zhang, Siyuan Zhou, Kevin Yu, et al. (large team)
+  - **Open Source**: ✅ [Dataset](https://huggingface.co/datasets/BAAI/Infinity-MM)
+  - **Significance**:
+    - **Scale Breakthrough**: 44.8M samples, among largest open-source datasets
+    - **Synthesis Method Innovation**: Tagging system provides systematic guidance for data synthesis
+    - **Open-Source VLM Synthesis**: First use of open-source VLM for large-scale high-quality synthesis
+    - **Continuous Expansion**: Framework supports continuous data expansion, not one-time dataset
+
 - **📄 ShareGPT4V** [(arxiv 2311.12793)](https://arxiv.org/abs/2311.12793)
   - **Data Synthesis Method** (Section 3.1):
     - Uses **GPT-4V** to generate high-quality captions for 100K images
@@ -1828,6 +2165,76 @@ This category of methods keeps original images fixed while enriching and improvi
   - **Experimental Results**: Substantial improvements on unseen questions, largest gains on reasoning-heavy and compositional questions, good transfer across datasets
   - **Publication**: arXiv October 2025
   - **Institution**: MIT, IBM Research, etc.
+
+- **📄 MAGID** [(arXiv 2403.03194)](https://arxiv.org/abs/2403.03194) 🏷️ **[Method + Data]**
+  - **Focus**: **Automatic Multimodal Dialogue Data Generation** - Automatically augments text-only dialogues into multimodal dialogues (text + images)
+  - **Problem Background**:
+    - **Existing Method Limitations**: Retrieval-based methods (retrieve from fixed image libraries) lead to limited image diversity and low matching quality
+    - **Data Scarcity**: Multimodal dialogue data difficult to obtain, with serious privacy and quality issues
+    - **Single-Image Limitation**: Existing datasets typically contain only one image per dialogue
+  - **Data Synthesis Method** - **Generative Multimodal Dialogue Pipeline + Quality Assurance Module**:
+    - **Core Innovation**: Starting from text-only dialogues, uses LLM to identify utterances requiring images, uses diffusion models to generate images, with feedback loop ensuring quality
+    - **Three Core Modules**:
+      1. **LLM-based Scanner**:
+         - **Task**: Identifies utterances in dialogues requiring images and generates image descriptions
+         - **Input**: Text-only dialogue
+         - **Output**: Selected utterances + corresponding image descriptions
+         - **Prompt Engineering**: Tests three strategies
+           - **Zero-shot**: Provides only format and problem description
+           - **Few-shot**: Provides input-output examples
+           - **Chain-of-Thought (CoT)**: Provides reasoning steps (optimal choice)
+         - **Output Format Control**: Uses HTML-like tags (`<result>` and `<reason>`) for structured output
+         - **Key Point**: CoT provides debuggable reasoning paths, avoids context inconsistencies (e.g., "give it a look" generating meaningless images)
+      2. **Diffusion-based Image Generator**:
+         - **Model Selection**: Stable Diffusion XL 1.0 (SDXL)
+         - **Advantages**: Trained on billions of images, generates diverse, high-quality images
+         - **Input**: LLM-generated image descriptions
+         - **Output**: Synthetic images
+         - **Key Point**: Transcends diversity bottleneck of retrieval-based methods
+      3. **Quality Assurance Module**:
+         - **Three Evaluation Dimensions**:
+           a) **Image-Text Matching**: 
+              - Uses CLIP score to verify image-utterance matching quality
+              - Low scores trigger regeneration (up to 2 times)
+           b) **Image Quality**: 
+              - Uses aesthetic score (CLIP embedding + MLP based)
+              - Detects diffusion model artifacts
+              - Threshold: 0.51 (effectively detects most artifacts)
+           c) **Image Safety**: 
+              - NSFW content detection
+              - Dataset finds very few unsafe images, validating pipeline reliability
+         - **Feedback Loop**: If image fails to meet standards, returns to LLM to regenerate image description
+    - **Key Technical Advantages**:
+      - **Generative not Retrieval-based**: Image diversity not limited by library size
+      - **Automated**: Fully automated pipeline, no manual annotation required
+      - **Quality Assurance**: Multi-dimensional quality control ensures data usability
+      - **Multi-Image Support**: No limit to one image per dialogue
+      - **Privacy-Friendly**: Does not rely on real user data
+  - **Data Scale**:
+    - **MAGID Dataset**: Medium-sized dataset (paper as proof-of-concept)
+    - **Source**: Text-only dialogue datasets (e.g., DailyDialog, etc.)
+  - **Experimental Results** - **Automated and Human Evaluation**:
+    - **Quantitative Evaluation**: 
+      - Compares with SOTA baselines on 3 dialogue datasets
+      - Uses automatic metrics (CLIP score, FID, etc.)
+    - **Human Evaluation**: 
+      - MAGID significantly outperforms retrieval-based baselines (especially with small image libraries)
+      - High image-dialogue consistency scores
+      - High scores for image quality and diversity
+    - **Ablation Studies**: 
+      - CoT prompting outperforms zero-shot and few-shot
+      - Quality assurance module critical for final data quality
+      - Feedback loop effectively improves image-text alignment
+  - **Publication**: arXiv March 2024
+  - **Institution**: AWS AI Labs, University of Waterloo
+  - **Authors**: Hossein Aboutalebi, Hwanjun Song, Yusheng Xie, Arshit Gupta, et al.
+  - **Open Source**: ✅ [Code](https://github.com/amazon-science/MAGID)
+  - **Significance**:
+    - **Paradigm Shift**: From retrieval-based to generative multimodal dialogue data construction
+    - **Quality Assurance Design**: Systematic design of multi-dimensional quality control + feedback loop
+    - **Addresses Practical Challenges**: Tackles three major challenges of privacy, diversity, and quality
+    - **Scalability**: Automated pipeline easy to scale to large scale
+    - **Multi-Image Dialogues**: Supports multiple images per conversation, closer to real scenarios
 
 - **📄 MegaPairs** [(arXiv 2412.14475)](https://arxiv.org/abs/2412.14475) 🏷️ **[Method + Data]**
   - **Focus**: **Large-Scale Data Synthesis for Universal Multimodal Retrieval** - Scalable multimodal retrieval training data construction via heterogeneous KNN triplets and open-ended instruction generation
