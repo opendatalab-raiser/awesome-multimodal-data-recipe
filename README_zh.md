@@ -1,11 +1,11 @@
 # Awesome 多模态数据合成方法 [![Awesome](https://awesome.re/badge.svg)](https://awesome.re)
 
 <div align="center">
-  <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square" alt="PRs Welcome">
-  <img src="https://img.shields.io/github/stars/opendatalab-raiser/awesome-multimodal-data-recipe?style=flat-square" alt="Stars">
-  <img src="https://img.shields.io/github/forks/opendatalab-raiser/awesome-multimodal-data-recipe?style=flat-square" alt="Forks">
-  <img src="https://img.shields.io/github/license/opendatalab-raiser/awesome-multimodal-data-recipe?style=flat-square" alt="License">
-  <img src="https://img.shields.io/github/last-commit/opendatalab-raiser/awesome-multimodal-data-recipe?style=flat-square" alt="Last Commit">
+  <img src="https://img.shields.io/github/stars/opendatalab-raiser/awesome-multimodal-data-recipe" alt="Stars">
+  <img src="https://img.shields.io/github/forks/opendatalab-raiser/awesome-multimodal-data-recipe" alt="Forks">
+  <img src="https://img.shields.io/github/license/opendatalab-raiser/awesome-multimodal-data-recipe" alt="License">
+  <img src="https://img.shields.io/github/last-commit/opendatalab-raiser/awesome-multimodal-data-recipe" alt="Last Commit">
+  <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome">
 </div>
 
 <p align="center">
@@ -20,21 +20,23 @@
 
 ## 📊 统计信息
 
-- **论文总数：** 36+篇（数据合成/构建方法）
-- **大厂报告：** 9篇（百度、微软、阿里巴巴、字节跳动、腾讯等）
+- **论文总数：** 43+篇（数据合成/构建方法）
+- **大厂报告：** 10篇（百度、微软、阿里巴巴、字节跳动、腾讯等）
 - **数据合成方法：** 
-  - 图像生成 - 合成新视觉内容(6篇): 几何/数学推理 + 文档/文本密集场景 + 场景文本检测 + 多模态对话
+  - 图像生成 - 合成新视觉内容(7篇): 几何/数学推理 + 文档/文本密集场景 + 场景文本检测 + 多模态对话 + 文本驱动图像合成
   - 图像编辑(4篇): 非刚性运动、统一编辑、指称表达式引导编辑
   - 组合性/偏好导向合成(1篇): 增强组合理解能力
-  - 交错图文·连贯性与一致性(1篇): 多视角质量过滤
+  - 交错图文·连贯性与一致性(2篇): 多视角质量过滤 + 迭代精炼
   - 图像介入推理(1篇): 图像主动参与推理过程
-  - 图像不变 - 文本增强(20篇): 固定图像，仅丰富文本
+  - 图像不变 - 文本增强(25篇): 固定图像，仅丰富文本（包括recaptioning、refinement、高分辨率处理等）
 - **典型数据集：** 
   - 4个交错图文数据集（OmniCorpus、OBELICS、MMC4、CoMM）
   - 2个领域特定数据集（MMM-RS、MESED）
   - 4个图像编辑数据集（ByteMorph-6M、ImgEdit、RefEdit、RefCOCO-Edit）
   - 4个大规模通用训练数据集
-- **开源数据集：** 25+个数据集完全开源
+  - 2个图表推理数据集（ChartInstruct、Synthesize Step-by-Step）
+  - 1个多模态对话数据集（MAGID）
+- **开源数据集：** 28+个数据集完全开源
 
 ---
 
@@ -946,6 +948,41 @@ LLaVA-OneVision代表了一种重要的以数据为中心的方法，在多模�
 
 该类别专注于**从零生成新图像**作为数据合成pipeline的一部分。这些方法通过程序化或生成模型创建合成视觉内容（几何图表、数学图形、文本密集场景等），并配对相应的文本标注。
 
+#### 🔄 文本驱动图像合成
+
+- **📄 SynthVLM** [(ACM MM 2025, arXiv 2407.20756)](https://arxiv.org/abs/2407.20756) 🏷️ **[方法 + 数据]** - **ACM Multimedia 2025**
+  - **聚焦**: **反向合成：从文本生成图像** - 不同于传统"图像→caption"，SynthVLM采用"caption→图像"范式，使用高质量caption驱动Diffusion模型生成高分辨率图像
+  - **数据合成方法** - **两阶段筛选-生成-再筛选**:
+    - **核心创新**: 首次系统性地提出从caption生成图像的VLM预训练数据合成框架，解决Web数据"水印/广告/低质量"三大痛点
+    - **Stage 1: Caption筛选**（构建高质量种子）:
+      - **数据源**: 汇聚人工标注（LAION、CC、SBU）+ 模型生成（BLIP2对DataComp重新标注）
+      - **两轮过滤**:
+        1. **质量过滤**: ChatGPT + 统计指标（N-gram、Perplexity）移除广告、重复、语法错误
+        2. **对齐过滤**: 计算caption与原始图像的CLIPScore，选择top 40%（1M caption）
+    - **Stage 2: 图像生成+质量筛选**:
+      - **生成**: 使用**Stable Diffusion XL (SDXL)** 为1M caption生成**1024×1024高分辨率图像**（60 sampling steps，网格搜索超参）
+      - **双指标筛选**:
+        - **CLIPScore(I, C)**: 评估图像-文本语义对齐
+        - **SSIMScore(I, I_resized)**: 评估图像质量（模拟336px resize损失）
+        - **加权公式**: Weighted_Score = CLIPScore + 0.5 × SSIMScore
+      - **选择**: Top 100K pairs → **SynthVLM-100K**
+    - **关键技术细节**:
+      - **避免伪影**: 生成图像天然无水印、无广告（Web图像常见问题）
+      - **更高分辨率**: 1024×1024 vs. Web图像通常336×520
+      - **更好对齐**: SynthVLM-100K的平均CLIPScore=0.36、SSIMScore=0.86，显著高于COCO-Caption(0.31/0.73)、BLIP-LCS(0.32/0.75)、ShareGPT4V(0.32/0.79)
+  - **评估与验证**:
+    - **GPT-4V + InternVL2 + 人工评估**: 1K样本盲测，合成图像胜率 **63.3%(GPT-4V)、69.2%(InternVL2)、75.8%(人工)**
+    - **下游任务**: SynthVLM-7B/13B仅用100K预训练数据（LLaVA的18%）达到SOTA，在VQAv2、GQA、MMBench、MME等全面超越LLaVA
+    - **语言能力保持**: MMLU基准上SynthVLM-7B达41.2（vs. LLaVA 36.3），证明合成数据不损害语言理解
+  - **数据规模**: 
+    - **中间池**: 1M高质量caption
+    - **最终数据集**: **SynthVLM-100K**（100K合成图像-文本对）
+  - **开源**: ✅ [GitHub](https://github.com/starriver030515/SynthVLM)
+  - **机构**: 北京大学 + 华为技术 + 上海人工智能实验室
+  - **发布时间**: ACM MM 2025 | arXiv 2024年7月
+
+---
+
 #### 📐 几何与数学推理
 
 - **📄 R-CoT** [(OpenReview ICLR 2025)](https://openreview.net/pdf?id=iwVkB9zaVb)
@@ -1674,6 +1711,60 @@ LLaVA-OneVision代表了一种重要的以数据为中心的方法，在多模�
 
 该类别专注于**高质量交错图文数据构建**，强调**连贯性（逻辑流程）、一致性（事实准确性）和对齐（图文相关性）**。与简单图文对不同，这些方法策划或合成具有叙事连贯性的多图像文档，适合训练模型进行长上下文多模态理解和生成。
 
+- **📄 InterSyn** [(arXiv 2506.09427)](https://arxiv.org/abs/2506.09427) 🏷️ **[方法 + 数据 + 评估]**
+  - **聚焦**: **交错图文生成数据集与评估** - 首个全自动、大规模、多轮指令跟随的交错图文问答数据集，配套专用评估模型SynJudge
+  - **数据合成方法** - **SEIR (Self-Evaluation with Iterative Refinement)**:
+    - **核心创新**: 三阶段迭代refinement pipeline，嵌入自我检查和反馈循环，确保语义完整性、跨模态协同和上下文相关性
+    - **准备阶段**（5个步骤）:
+      1. **问题收集**: 25名参与者各提供40个自然对话场景问题（共1000个）
+      2. **问题筛选与基准**: LLM+专家审核，筛选500个高质量问题构建benchmark
+      3. **问题模板提取**: 从高质量问题中提取通用化模板
+      4. **基础主题层级**: AI辅助主题提取+人工组织，构建逻辑清晰的主题层级
+      5. **主题层级扩展**: AI建议+专家策划，扩展至8个域、65个类别、3500个细粒度主题
+    - **SEIR三阶段Refinement**（每个对话轮次执行，K=3次迭代）:
+      - **Stage 1: Question Refinement (QR)**:
+        - 初始化: 从模板τ和主题z生成初始问题q₀
+        - 迭代refinement: LLM生成refinement建议 → 根据建议优化问题
+        - 效果: 3轮迭代后质量提升**32%**
+      - **Stage 2: Answer Refinement (AR)**:
+        - 初始化: 生成初始答案a₀和临时caption γ₀
+        - 迭代refinement: LLM评估答案和caption → 生成建议 → 优化
+        - 效果: TCC **+15%**, ICC **+11%**, ITS **+19%**
+      - **Stage 3: Image Refinement (IR)**:
+        - 使用临时caption生成初始图像 → VLM评估 → 优化caption → 重新生成图像
+        - 效果: 进一步提升ICC和ITS
+    - **关键技术**:
+      - **马尔可夫性质**: 每次迭代仅依赖前一状态
+      - **跨轮连贯性**: 通过历史上下文H维护主题一致性
+      - **多模型组合**: Qwen/InternLM/GPT + QwenVL/InternVL/LLaVA + FLUX
+  - **SynJudge评估模型**:
+    - **训练数据**: 38,400人工标注样本
+    - **基座模型**: QwenVL2.5 / InternVL2.5
+    - **四维评估**:
+      1. **TCC (Text Content Completeness)**: 文本内容完整性
+      2. **ICC (Image Content Completeness)**: 图像内容完整性
+      3. **IQ (Image Quality)**: 图像质量
+      4. **ITS (Image-Text Synergy)**: 图文协同性（奖励互补对齐，惩罚冗余）
+    - **vs. 人工评估**: RMSE仅5%偏差（vs. 其他模型的13%）
+  - **数据规模**: 
+    - **InterSyn**: 1.8M单轮样本 + 50K多轮对话
+    - **Benchmark**: 500个高质量问题
+    - **主题覆盖**: 8个域、65个类别、3500个细粒度主题
+  - **实验结果** - **模型微调显著提升**:
+    - **Anole微调** (50K InterSyn): TCC +14%, ICC +7.6%, IQ +6.2%, ITS **+30%**
+    - **VILA-U微调**: TCC **+29.7%**, ITS **+52.1%**
+    - **vs. 现有模型**: InterSyn生成样本在所有维度上超越GPT-4o+DALL-E3（+0.34~0.66）
+  - **开源**: ✅ [GitHub](https://github.com/xxx/InterSyn) (具体链接待确认)
+  - **机构**: Nankai University + Shanghai Innovation Institute + Wuhan University + USTC + Shanghai AI Lab
+  - **发布时间**: arXiv 2025年6月
+  - **重要意义**:
+    - **首个大规模交错图文指令数据**: 填补instruction-following交错数据空白
+    - **完全自动化pipeline**: SEIR大幅降低人工成本
+    - **四维评估体系**: SynJudge提供细粒度、可解释评估
+    - **跨模态协同**: 强调ITS指标，突破传统一致性评估
+
+---
+
 - **📄 CoMM** [(arXiv 2406.10462)](https://arxiv.org/abs/2406.10462) 🏷️ **[方法 + 数据 + 基准]** - **CVPR 2025**
   - **聚焦**: **连贯的交错图文数据集**，配多视角质量过滤和新颖评估任务
   - **数据筛选方法** - **多视角过滤策略 + 质量评估框架**:
@@ -1844,6 +1935,263 @@ LLaVA-OneVision代表了一种重要的以数据为中心的方法，在多模�
 #### 🔬 基于大模型的文本生成
 
 > **核心思想**: 使用强大的VLMs（如GPT-4V）或LLMs（如GPT-4）为图像生成更高质量的captions/对话数据
+
+- **📄 Recap-DataComp-1B** [(arXiv 2406.08478)](https://arxiv.org/abs/2406.08478) 🏷️ **[方法 + 数据]**
+  - **聚焦**: **LLaMA-3驱动的十亿级图像重新标注** - 使用LLaMA-3-powered LLaVA对DataComp-1B（1.3B图像）进行全量重新标注，生成详细、对齐的caption
+  - **数据合成方法** - **训练Captioner + 大规模Recaptioning**:
+    - **核心创新**: 首个在**十亿级规模**上使用开源LLaMA-3进行高质量重新标注的工作，填补社区缺口
+    - **Stage 1: 训练高性能Captioner**:
+      - **模型架构**: LLaVA-1.5框架 + **LLaMA-3-8B**（替代原7B/13B）+ CLIP ViT-L/14（冻结）
+      - **训练流程**（2阶段）:
+        1. **预训练阶段**: 558K图文对（LAION/CC/SBU）训练2层MLP projection
+        2. **指令微调阶段**: 665K instruction数据（LLaVA-1.5）+ **HQ-Edit数据集**微调MLP和LLM
+      - **模型性能**: 
+        - MMMU: 45.2（vs. LLaVA-1.5-7B的33.6，+11.6）
+        - MM-Vet: 37.8（vs. LLaVA-1.5-7B的33.9，+3.9）
+        - 超越LLaVA-1.5-13B，展现强大视觉理解能力
+    - **Stage 2: 大规模Recaptioning**:
+      - **数据源**: DataComp-1B（~1.3B web-crawled图文对，已经过安全检查、去重、CLIP过滤）
+      - **生成Prompt**: "Please generate a detailed caption of this image. Please be as descriptive as possible."
+      - **生成策略**: 贪婪解码，最大128 tokens，自回归生成
+      - **输出**: **Recap-DataComp-1B**（1.3B重新标注的图文对）
+    - **质量分析**:
+      - **长度**: 平均49.43 tokens（vs. 原始10.22，+4.8x）
+      - **词汇丰富度**: 覆盖82.86%的词汇，更多样的名词和形容词
+      - **语义对齐**:
+        - **LongCLIP Score**: 89.91（vs. 原始10.09，**约9倍提升**）
+        - 标准CLIP Score: 49.57 vs. 50.43（相当，因CLIP训练于短caption）
+      - **人工质量评估（GPT-4V评分）**:
+        - 平均评分: 4.14/5（vs. 原始3.71，+0.43）
+        - 评估维度：流畅性、准确性、对齐度
+  - **实验结果** - **CLIP和DiT模型显著提升**:
+    - **CLIP模型**（混合比例p=0.8，80%原始+20%重标注）:
+      - **零样本检索**（COCO I→T）: 61.5%（vs. 原始57.3%，+4.2%）
+      - **零样本检索**（Flickr30K T→I）: 66.9%（vs. 原始63.0%，+3.9%）
+      - **Urban-1K长文本检索**: 85.0% I→T（vs. 原始53.2%，**+31.8%**）
+      - **VG-Attribution**: 66.4%（vs. 原始57.1%，+9.3%）
+    - **Text-to-Image DiT模型**（混合比例p=0.0，100%重标注）:
+      - **FID**: 27.8（vs. 原始36.2，**-8.4**）
+      - **CLIP Score**: 32.5%（vs. 原始29.3%，+3.2%）
+      - **Recap-CLIP Score**: 28.3%（vs. 原始19.9%，+8.4%）
+      - **GPT-4V Score**: 2.53（vs. 原始1.40，+1.1）
+    - **关键发现**: 
+      - **混合策略最优**: 原始+重标注混合训练效果最佳（防止过拟合）
+      - **更大文本编码器**: 配合重标注数据，CLIP文本编码器扩大可进一步提升性能
+      - **长文本理解**: 重标注显著提升CLIP对长、复杂文本的理解能力
+  - **数据规模**: 
+    - **Recap-DataComp-1B**: 1.3B重新标注的图文对
+    - **平均caption长度**: 49.43 tokens（vs. 原始10.22）
+  - **开源**: ✅ [项目页面](https://www.haqtu.me/Recap-Datacomp-1B/)
+  - **机构**: UC Santa Cruz + University of Edinburgh + JHU + Adobe + UT Austin
+  - **发布时间**: arXiv 2024年6月
+  - **重要意义**:
+    - **开源十亿级重标注**: 首个开源的十亿级高质量重标注数据集，降低社区门槛
+    - **LLaMA-3应用**: 展示开源LLM（LLaMA-3）可达GPT-4V级别的标注质量
+    - **跨任务泛化**: 同时提升判别式（CLIP）和生成式（DiT）模型性能
+    - **长文本理解**: 证明详细caption对长文本检索和属性理解的关键作用
+    - **混合策略启发**: 为社区提供原始+合成数据混合训练的最佳实践
+
+---
+
+- **📄 Hunyuan-Recap100M** [(arXiv 2504.13123)](https://arxiv.org/abs/2504.13123) 🏷️ **[方法 + 数据]**
+  - **聚焦**: **低幻觉、知识密集型合成caption** - 腾讯混元团队提出的100M级低幻觉caption生成框架，通过连续DPO和知识增强实现高质量重新标注
+  - **数据合成方法** - **知识增强SFT + 连续DPO**:
+    - **核心创新**: 解决两大痛点：1）降低幻觉（非幻觉率从48.3%提升至77.9%）；2）提升知识密度（整合实体、属性等外部知识）
+    - **Stage 1: 知识增强SFT**:
+      - **数据生成**（GPT-4o + 人工审核）:
+        - **数据源**: CC3M、CC12M、DataComp、Wukong、Wikipedia（采样初始图文对）
+        - **GPT-4o Prompt设计**（三步法）:
+          1. 准确具体描述图像内容（>50词），避免主观评论
+          2. **知识注入**: 参考alt-text/metadata，提取并整合特定实体名、IP名、地名等关键信息（如"埃菲尔铁塔"而非"金属塔"）
+          3. 解释修改原因
+        - **人工后处理**: 纠正明显错误、确认关键信息包含、过滤噪声
+        - **数据规模**: 43,408条高质量标注数据
+      - **模型训练**: Qwen2-VL-7B（基座） + LoRA微调
+        - 学习率: 1e-5，批大小: 128，训练10 epochs
+        - 输出: **Recaption-SFT模型**
+    - **Stage 2: 连续DPO（Continuous DPO, CDPO）**:
+      - **标准DPO问题**: 在caption任务中，DPO性能在数据规模达到一定程度后plateau（停滞）
+      - **CDPO解决方案**（关键创新）:
+        - **迭代更新reference model**: 当DPO性能饱和时，用当前policy model更新reference model
+        - **重新采样preference data**: 使用更新后的model重新生成preferred/dispreferred pairs
+        - **长度平衡**: 对preference pairs进行长度平衡采样，防止length bias
+      - **初始DPO阶段**:
+        - 采样300K图文对 → SFT模型推理（8次并行，采样参数：top-p=1.0, top-k=20, temp=1.0）
+        - 使用内部Critic模型选择best/worst输出构建preference pairs
+        - 长度平衡后保留218K高质量pairs
+        - 训练初始DPO模型（作为reference）
+      - **CDPO阶段**:
+        - 采样200K新图文对 → 用初始DPO模型生成新preference data
+        - 长度平衡后保留139K pairs
+        - 继续训练（1 epoch，学习率5e-6）
+      - **效果**:
+        - 非幻觉率: 48.33%（Qwen2-VL-7B） → 77.86%（CDPO）
+        - 低幻觉率: 87.87% → 98.08%
+    - **关键技术优势**:
+      - **知识密集**: 整合alt-text中的实体名、专有名词（如"草酸 C2H2O4"）
+      - **低幻觉**: CDPO突破DPO plateau，持续降低幻觉
+      - **细节丰富**: 平均8.1个视觉细节/caption（vs. Recap-DataComp-1B的6.64）
+  - **数据规模**: 
+    - **Hunyuan-Recap100M**: 100M重新标注的图文对
+    - **平均caption长度**: 103.15 tokens（vs. Recap-DataComp-1B的72.60）
+    - **平均细节数**: 8.1个视觉细节
+    - **非幻觉率**: 77.9%（vs. Recap-DataComp-1B的29.7%）
+    - **幻觉率**: 4.2%（vs. Recap-DataComp-1B的24.9%）
+  - **实验结果** - **VLM和T2I模型全面提升**:
+    - **VLM预训练**（LLaVA架构：SigLIP + Hunyuan-7B）:
+      - **15个VL任务**: 平均提升至59.35%（vs. alt-text 53.12%，**+6.2%**）
+      - **20个认知域**: 平均准确率53.67%（vs. alt-text 36.33%，**+17.3%**）
+      - **幻觉任务**: HallusionBench非幻觉率73.87%（vs. alt-text 68.38%，+5.5%）
+      - **细粒度感知**: 在动物、植物、地标等20类视觉对象识别上显著提升
+    - **T2I生成**（Hunyuan-DiT微调，2M数据LoRA）:
+      - **内部感知测试集**: FID从62.38降至45.33（**-17.1**），CLIP Score从0.323提升至0.357
+      - **MSCOCO测试集**: FID从28.79降至15.46（**-13.3**），CLIP Score从0.307提升至0.313
+    - **训练效率**: 20M Hunyuan-Recap100M数据训练的模型，在大多数任务上超越其他100M scale数据集训练的模型
+  - **质量评估**（基于GPT-4o的CIEM方法）:
+    - **vs. Capfusion-120M**: 细节数+267%，长度+3.5x，幻觉率-8.6%
+    - **vs. Recap-DataComp-1B**: 非幻觉率+43.6%，幻觉率-19.3%
+  - **开源**: ✅ 承诺发布Hunyuan-Recap100M数据集
+  - **机构**: Hunyuan Team, Tencent（腾讯混元团队）
+  - **发布时间**: arXiv 2025年5月
+  - **重要意义**:
+    - **低幻觉突破**: 首个系统性解决caption幻觉问题的大规模数据集（非幻觉率77.9%）
+    - **CDPO方法论**: 提出连续DPO，突破标准DPO的plateau限制
+    - **知识密集**: 创新性地整合外部知识（实体、属性）到caption中
+    - **跨任务验证**: 同时在VLM预训练和T2I生成上取得显著提升
+    - **工业级规模**: 100M数据规模，展示工业界在合成数据上的探索
+
+---
+
+- **📄 SynC** [(arXiv 2507.18616)](https://arxiv.org/abs/2507.18616) 🏷️ **[方法]**
+  - **聚焦**: **合成数据refinement for零样本图像标注** - 通过one-to-many mapping重新配对caption到最语义对齐的合成图像
+  - **数据合成方法** - **One-to-many Mapping + Cycle-Consistency对齐评分**:
+    - **核心创新**: 不同于传统pruning或重新生成，SynC专注于**重新分配caption到预生成图像池中最佳匹配的图像**
+    - **问题定义**:
+      - **传统one-to-one**: 𝑆_One(C_i) = {I_i^syn}（每个caption只对应直接生成的图像）
+      - **挑战**: T2I模型常生成语义misalignment图像（缺失对象、错误属性），但caption本身是well-formed的
+      - **与Web数据pruning的差异**: Web数据是"noisy text + clean image"，合成数据是"clean caption + noisy image"
+    - **One-to-many Selection Strategy (𝑆_T2I)**:
+      - **输入**: Caption C_i，预生成合成图像池I^syn
+      - **T2I Retrieval**: 使用VLM（SigLIP ViT-B/16）的文本编码器E_T和图像编码器E_I
+      - **检索top-K候选**: 𝑅_i = Top-K_j { ⟨E_I(I_j^syn), E_T(C_i)⟩ }（K=15）
+      - **输出**: 候选集 {I_r^syn}_r∈R_i，而非仅I_i^syn
+      - **优势**: 允许caption从整个图像池中找到更好匹配，而非丢弃misaligned pairs
+    - **Cycle-Consistency Alignment Scoring (𝑓_ret)**:
+      - **标准CLIP Score局限**: 全局对齐优先，忽略细粒度细节和组合理解
+      - **Cycle-Consistency灵感**: T2I检索（选择） + I2T检索（评分）
+      - **I2T Retrieval Scoring**:
+        1. 对候选图像I^syn执行I2T检索，从caption corpus C中检索top-K_r相似captions
+        2. 使用SBERT（Sentence Transformer）计算检索到的captions与原始caption C的文本相似度
+        3. 分数: 𝑓_ret(I^syn, C) = max_r∈R̂(I^syn) ⟨E_S(C_r), E_S(C)⟩
+      - **核心逻辑**: 如果I^syn真正对齐C，那么从I^syn检索回的captions应与C语义相似
+      - **最终选择**: I_i^*syn = argmax_{I^syn∈S(C_i)} f_ret(I^syn, C_i)
+    - **Filtering**: 按alignment score排序，保留top τ% pairs（τ∈[0,1]）
+  - **实验设置**:
+    - **基线模型**: PCM-Net（ECCV 2024）
+    - **T2I模型**: Stable Diffusion v1.4（512×512，20 sampling steps）
+    - **检索VLM**: SigLIP ViT-B/16@256
+    - **文本编码器**: SBERT（unimodal text similarity）
+    - **数据源**: CC3M、SS1M生成200K合成pairs
+  - **实验结果** - **零样本captioning显著提升**:
+    - **COCO Captioning**（ViT-B/32）:
+      - BLEU@4: 31.5 → 33.6 (+2.1)
+      - CIDEr: 103.8 → 112.0 (+8.2)
+      - SPICE: 19.7 → 20.5 (+0.8)
+    - **COCO Captioning**（ViT-L/14）:
+      - BLEU@4: 33.6 → 35.2 (+1.6)
+      - CIDEr: 113.6 → 119.8 (+6.2)
+      - SPICE: 20.8 → 21.9 (+1.1)
+    - **Flickr30k**（ViT-L/14）:
+      - BLEU@4: 28.5 → 29.6 (+1.1)
+      - CIDEr: 69.5 → 75.6 (+6.1)
+    - **Cross-domain**: COCO→Flickr30k提升CIDEr +4.8，Flickr30k→COCO提升+5.5
+    - **NoCaps** (out-of-domain): Entire CIDEr 70.5 → 72.7 (+2.2)
+    - **一致性**: 在所有设置（in-domain, cross-domain, out-of-domain）上持续提升
+  - **消融研究**:
+    - **vs. 传统pruning方法**: SynC超越基于VLM的pruning方法（避免计算开销和公平性问题）
+    - **K值影响**: K=15达到最佳平衡
+    - **τ值**: 保留top 80-90% pairs效果最优
+  - **开源**: ✅ [GitHub](https://github.com/boreng0817/SynC)
+  - **机构**: Hanyang University + CJ Group
+  - **发布时间**: arXiv 2025年7月
+  - **重要意义**:
+    - **针对合成数据特性**: 首个专门为"clean caption + noisy image"设计的refinement方法
+    - **无需重新生成**: 重用预生成图像池，降低计算成本
+    - **Cycle-Consistency**: 双向检索保证细粒度对齐
+    - **泛化性强**: 跨域、跨模型一致提升
+    - **实用性**: 简单有效，易于集成到现有ZIC pipeline
+
+---
+
+- **📄 High-Res Captioning** [(arXiv 2510.27164)](https://arxiv.org/abs/2510.27164) 🏷️ **[方法]**
+  - **聚焦**: **高分辨率图像精确详细caption生成** - Training-free pipeline，整合VLM+LLM+对象检测系统，解决VLM低分辨率预训练导致的细节丢失
+  - **数据合成方法** - **五阶段Caption Refinement Pipeline**:
+    - **核心创新**: 通过"人类视觉zoom-in"机制和对象检测验证，生成更详细、更可靠的高分辨率图像caption，同时降低幻觉
+    - **Stage 1: 初始Caption生成**:
+      - **VLM生成**: 使用VLM（InstructBLIP/LLaVA-v1.5/Qwen2-VL）生成初始caption
+      - **Prompt**: "Describe this image in detail."
+      - **问题**: VLM通常在低分辨率预训练（224×224或336×336），高分辨率图像降采样丢失细节
+      - **LLM提取关键对象**: 使用GPT-4o从初始caption中提取关键对象列表
+    - **Stage 2: 识别潜在共现对象**:
+      - **LLM推理**: 基于关键对象，LLM利用世界知识推断可能共同出现但被遗漏的对象
+      - **示例**: 若关键对象是"table, chair"，LLM推断可能存在"lamp, books, cup"
+      - **输出**: 扩展候选对象列表（原始+新提议）
+    - **Stage 3: 对象存在性验证**:
+      - **三检测器Ensemble**: GroundingDINO + YOLO-World + OWLv2
+      - **验证策略**: 
+        - 对象被检测: 三个检测器总置信度≥0.5（IoU≥0.7视为同一对象）
+        - 对象未检测: 任何检测器都未检测到 → 从初始caption中移除（降低幻觉）
+      - **输出**: 验证对象列表 + 边界框坐标
+    - **Stage 4: 新对象详细Captioning（Zoom-in机制）**:
+      - **裁剪边界框**: 为新检测但初始caption未提及的对象裁剪图像区域
+      - **重新Captioning**: 将裁剪图像输入VLM，生成详细对象描述
+      - **模拟人类视觉**: 类似人类放大观察高分辨率图像细节的过程
+      - **效率优化**: 仅对初始caption缺失的对象执行，已描述对象假定足够详细
+    - **Stage 5: 最终Caption重新措辞**:
+      - **GPT-4o整合**: 结合初始caption + 验证对象列表+坐标 + 新详细描述
+      - **双重目标**:
+        1. **移除幻觉**: 删除未检测对象的引用
+        2. **添加新信息**: 整合新检测对象的详细描述和空间上下文
+      - **空间上下文**: 使用相对位置（"on the left", "in the foreground", "near the center"）
+      - **格式**: {label}: {caption} at coordinates (x_min, y_min, x_max, y_max)
+      - **自然流畅**: 整体重新措辞而非简单拼接，保持语义连贯性
+  - **实验设置**:
+    - **VLMs**: InstructBLIP（224×224）、LLaVA-v1.5（336×336）、Qwen2-VL（动态分辨率）
+    - **LLM**: GPT-4o（提取、推理、重新措辞）
+    - **检测器**: GroundingDINO, YOLO-World, OWLv2（开放词汇）
+    - **评估模型**: LLaMA-3.2-Vision-Instruct（1120×1120，reference-free评估）
+    - **数据集**: Objects365中筛选的266张4K图像（3840×2160），标准：≥15类对象、≥10小对象、≥5人
+  - **实验结果** - **Caption质量与幻觉双重提升**:
+    - **Pairwise比较（Winning Rate）**:
+      - InstructBLIP: ~55% winning rate（vs. 初始caption）
+      - LLaVA-v1.5: ~58% winning rate
+      - Qwen2-VL: ~52% winning rate（已较强但仍有提升）
+    - **定量评分（0-1范围，5次实验平均）**:
+      - InstructBLIP: 0.6344 → 0.6952 (**+9.59%**)
+      - LLaVA-v1.5: 0.6785 → 0.7304 (**+7.66%**)
+      - Qwen2-VL: 0.8260 → 0.8398 (**+1.68%**，动态分辨率已较robust）
+    - **POPE幻觉基准（Accuracy/Precision/Recall/F1，平均提升）**:
+      - **Random采样**: 
+        - InstructBLIP: Acc +4.87%, Prec +24.16%, Recall +50.15%, F1 **+45.10%**
+        - LLaVA-v1.5: Acc +5.30%, Prec +22.23%, Recall +24.31%, F1 +23.88%
+        - Qwen2-VL: Acc +2.62%, Prec +13.70%, Recall +24.90%, F1 +22.97%
+      - **Popular采样**: 
+        - InstructBLIP: F1 +28.71%, LLaVA-v1.5: F1 +20.32%, Qwen2-VL: F1 +23.84%
+      - **Adversarial采样**: 
+        - InstructBLIP: F1 +28.85%, LLaVA-v1.5: F1 +20.59%, Qwen2-VL: F1 **+29.44%**
+    - **一致性**: 对预训练分辨率较低的VLM提升更显著，证明方法针对"resolution curse"的有效性
+  - **开源**: ✅ （论文承诺发布代码和prompts）
+  - **机构**: University of Seoul + POSTECH + Yonsei University
+  - **发布时间**: arXiv 2025年10月
+  - **重要意义**:
+    - **无需重新训练**: Training-free pipeline，适用于任何VLM
+    - **人类视觉模拟**: Zoom-in机制首次系统性地模拟人类观察高分辨率图像的过程
+    - **双重优化**: 同时提升caption详细度（新对象）和准确性（移除幻觉）
+    - **Ensemble检测**: 三检测器ensemble降低单模型偏差，提升验证可靠性
+    - **高分辨率针对性**: 明确解决VLM在4K/高分辨率图像上的性能退化问题
+    - **工作流通用**: 可扩展至多模态检索、T2I生成、VQA等下游任务
+
+---
 
 - **📄 Synthesize Step-by-Step** [(CVPR 2024)](https://openaccess.thecvf.com/content/CVPR2024/papers/Li_Synthesize_Step-by-Step_Tools_Templates_and_LLMs_as_Data_Generators_for_CVPR_2024_paper.pdf) 🏷️ **[方法 + 数据]** - **CVPR 2024**
   - **聚焦**: **Chart VQA的推理数据生成** - 使用LLM作为自动数据标注器，为图表图像生成step-by-step推理问答对
@@ -2358,6 +2706,113 @@ LLaVA-OneVision代表了一种重要的以数据为中心的方法，在多模�
     - **开源生态贡献**: 完整开源数据、模型、pipeline，推动领域发展
     - **通用检索能力**: 在CIR和广泛多模态任务上均达到SOTA
 
+- **📄 ImageInWords** [(arXiv 2405.02793)](https://arxiv.org/abs/2405.02793) 🏷️ **[方法 + 数据]** - **ECCV 2024**
+  - **聚焦**: **超详细图像描述生成** - Human-in-the-loop框架，结合VLM种子生成和顺序人工增强，生成高质量hyper-detailed图像描述
+  - **数据合成方法** - **种子标注 + 顺序增强 + 主动学习**:
+    - **核心创新**: 结合VLM生成的**种子元数据**与**人工标注者的不可替代质量**，通过顺序迭代和主动学习循环生成超详细图像描述
+    - **两任务框架**:
+      1. **Task 1: 对象级描述**（细粒度标注）:
+         - **输入**: 图像 + 对象检测(OD)模型生成的(label, bbox)
+         - **VLM种子生成**: 使用PaLI-35B为每个bbox生成对象级caption
+         - **人工增强**: 众包工作者修正、添加、删除、合并对象标注
+         - **输出**: (label, bbox, 详细对象描述)三元组，涵盖所有显著对象
+      2. **Task 2: 图像级描述**（全局描述）:
+         - **输入**: Task 1的对象描述 + VLM生成的全局种子caption + 可选领域特定元数据（如艺术风格）
+         - **顺序增强**: 多个众包工作者依次增强和改进描述（通常3轮）
+         - **主动学习**: 每收集1K样本后，使用新数据重新微调PaLI-35B，改进种子质量
+         - **输出**: 217.2 tokens平均长度的hyper-detailed描述
+    - **顺序增强优势**（Fig. 2）:
+      - **效率提升**: 3个标注者顺序工作 vs 并行工作
+        - **Token增长**: +20% token count（从170→204词）
+        - **时间节省**: -30% 时间（从800秒→560秒/标注者）
+        - **质量提升**: Jaccard相似度从0.2提升至0.65（round 1-2 → round 2-3）
+      - **隐式学习循环**: 标注者互相学习，个体质量持续提升
+    - **主动学习循环**:
+      - **初始PaLI**: 平均生成15词caption
+      - **3K样本后**: 提升至150+词caption
+      - **关键作用**: 显著降低人工标注负担
+    - **标注指南**（详见论文Appendix A）:
+      - **TLDR原则**: 首句必须是报纸风格的简洁总结
+      - **显著性顺序**: 按对象显著性顺序描述，而非随机顺序
+      - **视觉准确**: 仅包含视觉可推断的细节，避免猜测
+      - **全面覆盖**: 包括设置、背景、风格、相机角度、整体构图、渲染文本
+      - **特别关注**: 人物、服饰、艺术作品、地点特定属性、独特属性
+    - **关键技术优势**:
+      - **种子标注**: 显著降低从零开始的标注成本和时间
+      - **顺序增强**: 比并行标注更高效，同时产生单一高质量输出
+      - **主动学习**: 持续改进VLM种子质量，减少人工负担
+      - **质量保证**: 多轮迭代 + n-gram Jaccard相似度监控确保收敛
+  - **数据规模**:
+    - **IIW数据集**: 9,018张图像（训练: 8,573，测试: 445）
+    - **平均统计**:
+      - **Tokens**: 217.2 (vs DOCCI 135.7, DCI 148.0)
+      - **Sentences**: 9.8
+      - **Nouns**: 52.5 (vs DOCCI 34.0, DCI 35.3)
+      - **Adjectives**: 28.0 (vs DOCCI 16.6, DCI 16.3)
+      - **Verbs**: 19.1 (vs DOCCI 9.6, DCI 10.5)
+    - **图像来源**: WebLI-like数据集采样
+    - **标注池**: 20+领域专家（创意写作、艺术、历史、摄影背景）
+  - **实验结果** - **人工SxS评估优势显著**:
+    - **IIW人工标注 vs 先前数据集**（Table 2）:
+      - **vs DCI（112测试样本）**:
+        - Comprehensiveness（全面性）: +61%
+        - Specificity（具体性）: +80%
+        - Hallucinations（更少幻觉）: -42%
+        - TLDR质量: +91%
+        - Human-Likeness（类人性）: +82%
+      - **vs DOCCI（100测试样本）**:
+        - Comprehensiveness: +42%
+        - Specificity: +82%
+        - Hallucinations: -35%
+        - TLDR质量: +79%
+        - Human-Likeness: +68%
+      - **平均提升**: +66%（5项指标平均，两数据集平均）
+    - **IIW人工标注 vs GPT-4V**（Table 3右侧）:
+      - **100样本对比**:
+        - Comprehensiveness: +35%
+        - Specificity: +53%
+        - Hallucinations: -59%
+        - TLDR质量: +70%
+        - Human-Likeness: +21%
+      - **平均提升**: +48%
+    - **IIW模型（微调PaLI-35B）vs 其他数据集微调模型**（Table 3左侧）:
+      - **vs DCI模型**: +42% Comprehensiveness, +54% Specificity, +51% TLDR
+      - **vs DOCCI模型**: +4% Comprehensiveness, +37% Specificity, +57% TLDR
+      - **平均提升**: +31%（5项指标平均，两数据集平均）
+  - **下游应用评估**:
+    - **Text-to-Image重建**（Table 4, 240张LocNar图像）:
+      - 使用Imagen模型，按句子累积输入（S1, S1-2, S1-3...）
+      - **Mean Rank**: IIW 1.63 vs DOCCI 1.74 vs DCI 2.05（**第1名**）
+      - **CLIP相似度**: IIW 0.861 vs DOCCI 0.853 vs DCI 0.844（**最高**）
+      - **关键发现**: 即使仅用第1句，IIW也优于其他数据集
+    - **组合推理**（Table 5，LLM-only设置）:
+      - 使用IIW描述替换ARO/SVO-Probes/Winoground中的图像，LLM判断
+      - **ARO VG-Attribution**: 90.37%（vs InstructBLIP 83.99%, LLaVA 84.80%, **+6%**）
+      - **ARO VG-Relation**: 66.19%（vs InstructBLIP 62.73%, LLaVA 63.71%, **+2-3%**）
+      - **Winoground**: 69.38%（vs InstructBLIP 65.25%, LLaVA 63.38%, **+4-6%**）
+  - **IIW-Eval基准**（Table 6）:
+    - **2,612张图像** + **1,899个对象级标注** + **2,712个图像级标注**
+    - **412个人工SxS标签**（IIW vs DCI, IIW vs DOCCI）
+    - **IIW-400**（400张新评估集）+ DCI测试集（112）+ DOCCI测试集（100）
+    - **模型enriched数据集**: LocNar（1,000）+ XM3600（1,000）使用IIW模型重新标注
+  - **消融研究关键发现**:
+    - **种子标注重要性**（Table 7）: 有种子 vs 无种子 = +54% Comprehensiveness, +48% Specificity
+    - **IIW人工 vs IIW模型**（Table 8，100样本）: 人工仍显著更优（+78% Compr., +91% Spec.）
+    - **顺序轮数**: 3轮达到0.8相似度阈值，后续轮数收益递减
+  - **发布时间**: ECCV 2024 | arXiv 2024年5月（v2: 2024年10月）
+  - **机构**: Google DeepMind, Google Research, University of Washington
+  - **作者**: Roopal Garg, Andrea Burns, Burcu Karagol Ayan, Yonatan Bitton等
+  - **开源**: ✅ **完全开源** - IIW-Eval基准（2.6K图像）、人工SxS标签、模型enriched LocNar+XM3600数据
+  - **项目页面**: [github.com/google/imageinwords](https://github.com/google/imageinwords)
+  - **重要意义**:
+    - **开创性人机协作**: 首个系统性地将VLM种子与人工精炼结合的hyper-detailed描述生成框架
+    - **顺序增强突破**: 证明顺序标注优于并行标注（效率+质量双赢）
+    - **主动学习循环**: 展示数据收集与模型改进的良性循环
+    - **TLDR设计**: 引入报纸风格首句总结，为长描述数据树立范式
+    - **全面基准**: IIW-Eval提供多维度质量评估，推动描述生成研究
+    - **下游验证**: T2I重建和组合推理验证描述质量的实用价值
+    - **质量标杆**: 在描述全面性、具体性、无幻觉性上建立新SOTA
+
 - **📄 CtrlSynth** [(arXiv 2410.11963)](https://arxiv.org/abs/2410.11963) 🏷️ **[方法 + 数据]**
   - **聚焦**: **可控图像-文本合成管道** - 通过视觉标签的分解-重组实现细粒度控制的多模态数据生成
   - **数据合成方法** - **分解-重组范式的可控数据合成**:
@@ -2689,7 +3144,7 @@ LLaVA-OneVision代表了一种重要的以数据为中心的方法，在多模�
 
 ## 📄 许可证
 
-本项目采用[CC0-1.0 License](LICENSE)。
+本项目采用[MIT License](LICENSE)。
 
 ---
 

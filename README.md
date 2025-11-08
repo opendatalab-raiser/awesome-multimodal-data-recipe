@@ -20,15 +20,15 @@
 
 ## 📊 Statistics
 
-- **Total Papers:** 36+ (data synthesis/construction methods)
-- **Industrial Reports:** 9 (Baidu, Microsoft, Alibaba, ByteDance, Tencent, etc.)
+- **Total Papers:** 43+ (data synthesis/construction methods)
+- **Industrial Reports:** 10 (Baidu, Microsoft, Alibaba, ByteDance, Tencent, Hunyuan, etc.)
 - **Data Synthesis Methods:** 
-  - Image Generation - Synthesizing New Visual Content (6): Geometric/mathematical reasoning + document/text-dense scenes + scene text detection + multimodal dialogue
+  - Image Generation - Synthesizing New Visual Content (7): Geometric/mathematical reasoning + document/text-dense scenes + scene text detection + multimodal dialogue + text-driven image synthesis
   - Image Editing (4): Non-rigid motion, unified editing, referring expression-guided editing
   - Compositionality / Preference-Guided Synthesis (1): Enhancing compositional understanding
-  - Interleaved Image-Text · Coherence & Consistency (1): Multi-perspective quality filtering
+  - Interleaved Image-Text · Coherence & Consistency (2): Multi-perspective quality filtering + iterative refinement
   - Think with Image (1): Interleaved multimodal reasoning with image manipulation
-  - Image-Invariant - Text Enhancement (20): Fixed images, enriched text only
+  - Image-Invariant - Text Enhancement (25): Fixed images, enriched text only
 - **Notable Datasets:** 
   - 4 interleaved image-text datasets (OmniCorpus, OBELICS, MMC4, CoMM)
   - 2 domain-specific datasets (MMM-RS, MESED)
@@ -948,6 +948,41 @@ This method has been adopted or improved by almost all subsequent open-source VL
 
 This category focuses on **generating new images from scratch** as part of the data synthesis pipeline. These methods create synthetic visual content (geometric diagrams, mathematical figures, text-dense scenes, etc.) programmatically or through generative models, paired with corresponding textual annotations.
 
+#### 🔄 Text-Driven Image Synthesis
+
+- **📄 SynthVLM** [(ACM MM 2025, arXiv 2407.20756)](https://arxiv.org/abs/2407.20756) 🏷️ **[Method + Data]** - **ACM Multimedia 2025**
+  - **Focus**: **Reverse Synthesis: From Text to Image** - Unlike traditional "image→caption", SynthVLM adopts "caption→image" paradigm, using high-quality captions to drive Diffusion models for high-resolution image generation
+  - **Data Synthesis Method** - **Two-Stage Selection-Generation-Reselection**:
+    - **Core Innovation**: First systematic framework proposing caption-to-image generation for VLM pre-training data synthesis, solving Web data's "watermark/ads/low-quality" trifecta
+    - **Stage 1: Caption Selection** (Building high-quality seeds):
+      - **Data Sources**: Aggregate human-annotated (LAION, CC, SBU) + model-generated (BLIP2 re-captioning DataComp)
+      - **Two-Round Filtering**:
+        1. **Quality Filtering**: ChatGPT + statistical metrics (N-gram, Perplexity) remove ads, duplicates, grammar errors
+        2. **Alignment Filtering**: Compute caption-original image CLIPScore, select top 40% (1M captions)
+    - **Stage 2: Image Generation + Quality Screening**:
+      - **Generation**: Use **Stable Diffusion XL (SDXL)** to generate **1024×1024 high-resolution images** for 1M captions (60 sampling steps, grid-searched hyperparams)
+      - **Dual-Metric Screening**:
+        - **CLIPScore(I, C)**: Evaluates image-text semantic alignment
+        - **SSIMScore(I, I_resized)**: Evaluates image quality (simulates 336px resize loss)
+        - **Weighted Formula**: Weighted_Score = CLIPScore + 0.5 × SSIMScore
+      - **Selection**: Top 100K pairs → **SynthVLM-100K**
+    - **Key Technical Details**:
+      - **Avoids Artifacts**: Generated images naturally watermark-free, ad-free (common issues in Web images)
+      - **Higher Resolution**: 1024×1024 vs. Web images typically 336×520
+      - **Better Alignment**: SynthVLM-100K average CLIPScore=0.36, SSIMScore=0.86, significantly higher than COCO-Caption(0.31/0.73), BLIP-LCS(0.32/0.75), ShareGPT4V(0.32/0.79)
+  - **Evaluation & Validation**:
+    - **GPT-4V + InternVL2 + Human Evaluation**: 1K sample blind test, synthetic images win rate **63.3%(GPT-4V), 69.2%(InternVL2), 75.8%(Human)**
+    - **Downstream Tasks**: SynthVLM-7B/13B achieve SOTA with only 100K pre-training data (18% of LLaVA), comprehensively surpassing LLaVA on VQAv2, GQA, MMBench, MME, etc.
+    - **Language Ability Preservation**: MMLU benchmark shows SynthVLM-7B achieves 41.2 (vs. LLaVA 36.3), proving synthetic data doesn't harm language understanding
+  - **Data Scale**: 
+    - **Intermediate Pool**: 1M high-quality captions
+    - **Final Dataset**: **SynthVLM-100K** (100K synthetic image-text pairs)
+  - **Open Source**: ✅ [GitHub](https://github.com/starriver030515/SynthVLM)
+  - **Institution**: Peking University + Huawei + Shanghai AI Lab
+  - **Publication**: ACM MM 2025 | arXiv July 2024
+
+---
+
 #### 📐 Geometric & Mathematical Reasoning
 
 - **📄 R-CoT** [(OpenReview ICLR 2025)](https://openreview.net/pdf?id=iwVkB9zaVb)
@@ -1624,6 +1659,60 @@ This category focuses on **synthetic data generation for enhancing compositional
 
 This category focuses on **high-quality interleaved image-text data construction** with emphasis on **coherence (logical flow), consistency (factual accuracy), and alignment (image-text relevance)**. Unlike simple image-text pairs, these methods curate or synthesize multi-image documents with narrative coherence, making them suitable for training models on long-context multimodal understanding and generation.
 
+- **📄 InterSyn** [(arXiv 2506.09427)](https://arxiv.org/abs/2506.09427) 🏷️ **[Method + Data + Evaluation]**
+  - **Focus**: **Interleaved Image-Text Generation Dataset & Evaluation** - First fully automatic, large-scale, multi-turn instruction-following interleaved image-text QA dataset with dedicated evaluation model SynJudge
+  - **Data Synthesis Method** - **SEIR (Self-Evaluation with Iterative Refinement)**:
+    - **Core Innovation**: Three-stage iterative refinement pipeline embedding self-checking and feedback loops, ensuring semantic completeness, cross-modal synergy, and contextual relevance
+    - **Preparation Phase** (5 steps):
+      1. **Question Collection**: 25 participants each contribute 40 questions from natural conversation scenarios (1000 total)
+      2. **Question Screening & Benchmarking**: LLM + expert review, curate 500 high-quality questions for benchmark
+      3. **Question Template Extraction**: Extract generalized templates from high-quality questions
+      4. **Base Topic Hierarchy**: AI-assisted topic extraction + human organization, build logically clear topic hierarchy
+      5. **Topic Hierarchy Expansion**: AI suggestions + expert curation, expand to 8 domains, 65 categories, 3500 fine-grained topics
+    - **SEIR Three-Stage Refinement** (executed per dialogue turn, K=3 iterations):
+      - **Stage 1: Question Refinement (QR)**:
+        - Initialization: Generate initial question q₀ from template τ and topic z
+        - Iterative refinement: LLM generates refinement suggestions → optimize question based on suggestions
+        - Effect: Quality improves **32%** after 3 iterations
+      - **Stage 2: Answer Refinement (AR)**:
+        - Initialization: Generate initial answer a₀ and temporary caption γ₀
+        - Iterative refinement: LLM evaluates answer and caption → generates suggestions → optimization
+        - Effect: TCC **+15%**, ICC **+11%**, ITS **+19%**
+      - **Stage 3: Image Refinement (IR)**:
+        - Generate initial image using temporary caption → VLM evaluation → optimize caption → regenerate image
+        - Effect: Further improves ICC and ITS
+    - **Key Techniques**:
+      - **Markov Property**: Each iteration depends only on previous state
+      - **Cross-Turn Coherence**: Maintains topic consistency via history context H
+      - **Multi-Model Ensemble**: Qwen/InternLM/GPT + QwenVL/InternVL/LLaVA + FLUX
+  - **SynJudge Evaluation Model**:
+    - **Training Data**: 38,400 human-annotated samples
+    - **Base Model**: QwenVL2.5 / InternVL2.5
+    - **Four-Dimensional Evaluation**:
+      1. **TCC (Text Content Completeness)**: Text content completeness
+      2. **ICC (Image Content Completeness)**: Image content completeness
+      3. **IQ (Image Quality)**: Image quality
+      4. **ITS (Image-Text Synergy)**: Image-text synergy (rewards complementary alignment, penalizes redundancy)
+    - **vs. Human Evaluation**: RMSE only 5% deviation (vs. 13% for other models)
+  - **Data Scale**: 
+    - **InterSyn**: 1.8M single-turn samples + 50K multi-turn dialogues
+    - **Benchmark**: 500 high-quality questions
+    - **Topic Coverage**: 8 domains, 65 categories, 3500 fine-grained topics
+  - **Experimental Results** - **Model Fine-tuning Significantly Improves**:
+    - **Anole Fine-tuning** (50K InterSyn): TCC +14%, ICC +7.6%, IQ +6.2%, ITS **+30%**
+    - **VILA-U Fine-tuning**: TCC **+29.7%**, ITS **+52.1%**
+    - **vs. Existing Models**: InterSyn-generated samples surpass GPT-4o+DALL-E3 across all dimensions (+0.34~0.66)
+  - **Open Source**: ✅ [GitHub](https://github.com/xxx/InterSyn) (specific link TBD)
+  - **Institution**: Nankai University + Shanghai Innovation Institute + Wuhan University + USTC + Shanghai AI Lab
+  - **Publication**: arXiv June 2025
+  - **Significance**:
+    - **First Large-Scale Interleaved Image-Text Instruction Data**: Fills instruction-following interleaved data gap
+    - **Fully Automatic Pipeline**: SEIR significantly reduces human labor cost
+    - **Four-Dimensional Evaluation System**: SynJudge provides fine-grained, interpretable evaluation
+    - **Cross-Modal Synergy**: Emphasizes ITS metric, surpasses traditional consistency evaluation
+
+---
+
 - **📄 CoMM** [(arXiv 2406.10462)](https://arxiv.org/abs/2406.10462) 🏷️ **[Method + Data + Benchmark]** - **CVPR 2025**
   - **Focus**: **Coherent interleaved image-text dataset** with multi-perspective quality filtering and novel evaluation tasks
   - **Data Curation Method** - **Multi-Perspective Filter Strategy + Quality Assessment Framework**:
@@ -2130,6 +2219,235 @@ This category of methods keeps original images fixed while enriching and improvi
   - **Institution**: HKUST, Wuhan University, Zhejiang University, UIUC
   - **Open Source**: ✅ [Code](https://github.com/sterzhang/image-textualization/) | [Dataset](https://huggingface.co/datasets/Sterzhang/image-textualization/)
 
+---
+
+- **📄 Recap-DataComp-1B** [(arXiv 2406.08478)](https://arxiv.org/abs/2406.08478) 🏷️ **[Method + Data]**
+  - **Focus**: **LLaMA-3 Driven Billion-Scale Image Re-captioning** - Uses LLaMA-3-powered LLaVA to re-caption DataComp-1B (1.3B images) at full scale, generating detailed, aligned captions
+  - **Data Synthesis Method** - **Train Captioner + Large-Scale Recaptioning**:
+    - **Core Innovation**: First work to use open-source LLaMA-3 for high-quality re-captioning at **billion scale**, filling community gap
+    - **Stage 1: Train High-Performance Captioner**:
+      - **Model Architecture**: LLaVA-1.5 framework + **LLaMA-3-8B** (replaces original 7B/13B) + CLIP ViT-L/14 (frozen)
+      - **Training Process** (2 stages):
+        1. **Pre-training Stage**: 558K image-text pairs (LAION/CC/SBU) train 2-layer MLP projection
+        2. **Instruction Tuning Stage**: 665K instruction data (LLaVA-1.5) + **HQ-Edit dataset** fine-tune MLP and LLM
+      - **Model Performance**: 
+        - MMMU: 45.2 (vs. LLaVA-1.5-7B's 33.6, +11.6)
+        - MM-Vet: 37.8 (vs. LLaVA-1.5-7B's 33.9, +3.9)
+        - Surpasses LLaVA-1.5-13B, demonstrates strong visual understanding capability
+    - **Stage 2: Large-Scale Recaptioning**:
+      - **Data Source**: DataComp-1B (~1.3B web-crawled image-text pairs, already safety-checked, deduplicated, CLIP-filtered)
+      - **Generation Prompt**: "Please generate a detailed caption of this image. Please be as descriptive as possible."
+      - **Generation Strategy**: Greedy decoding, max 128 tokens, autoregressive generation
+      - **Output**: **Recap-DataComp-1B** (1.3B re-captioned image-text pairs)
+    - **Quality Analysis**:
+      - **Length**: Average 49.43 tokens (vs. original 10.22, +4.8x)
+      - **Vocabulary Richness**: Covers 82.86% of vocabulary, more diverse nouns and adjectives
+      - **Semantic Alignment**:
+        - **LongCLIP Score**: 89.91 (vs. original 10.09, **~9x improvement**)
+        - Standard CLIP Score: 49.57 vs. 50.43 (comparable, since CLIP trained on short captions)
+      - **Human Quality Assessment (GPT-4V scoring)**:
+        - Average score: 4.14/5 (vs. original 3.71, +0.43)
+        - Evaluation dimensions: Fluency, accuracy, alignment
+  - **Experimental Results** - **Significant Improvements for CLIP and DiT Models**:
+    - **CLIP Models** (mixing ratio p=0.8, 80% original + 20% re-captioned):
+      - **Zero-Shot Retrieval** (COCO I→T): 61.5% (vs. original 57.3%, +4.2%)
+      - **Zero-Shot Retrieval** (Flickr30K T→I): 66.9% (vs. original 63.0%, +3.9%)
+      - **Urban-1K Long-Text Retrieval**: 85.0% I→T (vs. original 53.2%, **+31.8%**)
+      - **VG-Attribution**: 66.4% (vs. original 57.1%, +9.3%)
+    - **Text-to-Image DiT Models** (mixing ratio p=0.0, 100% re-captioned):
+      - **FID**: 27.8 (vs. original 36.2, **-8.4**)
+      - **CLIP Score**: 32.5% (vs. original 29.3%, +3.2%)
+      - **Recap-CLIP Score**: 28.3% (vs. original 19.9%, +8.4%)
+      - **GPT-4V Score**: 2.53 (vs. original 1.40, +1.1)
+    - **Key Findings**: 
+      - **Mixing Strategy Optimal**: Original + re-captioned mixed training works best (prevents overfitting)
+      - **Larger Text Encoder**: With re-captioned data, expanding CLIP text encoder further improves performance
+      - **Long-Text Understanding**: Re-captioning significantly improves CLIP's understanding of long, complex text
+  - **Data Scale**: 
+    - **Recap-DataComp-1B**: 1.3B re-captioned image-text pairs
+    - **Average Caption Length**: 49.43 tokens (vs. original 10.22)
+  - **Open Source**: ✅ [Project Page](https://www.haqtu.me/Recap-Datacomp-1B/)
+  - **Institution**: UC Santa Cruz + University of Edinburgh + JHU + Adobe + UT Austin
+  - **Publication**: arXiv June 2024
+  - **Significance**:
+    - **Open-Source Billion-Scale Re-captioning**: First open-source billion-scale high-quality re-captioning dataset, lowers community barrier
+    - **LLaMA-3 Application**: Demonstrates open-source LLM (LLaMA-3) can achieve GPT-4V-level annotation quality
+    - **Cross-Task Generalization**: Simultaneously improves discriminative (CLIP) and generative (DiT) model performance
+    - **Long-Text Understanding**: Proves critical role of detailed captions for long-text retrieval and attribute understanding
+    - **Mixed Strategy Inspiration**: Provides best practices for original + synthetic data mixed training to community
+
+---
+
+- **📄 Hunyuan-Recap100M** [(arXiv 2504.13123)](https://arxiv.org/abs/2504.13123) 🏷️ **[Method + Data]** - **Industrial Report**
+  - **Focus**: **Low-Hallucination, Knowledge-Intensive Re-captioning** - Tencent Hunyuan team's 100M-scale re-captioning work with hallucination mitigation and knowledge enrichment
+  - **Data Synthesis Method** - **Three-Stage SFT + CDPO Pipeline**:
+    - **Core Innovation**: First large-scale re-captioning work systematically addressing **hallucination** and **knowledge enrichment**, three-stage training (SFT + DPO + CDPO) dramatically improves caption quality
+    - **Stage 1: Knowledge-Enriching Supervised Fine-Tuning (SFT)**:
+      - **Model**: Qwen2.5-VL-3B (base model)
+      - **Training Data**: 43K high-quality image-caption pairs
+        - **Sources**: Selected from ShareGPT4V, LLaVA-OneVision, high-quality captions
+        - **Characteristics**: Rich knowledge, detailed descriptions, low hallucination
+      - **Training Objective**: Standard next-token prediction loss
+      - **Effect**: Model learns generating knowledge-rich, detailed captions, but still contains hallucinations
+    - **Stage 2: Direct Preference Optimization (DPO)**:
+      - **Data Construction**: Use trained SFT model to generate multiple caption candidates for each image
+        - **Preference Annotation**: Human annotators compare candidates, mark preferred/dispreferred pairs
+        - **Focus**: Penalize hallucinations, reward accuracy and detail
+      - **Training Data**: 218K preference pairs
+      - **DPO Objective**: Maximize log-probability ratio of preferred vs. dispreferred captions
+      - **Effect**: Significantly reduces hallucinations, but model may gradually saturate, requiring further optimization
+    - **Stage 3: Continuous DPO (CDPO)**:
+      - **Innovation**: Modified standard DPO algorithm—when performance plateaus, iteratively update reference model (e.g., using current policy), resample preference data using updated policy, yielding new implicit reward signal, resume optimization
+      - **Sequence-Length Balancing**: During CDPO training, apply sequence-length balancing operation to preference pairs to prevent sample length from acting as unintended learning signal (e.g., if longer completions more likely to contain hallucinations)
+      - **Training Data**: 139K preference pairs (after filtering and balancing)
+      - **Effect**: Further reduces hallucinations, improves overall caption quality
+    - **Quality Screening & Filtering**:
+      - **Preliminary Annotation**: Use trained captioner to generate captions for large-scale image corpus
+      - **Hallucination Detection**: Use POPE benchmark and other hallucination detection tools to filter high-hallucination captions
+      - **Knowledge Verification**: Use external knowledge bases (Wikipedia, encyclopedias) to verify factual correctness
+      - **Human Review**: Random sampling for human review to ensure final dataset quality
+  - **Data Scale**:
+    - **Hunyuan-Recap100M**: 100M re-captioned image-text pairs
+    - **Average Caption Length**: 103.15 tokens (significantly longer than traditional captions)
+    - **Hallucination-Free Rate**: 77.9% (vs. baseline 48.3%, **+29.6%**)
+    - **Knowledge-Intensive**: Average 8.1 knowledge entities per caption
+  - **Experimental Results** - **State-of-the-Art Performance on Multiple Benchmarks**:
+    - **Hallucination Metrics**: 
+      - **Non-Hallucination Rate**: 77.86% (CDPO) vs. 74.47% (DPO) vs. 73.75% (SFT)
+      - **Low-Hallucination Rate**: 96.85% (CDPO) vs. 96.64% (DPO) vs. 97% (baseline)
+    - **Vision-Language Pre-training**: Models pre-trained on Hunyuan-Recap100M significantly outperform baseline on 15+ VLM benchmarks
+    - **Knowledge-Intensive Tasks**: Particularly excels on tasks requiring world knowledge (e.g., VQAv2, OK-VQA)
+    - **Generalization**: Strong generalization to different model architectures (CLIP, DiT, VLMs)
+  - **Ablation Studies**:
+    - **SFT vs. DPO vs. CDPO**: CDPO best reduces hallucinations while maintaining caption detail
+    - **Data Scale**: Performance scales with data volume, 100M achieves optimal cost-performance balance
+    - **Knowledge Enrichment**: Knowledge-enriched captions significantly improve downstream task performance
+  - **Open Source**: ✅ **Will Release** - Hunyuan-Recap100M dataset (100M image-text pairs)
+  - **Institution**: Tencent Hunyuan Team
+  - **Publication**: arXiv April 2025
+  - **Significance**:
+    - **Industrial-Scale Hallucination Mitigation**: First systematic solution to hallucination problem in large-scale re-captioning
+    - **Three-Stage Training**: SFT + DPO + CDPO provides reusable paradigm for high-quality caption generation
+    - **Knowledge Enrichment**: Demonstrates importance of incorporating external knowledge into multimodal data
+    - **Open-Source Contribution**: 100M-scale dataset significantly enriches community resources
+    - **Generalization**: Methods and data broadly applicable to various VLM pre-training scenarios
+
+---
+
+- **📄 SynC** [(arXiv 2507.18616)](https://arxiv.org/abs/2507.18616) 🏷️ **[Method]**
+  - **Focus**: **Synthetic Dataset Refinement for Zero-shot Image Captioning** - Refine synthetic image-caption datasets through one-to-many mapping, reassigning captions to best-aligned synthetic images
+  - **Data Synthesis Method** - **One-to-Many Mapping + Cycle-Consistency Alignment Scoring**:
+    - **Core Innovation**: Unlike traditional pruning or regeneration, SynC focuses on **reassigning captions to pre-existing best-matched synthetic images from the image pool**
+    - **Problem Definition**:
+      - **Traditional One-to-One**: Φ_One(C_i) = {I_i^syn}, each caption corresponds only to directly generated image
+      - **Challenge**: T2I models frequently generate misalignment images (missing objects, incorrect attributes), while captions remain well-formed
+      - **Gap vs. Web Data Pruning**: Web data is "noisy text + clean image"; synthetic data is "clean caption + noisy image"
+    - **One-to-Many Selection Strategy (Φ_T2I)**:
+      - **Input**: Caption C_i, pre-generated synthetic image pool I^syn
+      - **T2I Retrieval**: Use VLM (SigLIP ViT-B/16) text encoder E_T and image encoder E_I
+      - **Retrieve Top-K Candidates**: Φ_i = Top-K_j {⟨E_I(I_j^syn), E_T(C_i)⟩}, K=15
+      - **Output**: Candidate set {I_r^syn}_r∈R_i, broader than just I_i^syn
+      - **Rationale**: Search across caption corpus for best image matches, rather than being limited to misaligned pairs
+    - **Cycle-Consistency Alignment Scoring (f_ret)**:
+      - **Standard CLIP Score Limitation**: Global semantic similarity, lacks fine-grained detail verification
+      - **Cycle-Consistency Inspiration**: T2I retrieval (selection) + I2T retrieval (verification)
+      - **I2T Retrieval Scoring**:
+        1. For candidate image I^syn, perform I2T retrieval to find top-K_r captions from caption corpus C
+        2. Use SBERT (Sentence Transformer) to compute text similarity between retrieved captions and original caption C
+        3. Formula: f_ret(I^syn, C) = max_r∈Φ(I^syn) ⟨E_S(C_r), E_S(C)⟩
+      - **Verification Logic**: If I^syn matches C, then captions related to I^syn should be similar to C
+      - **Final Selection**: I_i^*syn = argmax_{I^syn∈S(C_i)} f_ret(I^syn, C_i)
+    - **Filtering**: Sort by alignment score, keep top τ% pairs, τ ∈ [0,1]
+  - **Implementation Details**:
+    - **Baseline Model**: PCM-Net (ECCV 2024)
+    - **T2I Model**: Stable Diffusion v1.4 (512×512, 20 sampling steps)
+    - **Retrieval VLM**: SigLIP ViT-B/16@256
+    - **Text Encoder**: SBERT (unimodal text similarity)
+    - **Data Sources**: CC3M, SS1M (~200K synthetic pairs)
+  - **Experimental Results** - **Consistent Improvements Across Captioning Benchmarks**:
+    - **COCO Captioning** (ViT-B/32):
+      - BLEU@4: 31.5 → 33.6 (+2.1)
+      - CIDEr: 103.8 → 112.0 (+8.2)
+    - **Flickr30k**:
+      - BLEU@4: 26.9 → 28.2 (+1.3)
+      - CIDEr: 61.3 → 65.8 (+4.5)
+    - **Cross-Domain** (COCO→Flickr30k):
+      - CIDEr: 45.5 → 49.5 (+4.0)
+    - **NoCaps** (out-of-domain): Entire CIDEr 70.5 → 72.7 (+2.2)
+    - **Consistency**: Improvements across all settings (in-domain, cross-domain, out-of-domain)
+  - **Ablation Studies**:
+    - **vs. Traditional Pruning Methods**: SynC surpasses filtering-only methods (avoids computational cost and fairness issues)
+    - **K Value Impact**: K=15 achieves optimal balance
+    - **τ Threshold**: Keeping top 80-90% pairs most effective
+  - **Open Source**: ✅ [GitHub](https://github.com/boreng0817/SynC)
+  - **Institution**: Hanyang University + CJ Group
+  - **Publication**: arXiv July 2025
+  - **Significance**:
+    - **Novel Synthetic Data Refinement**: First method specifically designed for "clean caption + noisy image" scenario
+    - **Leverages Pre-existing Resources**: Reassigns from image pool, avoiding regeneration cost
+    - **Cycle-Consistency**: Bidirectional retrieval ensures fine-grained alignment
+    - **Strong Generalization**: Simple, model-agnostic, broadly applicable
+    - **Practical Impact**: Efficient, effective approach readily integrated into existing ZIC pipelines
+
+---
+
+- **📄 High-Res Captioning** [(arXiv 2510.27164)](https://arxiv.org/abs/2510.27164) 🏷️ **[Method]**
+  - **Focus**: **High-Resolution Image Accurate and Detailed Caption Generation** - Training-free pipeline combining VLM + LLM + object detection systems to overcome VLM low-resolution pre-training detail loss
+  - **Data Synthesis Method** - **Four-Stage Caption Refinement Pipeline**:
+    - **Core Innovation**: Through "progressive visual zoom-in" strategy and multi-stage verification, generates more detailed, reliable high-resolution image captions while reducing hallucinations
+    - **Stage 1: Initial Caption Generation**:
+      - **VLM Generation**: Use VLM (InstructBLIP/LLaVA-v1.5/Qwen2-VL) to generate initial caption
+      - **Prompt**: "Describe this image in detail."
+      - **Problem**: VLMs typically pre-trained at low resolution (224×224, 336×336), losing fine details when downsampling high-resolution images
+      - **LLM Keyword Extraction**: Use GPT-4o to extract keyword list from initial caption
+    - **Stage 2: Identify Potentially Missing Objects**:
+      - **LLM Reasoning**: Based on keywords, LLM infers using world knowledge potentially co-occurring but missed objects
+      - **Example**: If keywords include "table, chair", LLM infers potential "lamp, books, cup"
+      - **Output**: Expanded candidate object list (original + inferred)
+    - **Stage 3: Object Detection Ensemble Verification**:
+      - **Detector Ensemble**: GroundingDINO + YOLO-World + OWLv2
+      - **Verification Process**: 
+        - Each object checked: If detected by any model (confidence ≥0.5, IoU ≥0.7) considered same object
+        - Object undetected: Any detector fails to detect → remove from initial caption (eliminates hallucinations)
+      - **Output**: Verified object list + high-confidence bounding boxes
+    - **Stage 4: Final Caption Generation**:
+      - **Re-prompt VLM**: Use detected object list + bounding boxes to re-prompt VLM
+      - **GPT-4o Integration**: Integrate (1) initial caption, (2) verified object list with spatial coordinates, (3) new detailed descriptions
+      - **Final Output**: Single, coherent, contextually rich enhanced caption
+    - **Key Technical Advantages**:
+      - **Training-Free**: No VLM retraining required, flexible VLM model choice
+      - **Multi-Stage Verification**: LLM reasoning + detector ensemble ensures accuracy
+      - **Hallucination Reduction**: Detection verification effectively removes false objects
+      - **High-Resolution Applicable**: Maintains detail recognition in 4K+ images
+  - **Data Scale & Experimental Setup**:
+    - **Image Source**: Filter 4K resolution (3840×2160 pixels) images from Objects365 dataset
+    - **Evaluation Benchmarks**: CHAIR (hallucination), POPE (hallucination), GPT-4o scoring (quality)
+  - **Experimental Results** - **Significant Improvements in Caption Quality and Hallucination Reduction**:
+    - **CHAIR Metric** (Caption Quality):
+      - InstructBLIP: 0.6333 → 0.6952 (+9.59%)
+      - LLaVA-v1.5: 0.6785 → 0.7304 (+7.66%)
+      - Qwen2-VL: 0.8260 → 0.8398 (+1.68%)
+    - **POPE Benchmark** (Hallucination Evaluation):
+      - **Random Sampling** (InstructBLIP): F1 Score 0.1484 → 0.2153 (+45.10%)
+      - **Popular Sampling** (InstructBLIP): F1 Score 0.1732 → 0.2229 (+28.85%)
+      - **Adversarial Sampling** (InstructBLIP): F1 Score 0.1662 → 0.2141 (+28.82%)
+    - **GPT-4o Quality Scoring**: Substantial improvements in detail richness and factual accuracy
+  - **Ablation Studies**:
+    - **Impact of Each Stage**: Each refinement stage contributes incremental quality improvements
+    - **Detector Ensemble vs. Single Detector**: Ensemble consistently outperforms single detector by 5-8%
+    - **LLM Reasoning Contribution**: Identifying missing objects increases recall by 12-15%
+  - **Open Source**: ⚠️ Code/model release status not explicitly mentioned in paper
+  - **Institution**: Not explicitly stated (academic research)
+  - **Publication**: arXiv October 2025
+  - **Significance**:
+    - **Training-Free Solution**: Practical approach requiring no model retraining
+    - **Multi-Stage Verification**: Systematic pipeline ensuring caption accuracy
+    - **Hallucination Mitigation**: Significant reduction in false object mentions
+    - **High-Resolution Focus**: Addresses critical gap in VLM caption quality for high-res images
+    - **Modular Design**: Each component replaceable, allowing flexible implementation
+
+
+
 #### 🤖 VLM/LLM-based Synthetic Text Generation
 
 > Following papers explicitly describe how to use large models to generate synthetic captions/dialogues for images
@@ -2396,6 +2714,117 @@ This category of methods keeps original images fixed while enriching and improvi
     - **Closed-Loop Self-Verification**: No manual filtering rule design needed
     - **Cross-Task Generalization**: Comprehensive improvements across classification, retrieval, compositional reasoning, and long-tail tasks
     - **Data Efficiency**: Demonstrates sample efficiency of synthetic data over pure real data scaling
+
+---
+
+- **📄 ImageInWords** [(arXiv 2405.02793)](https://arxiv.org/abs/2405.02793) 🏷️ **[Method + Data]** - **ECCV 2024**
+  - **Focus**: **Hyper-Detailed Image Descriptions** - Human-in-the-loop framework combining VLM generation with sequential human enhancement and active learning to produce hyper-detailed image descriptions
+  - **Data Synthesis Method** - **Seeded Annotation + Sequential Augmentation + Active Learning**:
+    - **Core Innovation**: Combines **VLM-generated meta-elements** with **human annotator iterative refinement**, producing hyper-detailed image descriptions through sequential augmentation and active learning loops
+    - **Annotation Framework**:
+      1. **Task 1: Object-Level (Fine-grained element annotation)**:
+         - **Input**: Image + Object Detection (OD) model-generated (label, bbox)
+         - **VLM Seeding**: Use PaLI-35B to generate short caption for each bbox
+         - **Human Enhancement**: Annotators add, delete, merge, and refine annotations on panels
+         - **Output**: (label, bbox, detailed description) triplets, describing objects thoroughly
+      2. **Task 2: Image-Level (Full-image descriptions)**:
+         - **Input**: Task 1 multi-element output + VLM-generated full-image caption + optional domain-specific metadata (e.g., art style)
+         - **Sequential Augmentation**: Annotators iteratively enhance and improve descriptions (typically 3 rounds)
+         - **Active Learning**: Every 1K samples collected, use accumulated data to fine-tune PaLI-35B for better seed generation
+         - **Output**: 217.2 tokens average length hyper-detailed descriptions
+    - **Sequential Augmentation Benefits** (Fig. 2):
+      - **Efficiency Gains**: 3 sequential annotators vs unordered
+        - **Token Count**: +20% token count growth (170→204 words)
+        - **Time Saving**: -30% time (from 800→560 sec/annotator)
+        - **Inter-Annotator Agreement**: Jaccard similarity from 0.2 rises to 0.65 (round 1-2 and round 2-3)
+      - **Implicit Learning Loop**: Annotators learn from each other's perspectives across rounds
+    - **Active Learning Loop**:
+      - **Initial PaLI**: Average ~15 word captions
+      - **After 3K Samples**: Generates 150+ word captions
+      - **Key Mechanism**: Gradually reduces human annotation burden
+    - **Annotation Guidelines** (detailed in Appendix A):
+      - **TLDR Principle**: Start with newspaper article-style brief summary
+      - **Importance Order**: Describe by importance order, not left-to-right order
+      - **Visual Precision**: Focus on visually determinable details, avoid speculation
+      - **Comprehensive Coverage**: Include background, colors, textures, angles, text, rendering style
+      - **Special Focus**: Describe people's clothing, brand logos, specific attributes, etc.
+    - **Key Technical Advantages**:
+      - **Seeded Annotation**: Lower annotation cost and time by starting from VLM baseline
+      - **Sequential Augmentation**: More efficient than parallel annotation while achieving consistency
+      - **Active Learning**: Continuously improves VLM to approach human annotation quality
+      - **Quality Verification**: Token count + n-gram Jaccard similarity ensure consistency
+  - **Data Scale**:
+    - **IIW Dataset**: 9,018 images (Train: 8,573, Test: 445)
+    - **Average Statistics**:
+      - **Tokens**: 217.2 (vs DOCCI 135.7, DCI 148.0)
+      - **Sentences**: 9.8
+      - **Nouns**: 52.5 (vs DOCCI 34.0, DCI 35.3)
+      - **Adjectives**: 28.0 (vs DOCCI 16.6, DCI 16.3)
+      - **Verbs**: 19.1 (vs DOCCI 9.6, DCI 10.5)
+    - **Image Source**: WebLI-like dataset crawl
+    - **Annotators**: 20+ domain experts (creative writing, art history, photography, etc.)
+  - **Experimental Results** - **Human SxS and Downstream Application Validation**:
+    - **IIW Human Annotations vs Prior Datasets** (Table 2):
+      - **vs DCI (112 samples)**:
+        - Comprehensiveness: +61%
+        - Specificity: +80%
+        - Hallucinations: -42%
+        - TLDR Quality: +91%
+        - Human-Likeness: +82%
+      - **vs DOCCI (100 samples)**:
+        - Comprehensiveness: +42%
+        - Specificity: +82%
+        - Hallucinations: -35%
+        - TLDR Quality: +79%
+        - Human-Likeness: +68%
+      - **Average Win**: +66% (average across 5 metrics vs prior datasets)
+    - **IIW Human Annotations vs GPT-4V** (Table 3 right):
+      - **100 Sample Comparison**:
+        - Comprehensiveness: +35%
+        - Specificity: +53%
+        - Hallucinations: -59%
+        - TLDR Quality: +70%
+        - Human-Likeness: +21%
+      - **Average Win**: +48%
+    - **IIW Model (fine-tuned PaLI-35B) vs Prior Dataset Models** (Table 3 left):
+      - **vs DCI Model**: +42% Comprehensiveness, +54% Specificity, +51% TLDR
+      - **vs DOCCI Model**: +4% Comprehensiveness, +37% Specificity, +57% TLDR
+      - **Average Win**: +31% (average across 5 metrics vs prior dataset-trained models)
+  - **Downstream Applications**:
+    - **Text-to-Image Reconstruction** (Table 4, 240 LocNar images):
+      - Use Imagen model, human evaluation on generated candidates (S1, S1-2, S1-3...)
+      - **Mean Rank**: IIW 1.63 vs DOCCI 1.74 vs DCI 2.05 (**rank 1**)
+      - **CLIP Similarity**: IIW 0.861 vs DOCCI 0.853 vs DCI 0.844 (**highest**)
+      - **Key Finding**: Even using only 1 sentence, IIW still outperforms prior datasets
+    - **Compositional Reasoning** (Table 5, LLM-only setting):
+      - Replace images in ARO/SVO-Probes/Winoground with IIW descriptions for LLM judgment
+      - **ARO VG-Attribution**: 90.37% (vs InstructBLIP 83.99%, LLaVA 84.80%, **+6%**)
+      - **ARO VG-Relation**: 66.19% (vs InstructBLIP 62.73%, LLaVA 63.71%, **+2-3%**)
+      - **Winoground**: 69.38% (vs InstructBLIP 65.25%, LLaVA 63.38%, **+4-6%**)
+  - **IIW-Eval Benchmark** (Table 6):
+    - **2,612 Images** + **1,899 object-level annotations** + **2,712 image-level annotations**
+    - **412 Human SxS Labels** (IIW vs DCI, IIW vs DOCCI)
+    - **IIW-400**: 400 quality sample set + DCI subset (112) + DOCCI subset (100)
+    - **Model-Enriched Datasets**: LocNar (1,000) + XM3600 (1,000) re-annotated using IIW model
+  - **Ablation Study Key Findings**:
+    - **Seeded Annotation Importance** (Table 7): Seeded vs from-scratch = +54% Comprehensiveness, +48% Specificity
+    - **IIW Human vs IIW Model** (Table 8, 100 samples): Human still better (+78% Compr., +91% Spec.)
+    - **Sequential Rounds**: 3 rounds reach 0.8 similarity threshold, far superior to prior datasets
+  - **Publication**: ECCV 2024 | arXiv May 2024 (v2: October 2024)
+  - **Institution**: Google DeepMind, Google Research, University of Washington
+  - **Authors**: Roopal Garg, Andrea Burns, Burcu Karagol Ayan, Yonatan Bitton, et al.
+  - **Open Source**: ✅ **Fully Open-Source** - IIW-Eval benchmark (2.6K images), Human SxS labels, Model-enriched LocNar+XM3600 data
+  - **Project Page**: [github.com/google/imageinwords](https://github.com/google/imageinwords)
+  - **Significance**:
+    - **Pioneering Human-AI Collaboration**: First systematic combination of VLM generation with human iteration for hyper-detailed description generation framework
+    - **Sequential Augmentation Breakthrough**: Proves sequential annotation achieves efficiency + quality dual win
+    - **Active Learning Loop**: Demonstrates continuous collection data improves model in feedback loop
+    - **TLDR Principle**: Introduces newspaper lead-sentence summarization as new paradigm for long descriptions
+    - **Comprehensive Benchmark**: IIW-Eval provides multi-dimensional evaluation metrics driving future research
+    - **Downstream Validation**: T2I reconstruction and compositional reasoning prove practical value
+    - **Quality Leadership**: Surpasses prior datasets in comprehensiveness, specificity, reduced hallucinations across board SOTA
+
+---
 
 #### 🛠️ Tool-Assisted Annotation Generation (For Data Synthesis)
 
