@@ -20,15 +20,15 @@
 
 ## 📊 Statistics
 
-- **Total Papers:** 43+ (data synthesis/construction methods)
+- **Total Papers:** 48+ (data synthesis/construction methods)
 - **Industrial Reports:** 10 (Baidu, Microsoft, Alibaba, ByteDance, Tencent, Hunyuan, etc.)
 - **Data Synthesis Methods:** 
   - Image Generation - Synthesizing New Visual Content (7): Geometric/mathematical reasoning + document/text-dense scenes + scene text detection + multimodal dialogue + text-driven image synthesis
   - Image Editing (4): Non-rigid motion, unified editing, referring expression-guided editing
-  - Compositionality / Preference-Guided Synthesis (1): Enhancing compositional understanding
-  - Interleaved Image-Text · Coherence & Consistency (2): Multi-perspective quality filtering + iterative refinement
+  - Compositionality / Preference-Guided Synthesis (3): Enhancing compositional understanding + multi-concept composition + multi-image customization
+  - Interleaved Image-Text · Coherence & Consistency (3): Multi-perspective quality filtering + iterative refinement + multimodal embedding-based correlation
   - Think with Image (1): Interleaved multimodal reasoning with image manipulation
-  - Image-Invariant - Text Enhancement (25): Fixed images, enriched text only
+  - Image-Invariant - Text Enhancement (27): Fixed images, enriched text only
 - **Notable Datasets:** 
   - 4 interleaved image-text datasets (OmniCorpus, OBELICS, MMC4, CoMM)
   - 2 domain-specific datasets (MMM-RS, MESED)
@@ -1655,6 +1655,151 @@ This category focuses on **synthetic data generation for enhancing compositional
 
 ---
 
+- **📄 Gen4Gen** [(arXiv 2402.15504)](https://arxiv.org/abs/2402.15504) 🏷️ **[Method + Data + Benchmark]** - **CVPR 2024**
+  - **Focus**: **Generative Data Pipeline for Generative Multi-Concept Composition** - Semi-automated dataset creation pipeline Gen4Gen for multi-concept personalization using cascaded AI foundation models
+  - **Data Synthesis Method** - **Semi-Automated Multi-Stage Composition Pipeline**:
+    - **Core Innovation**: Leverages recent advancements in image foreground extraction, LLMs, MLLMs, and inpainting to compose personalized concepts into realistic scenes with densely corresponding text descriptions
+    - **Three Design Principles**:
+      1. **Detailed Text-Image Pairing**: Text must be well-aligned with corresponding image, providing information for both foreground and background objects
+      2. **Reasonable Object Layout and Background Generation**: Objects only co-exist when possible in real-life, and their positions in image make sense
+      3. **High Resolution**: Ensures dataset caters to end goal of generating high-quality, multi-concept personalized images
+    - **Gen4Gen Pipeline** (three main stages):
+      1. **Object Association and Foreground Segmentation**:
+         - **Input**: Set of k objects O = {o_i}^k, where each object o_i is represented by set of n images X_oi = {x_j}^n
+         - **Source Data**: DreamBooth, Custom Diffusion, online copyright-free sources
+         - **Object Combination Selection**: Find subset of object combinations O' = {o_a, o_b, ...} that are intuitively likely to co-exist (e.g., dog, cat, houseplant)
+         - **Foreground Segmentation**: Apply DIS (category-agnostic saliency object detector) to segment foreground given objects within composition O'
+         - **Output**: Segmented foreground images D(X') and corresponding masks M(D(X'))
+      2. **LLM-Guided Object Composition**:
+         - **Bounding Box Generation**: Exploit LLM's zero-shot capability, inquire ChatGPT to provide probable set of bounding boxes given object combinations O'
+         - **Template-Based**: Show few samples to ChatGPT explaining task of providing bounding box points given object bounding boxes in COCO dataset
+         - **Scale Enhancement**: Utilize GPT-4 for logical enhancements, request scales for each bounding box to be realistic (solves scaling problem where some objects are unrealistically bigger)
+         - **Composition**: Place individual images within D(X') following bounding box location and given size to obtain foreground image I_fg and mask M(I_fg)
+         - **Background Prompt Generation**: Obtain set of prompts P describing possible scenes I_fg may be placed in by verifying validity against same LLM model
+      3. **Background Repainting and Image Recaptioning**:
+         - **Background Retrieval**: Find starting background image I_bg from copyright-free sources (Unsplash) with prompt p ∈ P
+         - **Inpainting**: Use text-to-image diffusion inpainting model f (Stable-Diffusion-XL) to repaint I_fg by embedding it within background image I_bg
+         - **Mask Smoothing**: Utilize smoothed soft mask (average smoothing on M(I_fg) with 5×5 window) to enhance integration of foreground object into background
+         - **Output**: Final image I_O' = f(I_fg, M(I_fg), I_bg)
+         - **Recaptioning**: Inquire MLLM (LLaVA-1.5) to provide detailed caption describing I_O' to subset of all combinations (word limit: 30, constrained by CLIP's context constraints of 77 tokens max)
+    - **Training-Time Prompt Engineering Strategies**:
+      - **Global Composition Token**: Adapt DreamBooth concept to complex compositions, introduce global token alongside individual tokens for each object to enhance capabilities in describing detailed scene arrangements
+      - **Repeat Concept Token Prompts During Training**: Employ strategy of repeating concept token prompts during training to encourage model to ensure presence of each specified concept in generated images
+      - **Incorporating Background Prompts**: Make sure background is stated within training prompt to disentangle background and concept compositions
+    - **Key Techniques**:
+      - **DIS Segmentation**: Category-free saliency object detector, agnostic to set of objects being used
+      - **LLM-Guided Composition**: Leverages LLM's zero-shot capability for realistic object layout
+      - **Scale Enhancement**: GPT-4 logical enhancements ensure realistic object proportions
+      - **Diffusion Inpainting**: Stable-Diffusion-XL for high-quality background integration
+      - **MLLM Recaptioning**: LLaVA-1.5 for detailed caption generation maintaining alignment
+    - **MyCanvas Dataset**:
+      - **Scale**: 150 objects (some with single image, others with multiple), 41 probable compositions, over 10K images filtered manually down to **2,684 images** of best quality
+      - **Caption Statistics**: Average word length 17.7, approximately 30% of lengths extending beyond 20 words
+      - **Object Diversity**: Wide range of objects, surpassing both CustomConcept101 and DreamBooth datasets
+      - **Recaptioning Coverage**: Applied to 10 object combinations O' within MyCanvas dataset
+    - **Comprehensive Evaluation Metrics**:
+      - **CP-CLIP (Composition-Personalization-CLIP)**: Assesses accuracy of composition and personalization
+        - **Composition Accuracy**: Is each personalized concept mentioned in text reflected during image generation?
+        - **Fidelity**: Does generated personalized concepts look similar to their source counterparts?
+      - **TI-CLIP (Text-Image Alignment CLIP)**: Serves as indicator of potential overfitting by evaluating model's generalization quality across various textual backgrounds
+    - **Experimental Results**:
+      - **Multi-Concept Personalization**: Previous methods (Custom Diffusion) with enhanced dataset (MyCanvas) and prompting strategy can gain significant improvements in generating realistic multi-concept images with varying backgrounds while sticking to identity of personalized concepts
+      - **Improvements**: More apparent under very complex compositions, challenging guidance (relative positions), and multiple semantically similar concepts (e.g., two dog identities in same image)
+      - **Baseline**: Simple baseline built on top of Custom Diffusion with empirical prompting strategies for future researchers to evaluate on MyCanvas
+    - **Publication**: CVPR 2024 | arXiv February 2024
+  - **Institution**: UC Berkeley, University of Oxford, Harvard University, CMU, HKU, UC Davis
+  - **Open Source**: ✅ [Project](https://danielchyeh.github.io/Gen4Gen/) | [GitHub](https://github.com/danielchyeh/Gen4Gen) - Code, MyCanvas Dataset (2,684 images), Benchmark Metrics
+  - **Significance**:
+    - **Integrating AI Foundation Models**: Semi-automated dataset creation pipeline introduces possibilities of using cascaded AI-foundation models for generating high-quality datasets
+    - **Dataset Quality Matters**: Proof-of-concept MyCanvas dataset reflects that simply composing well-aligned image and text description pairs would significantly improve task of multi-concept personalization
+    - **Benchmark for Multi-Concept Personalization**: Holistic evaluation benchmark considers personalization accuracy, composition correctness, and text-image alignment in task of multi-concept personalization
+    - **Chaining Foundation Models**: Demonstrates chaining strong foundation models could be promising direction for generating high-quality datasets targeting variety of challenging tasks
+
+---
+
+- **📄 SynCD** [(arXiv 2502.01720)](https://arxiv.org/abs/2502.01720) 🏷️ **[Method + Data]** - **CVPR 2025**
+  - **Focus**: **Generating Multi-Image Synthetic Data for Text-to-Image Customization** - Simple approach to address challenges in text-to-image customization by creating Synthetic Customization Dataset (SynCD) consisting of multiple images of same object under different lighting, poses, and backgrounds
+  - **Data Synthesis Method** - **Masked Shared Attention + 3D Consistency + Dataset Filtering**:
+    - **Core Innovation**: Leverages existing text-to-image models and 3D assets to create high-quality synthetic dataset of multiple images of same object in different contexts, maintaining object identity while generating multiple images with varying contexts
+    - **SynCD Dataset Generation Pipeline** (three main steps):
+      1. **LLM-Assisted Prompt Generation**:
+         - **Object Description**: Design each prompt to have detailed description of both object and background
+         - **Rigid Objects**: Use Cap3D descriptions for Objaverse assets (e.g., "a large metal drum with blue and pink stripes")
+         - **Deformable Objects**: Instruct LLM to generate descriptive captions (e.g., "The Russian blue cat has a thick, plush coat in a steel blue color, with green eyes")
+         - **Background Prompt Generation**: Instruct LLM (Instruction-tuned Llama3) to generate plausible background scene descriptions based on object description
+         - **Combination**: Combine one object description with multiple background descriptions and input to image generation step
+      2. **Multi-Image Consistent-Object Generation**:
+         - **Base Model**: Use DiT-based FLUX model to generate images with consistent object
+         - **Masked Shared Attention (MSA) Mechanism**:
+           - **Method**: Modify attention block of diffusion model such that each image attends to itself as well as foreground object regions of other images
+           - **Formula**: MSA({q_i, k_i, v_i}^N) ≡ Softmax(q_i [k_1 ... k_N]^T / √d' + M_i) [v_1 ... v_N]
+           - **Mask M_i**: Initialized so that text tokens of one image do not attend to other image tokens, and i-th image feature only attends to object region of other images, ignoring their background
+           - **Effect**: Enables generation of objects with similar visual features among all images
+         - **Rigid Object Generation with 3D Consistency**:
+           - **Depth Guidance**: For rigid objects with available 3D datasets (Objaverse), render asset from N varying camera poses and feed rendered depth map and captions to depth-conditioned FLUX model
+           - **Depth Guidance**: Ensures 3D shape consistency of object across images
+           - **Feature Warping**: For representative example of generating two images with same object, given latent features f_i ∈ R^(h×w)×d, i ∈ {1,2}, warping is calculated as:
+             - f̂_2(u,v) = α f_1(u+Δu, v+Δv) + (1-α) f_2(u,v)
+             - Where (u+Δu, v+Δv) denotes corresponding location in first image, α is binary scalar denoting if that location is visible in first image
+           - **Application**: Apply warping for all pairs with appropriate masks and only during early diffusion timesteps
+           - **Effect**: Increases multi-view consistency without introducing warping artifacts and allows flexibility for lighting variations
+      3. **Dataset Filtering**:
+         - **Aesthetic Score Filtering**: Reject images with aesthetic score below 6
+         - **Object Identity Similarity**: Use DINOv2 to measure object identity similarity, remove images with average pairwise feature similarity below 0.7 within their set
+         - **Final Dataset**: Contains ~95,000 objects with 2-3 images per object, uniformly distributed among rigid and deformable categories
+    - **Encoder-Based Model Training**:
+      - **Architecture**: Fine-tune existing text-to-image diffusion or flow-based model using SynCD dataset
+      - **Training Setup**: Given N images of object, consider one as target and rest as references
+      - **Shared Attention Mechanism**: For conditioning generation on real reference images, employ Shared Attention similar to dataset generation pipeline
+        - Concatenate reference image features with target image features along sequence dimension in each attention block
+        - Query features of target image are subsequently updated by attending to both itself and reference images' features
+      - **Training Objective**: Adopt velocity or flow prediction objective for diffusion and flow-based models respectively
+    - **Inference Method**:
+      - **Normalized Guidance Vectors**: Directly combining text and image guidance using previous work often leads to over-exposure issues in generated image, especially at high image guidance
+      - **Proposed Solution**: Normalize image and text guidance vectors
+        - Formula: ε_θ(x_t, {x_i}^K, ∅) + λ_I ||g||/||g_I|| · g_I + λ_c ||g||/||g_c|| · g_c
+        - Where g_I = ε_θ(x_t, {x_i}^K, ∅) - ε_θ(x_t, ∅, ∅), g_c = ε_θ(x_t, {x_i}^K, c) - ε_θ(x_t, {x_i}^K, ∅), ||g|| = min(||g_I||, ||g_c||)
+      - **Effect**: Helps achieve better image alignment with reference object while still following text prompt
+      - **Flexibility**: Number of reference images can vary from training since attention-based conditioning is agnostic to sequence length
+    - **Key Techniques**:
+      - **Masked Shared Attention**: Enables consistent object generation across multiple images
+      - **3D Consistency for Rigid Objects**: Depth guidance and feature warping ensure multi-view consistency
+      - **Shared Attention in Training**: Allows model to learn from multiple reference images
+      - **Normalized Guidance Inference**: Mitigates over-exposure issues while maintaining text and image alignment
+    - **Data Scale**:
+      - **SynCD Dataset**: ~95,000 objects with 2-3 images per object
+        - **Rigid Objects**: 75,000 rigid category assets from Objaverse
+        - **Deformable Objects**: 16 deformable super-categories of animals with approximately 100 different subspecies
+      - **Uniform Distribution**: Uniformly distributed among rigid and deformable categories
+    - **Experimental Results**:
+      - **Quantitative Comparison** (3 input reference images):
+        - **Ours(1B)**: MDINOv2-I 0.806, CLIPScore 0.773, TIFA 0.303, GeometricScore 0.801
+        - **Ours(3B)**: MDINOv2-I 0.822, CLIPScore 0.789, TIFA 0.313, GeometricScore 0.838
+        - **Ours(12B)**: MDINOv2-I 0.778, CLIPScore 0.771, TIFA 0.306, GeometricScore 0.780
+        - All variants perform better or on par with other baselines on overall GeometricScore metric
+      - **Human Evaluation**:
+        - **Ours(1B) vs JeDi**: 69.51% text alignment, 63.05% image alignment, 80.89% photorealism, 68.19% overall preference
+        - **Ours(3B) vs Emu-2**: 70.49% text alignment, 66.88% image alignment, 64.66% photorealism, 66.74% overall preference
+        - **Ours(12B) vs OminiControl**: 56.27% text alignment, 58.30% image alignment, 54.47% photorealism, 58.02% overall preference
+      - **Ablation Studies**:
+        - **SynCD Dataset Contribution**: Simply fine-tuning with SynCD dataset already improves performance
+        - **Shared Attention Effectiveness**: Adding reference condition via shared attention further boosts performance
+        - **Multiple Reference Images**: Allows use of multiple reference images during inference, improving performance as number of reference images increases to three
+        - **Normalized Guidance**: Outperforms guidance rescale in mitigating over-exposure issues
+    - **Model Variants**:
+      - **Ours(12B)**: Fine-tuned FLUX model, only fine-tune attention layers with LoRA
+      - **Ours(1B/3B)**: Latent Diffusion Models initialized with IP-Adapter, fine-tune LoRA layers in self-attention block and key-value projection matrices in image cross-attention layers
+    - **Publication**: CVPR 2025 | arXiv February 2025
+  - **Institution**: Carnegie Mellon University, Meta
+  - **Open Source**: ✅ Code and data available at project website
+  - **Significance**:
+    - **Addresses Data Shortage**: Creating such dataset through internal feature sharing and external 3D guidance is far more scalable than collecting real-world data of multiple images with same object
+    - **Cost-Effective Customization**: Generates consistent object identities using internal feature sharing and external 3D guidance, more tractable than task of model customization with real images
+    - **Multi-Image Supervision**: Training encoder-based models on multi-image datasets with shared attention improves customization quality
+    - **Inference Innovation**: Normalized guidance vectors help achieve better image alignment while following text prompt
+
+---
+
 ### 🧪 Interleaved Image-Text · Coherence & Consistency
 
 This category focuses on **high-quality interleaved image-text data construction** with emphasis on **coherence (logical flow), consistency (factual accuracy), and alignment (image-text relevance)**. Unlike simple image-text pairs, these methods curate or synthesize multi-image documents with narrative coherence, making them suitable for training models on long-context multimodal understanding and generation.
@@ -1785,6 +1930,71 @@ This category focuses on **high-quality interleaved image-text data construction
     - **Multi-Dimensional Quality**: First to systematically address coherence, consistency, AND alignment simultaneously
     - **Methodological Contribution**: Multi-perspective filtering framework applicable to other web-scale curation tasks
     - **Benchmark Innovation**: Proposes new tasks specifically for evaluating interleaved data quality
+
+---
+
+- **📄 SMIR** [(arXiv 2501.03675)](https://arxiv.org/abs/2501.03675) 🏷️ **[Method + Data + Benchmark]**
+  - **Focus**: **Efficient Synthetic Data Pipeline for Multi-Image Reasoning** - Synthetic data generation pipeline for multi-image reasoning with high-quality dataset and evaluation benchmark
+  - **Data Synthesis Method** - **Multimodal Embedding + Random Sampling with Iteration**:
+    - **Core Innovation**: Efficiently identifies correlated images using multimodal embeddings, applying cluster sampling and graph iteration sampling to ensure diversity and robustness in instruction tuning
+    - **Stage 1: Multimodal Embedding Construction**:
+      - **Method**: Combines SigLIP or CLIP image embeddings with corresponding caption embeddings
+      - **Formula**: E_multimodal = E_image + c·E_caption (where c = 0.2 for ShareGPT4V dataset)
+      - **Purpose**: Captures both visual and textual relationships for better identification and clustering of correlated images
+      - **Dimensionality Reduction**: Applies UMAP for dimensionality reduction, preserving essential data structures
+    - **Stage 2: Random Sampling with Iteration**:
+      - **Algorithm**: Iteratively selects semantically related images using probability distribution based on cumulative distance
+      - **Probability Distribution**: p(x_j) ∝ 1/(Σ∥x_j - x_u∥^k + ε), where k (default: 12) controls proximity emphasis
+      - **Purpose**: Balances semantic coherence and diversity, allowing meaningful multi-image relationships while introducing randomness
+      - **Advantage**: Effectively clusters related images while avoiding disconnected groupings
+    - **Stage 3: Synthetic Data Generation**:
+      - **LLM**: Uses Meta Llama 3.1 70B Instruct Turbo (open-source LLM)
+      - **Cost Efficiency**: Up to **50× cheaper** and **10× faster** than GPT-4
+      - **Two Types of System Prompts**:
+        1. **LLaVA-style Prompt**: Focuses on shorter visual questions, often requiring OCR-based understanding
+        2. **Long-form Reasoning Prompt**: Designed for multi-step inference and deeper contextual understanding
+      - **Data Source**: ShareGPT4V (1.2M image-caption pairs)
+      - **Batch Processing**: Each batch consists of 20,000 images and generates 5,000 synthetic conversations
+    - **Key Techniques**:
+      - **Multimodal Embedding**: Integrates visual and descriptive information for better correlation identification
+      - **Iterative Sampling**: Ensures diversity while preserving coherence
+      - **Open-Source LLM**: Reduces costs significantly compared to closed-source alternatives
+      - **Modular Design**: Easy adaptation to new datasets and applications
+  - **SMIR-BENCH Evaluation Benchmark**:
+    - **Scale**: 200 diverse examples across seven complex reasoning tasks
+    - **Task Categories**:
+      1. **Bird**: Identifying species and reasoning over distinguishing features
+      2. **Matching**: Pairing photos based on visual similarities
+      3. **OCR**: Reading and reasoning about academic texts
+      4. **Pattern**: Recognizing visual patterns in structured tasks
+      5. **Ranking**: Ordering objects based on contextual preferences
+      6. **Storytelling**: Narrating events from image sequences
+      7. **Visual**: Establishing meaningful connections between images
+    - **Evaluation Methodology**: 
+      - **Multi-turn**: Supports multi-turn interactions
+      - **Free-form Responses**: Assesses models via free-form responses and reasoning justifications
+      - **Judge Model**: Uses GPT-4o as judge for pairwise comparisons
+      - **Framework**: Extends Auto-Hard-Auto v0.1 framework to multimodal evaluation
+  - **Data Scale**:
+    - **SMIR Dataset**: 160,000 synthetic training samples
+    - **Source Images**: 640,000 image-caption pairs used to produce 160,000 synthetic conversations
+    - **Average Statistics**:
+      - Maximum turns: 24, Minimum turns: 2, Average turns: 9.65
+      - Average images per conversation: 4.65
+      - Average user tokens: 25.51, Average assistant tokens: 124.32
+  - **Experimental Results**:
+    - **Model Fine-tuning**: Models fine-tuned on SMIR achieve up to **8% improvement** over base versions on SMIR-BENCH
+    - **SMIR-8B-SIGLIP-LLAMA3**: 58.1 score (+8.1% vs Mantis-8B-siglip-llama3 baseline)
+    - **SMIR-8B-IDEFICS2**: 58.0 score (+8.0% vs Mantis-8B-Idefics2 baseline)
+    - **vs. Closed-Source Models**: SMIR-trained models significantly outperform MANTIS-tuned counterparts despite smaller dataset size
+  - **Publication**: arXiv January 2025
+  - **Institution**: TogetherAI, UC Berkeley, Stanford University, Caltech
+  - **Open Source**: ✅ [GitHub](https://github.com/togethercomputer/SMiR) - Code, SMIR Dataset (160K samples), SMIR-BENCH (200 examples)
+  - **Significance**:
+    - **Addresses Multi-Image Reasoning Gap**: Targets known weakness in open-source VLMs for multi-image tasks
+    - **Cost-Effective Synthesis**: Open-source LLM reduces costs by 50× and increases speed by 10×
+    - **Correlated Image Focus**: Ensures image correlation, advancing complex multi-image reasoning
+    - **Comprehensive Benchmark**: SMIR-BENCH provides rigorous evaluation with multi-turn, free-form responses
 
 ---
 
@@ -1933,6 +2143,170 @@ This category of methods keeps original images fixed while enriching and improvi
     - **Tool-Assisted Execution**: Combines LLM generation with tool execution to ensure answer accuracy
     - **Template-Guided Training**: Innovatively uses template data to train LLM generator
     - **Significant Performance Boost**: 16 percentage point improvement on most challenging human-written questions
+
+- **📄 MANTIS** [(arXiv 2405.01483)](https://arxiv.org/abs/2405.01483) 🏷️ **[Method + Data + Evaluation]**
+  - **Focus**: **Interleaved Multi-Image Instruction Tuning** - First multi-image instruction-tuning dataset MANTIS-INSTRUCT containing 721K multi-image instruction data to train multi-image LMMs with academic-level resources
+  - **Data Construction Method** - **Multi-Source Dataset Curation + Instruction Formatting**:
+    - **Core Innovation**: Builds strong multi-image LMMs via instruction tuning with academic-level resources, avoiding massive pre-training on hundreds of millions of noisy interleaved image-text data
+    - **MANTIS-INSTRUCT Dataset Construction**:
+      - **Total Scale**: 721K multi-image instruction instances across 14 subsets
+      - **Four Multi-Image Skills Coverage**:
+        1. **Co-reference**: Understanding references like "second image" and grounding them to referred images
+           - **LLaVA-665k-multi** (313K): Concatenates multiple single-image conversations into multi-image sequences
+           - **LRV-multi** (8K): Includes natural language references like "For the second image"
+        2. **Comparison**: Capturing nuances and commonalities between several images
+           - **CoInstruct** (151K): Image quality, visual similarity, difference description
+           - **Dreamsim** (16K), **Spot-the-Diff** (8K), **Birds-to-Words** (3K)
+        3. **Reasoning**: Capturing information across multiple images and reasoning over multiple pieces
+           - **NLVR2** (86K): Logical reasoning across image contents
+           - **IconQA** (64K): Counting, image matching, image retrieval
+           - **Contrast-Caption** (36K): Reformatting captioning datasets
+           - **ImageCoDe** (17K): Free-form multi-image QA
+           - **Multi-VQA** (5K): Self-collected multi-image QA
+        4. **Temporal Understanding**: Observing multiple frames to understand temporal information
+           - **VIST** (7K): Storytelling from image sequences
+           - **NExT-QA** (4K), **STAR** (3K): Video understanding tasks
+      - **Single-Image Datasets** (268K): DVQA (200K), DocVQA (39K), ChartQA (28K) for balancing multi-image and single-image abilities
+      - **Newly Curated Subsets** (4 new datasets):
+        - **LLaVA-665k-multi**: Multi-image version of LLaVA-665k
+        - **LRV-multi**: Multi-image version of LRV
+        - **Contrast-Caption**: Reformatting captioning datasets for multi-image reasoning
+        - **Multi-VQA**: Self-collected multi-image QA dataset
+    - **Text-Image Interleaving Format**:
+      - **Format**: "(image {i}: <BOI><image><EOI>)", where <BOI> and <EOI> are image delimiters
+      - **Design Principles**: (1) Mark boundaries between images clearly, (2) Denote serial number of images
+      - **Implementation**: Uses <Image> and </Image> as delimiters
+      - **Image Context Length**: 
+        - **LLaVA architecture**: 576 image tokens per image, max 14 images (8K context)
+        - **Idefics2 architecture**: 64 tokens per image, max 128 images (8K context)
+    - **Key Techniques**:
+      - **Instruction Tuning Focus**: Low-cost instruction tuning on 721K high-quality data vs. massive pre-training
+      - **Multi-Skill Coverage**: Systematically covers all four multi-image skills
+      - **Academic-Level Resources**: Achieves strong performance without massive computational resources
+      - **Format Standardization**: Consistent text-image interleaving format across all datasets
+  - **MANTIS Model Family**:
+    - **Architecture Variants**:
+      - **Mantis-CLIP**: CLIP encoder + LLaMA-3-8B, pre-trained on CC3M subset (0.56M)
+      - **Mantis-SigLIP**: SigLIP encoder + LLaMA-3-8B, pre-trained on CC3M subset (0.56M)
+      - **Mantis-Flamingo**: CLIP encoder + MPT-7B, initialized from OpenFlamingo (pre-trained on 2.4B data)
+      - **Mantis-Idefics2**: SigLIP encoder + Mistral-7B-v0.1, initialized from Idefics2 (pre-trained on 143M data)
+    - **Training**: Fine-tuned on MANTIS-INSTRUCT (721K) + 268K single-image data
+    - **Training Resources**: 16×A100-40G for 36 hours
+  - **Mantis-Eval Benchmark**:
+    - **Scale**: 217 multi-image reasoning examples covering different topics
+    - **Coverage**: Size perceptions, weight comparisons, etc.
+    - **Construction**: Carefully curated by annotators, images acquired via Google Search
+    - **Format**: Contains both multiple-choice and short-answer questions
+  - **Data Scale**:
+    - **MANTIS-INSTRUCT**: 721K multi-image instruction instances
+      - **Average Images per Example**: 4.7
+      - **Maximum Images per Example**: 50
+      - **Average Turns**: 14.4
+      - **Average Text Token Length**: 555
+      - **Average Text+Image Token Length**: 3,584
+    - **Single-Image Datasets**: 268K instances for balancing
+  - **Experimental Results** - **SOTA on All Multi-Image Benchmarks**:
+    - **Multi-Image Benchmarks** (5 benchmarks):
+      - **NLVR2**: Mantis-Idefics2 achieves **89.71** (vs. Idefics2-8B 86.87, +2.84)
+      - **Q-Bench**: Mantis-Idefics2 achieves **75.20** (vs. Idefics2-8B 57.00, +18.20)
+      - **Mantis-Eval**: Mantis-SigLIP achieves **59.45** (vs. Idefics2-8B 48.85, +10.60)
+      - **BLINK**: Mantis-Idefics2 achieves **49.05** (vs. Idefics2-8B 45.18, +3.87)
+      - **MVBench**: Mantis-SigLIP achieves **50.15** (vs. Idefics2-8B 29.68, +20.47)
+      - **Average**: Mantis-SigLIP achieves **62.7** (vs. Idefics2-8B 53.5, +9.2), Mantis-Idefics2 achieves **64.5** (vs. Idefics2-8B 53.5, +11.0)
+    - **vs. GPT-4V**: Mantis-Idefics2 matches GPT-4V performance (64.5 vs 64.5 average)
+    - **vs. Idefics2-8B**: Mantis beats Idefics2-8B by average of **11 absolute points** despite Idefics2-8B being pre-trained on 140M interleaved multi-image data (200× larger than MANTIS-INSTRUCT)
+    - **Generalization**: Held-in and held-out results are equivalently strong, showing strong generalization ability
+    - **Single-Image Performance**: Mantis maintains strong single-image performance on par with CogVLM and Emu2
+  - **Publication**: arXiv May 2024
+  - **Institution**: University of Waterloo, Tsinghua University, Sea AI Lab
+  - **Open Source**: ✅ [GitHub](https://github.com/tiger-ai-lab/Mantis) - Code, MANTIS-INSTRUCT Dataset (721K), Models
+  - **Significance**:
+    - **First Multi-Image Instruction-Tuning Dataset**: MANTIS-INSTRUCT provides essential baseline for future studies
+    - **Academic-Level Resources**: Achieves SOTA without massive pre-training, demonstrating efficiency of instruction tuning
+    - **Multi-Skill Coverage**: Systematically covers co-reference, comparison, reasoning, and temporal understanding
+    - **Cost-Effective**: Low-cost instruction tuning (721K data) outperforms models pre-trained on 200× larger datasets
+    - **Generalization**: Strong performance on both held-in and held-out benchmarks
+
+- **📄 MMDU** [(arXiv 2406.11833)](https://arxiv.org/abs/2406.11833) 🏷️ **[Method + Data + Benchmark]** - **NeurIPS 2024**
+  - **Focus**: **Multi-Turn Multi-Image Dialog Understanding Benchmark and Instruction-Tuning Dataset** - Comprehensive benchmark and large-scale instruction tuning dataset designed to evaluate and improve LVLMs' abilities in multi-turn and multi-image conversations
+  - **Data Construction Method** - **Clustering-Based Image Selection + GPT-4o Generation + Human Annotation**:
+    - **Core Innovation**: Employs clustering algorithm to find relevant images and textual descriptions from open-source Wikipedia, constructs question-answer pairs by human annotators with GPT-4o assistance
+    - **MMDU Benchmark Construction**:
+      - **Data Collection**:
+        1. **Image and Text Selection**: 
+           - **Source**: Open-source Wikipedia entries
+           - **Method**: Clustering algorithm to identify relevant Wikipedia entities
+           - **Process**: Encodes relevant tags of entries using sentence transformer, clusters entries using obtained embeddings
+           - **Image Matching**: Matches entries using image captions to obtain highly relevant entries and image sets
+           - **Selection**: Within each cluster, selects multiple images and associated textual information to create combinations of image-text pairs (ranging from 2 to 20 images)
+        2. **Question-Answer Generation**:
+           - **GPT-4o Generation**: Uses carefully crafted prompts to guide GPT-4o in generating corresponding questions and answers based on available images and text information
+           - **Multi-turn Construction**: 
+             - Initially constructs multi-turn Q&A pairs for each single image and its associated text
+             - Then inputs combinations of multiple images into GPT-4o to generate multi-turn Q&A pairs based on multiple images
+             - Combines multi-turn Q&A pairs for multiple images with those for each individual image, creating dialogues that include both single-image and multi-image questions
+           - **Text-Image Interleaving Format**: Uses tags like <image-1>, <image-2>, etc., to refer to different images
+        3. **Quality Control**:
+           - **Human Annotation**: Expert annotators meticulously review generated dialogues
+           - **Selection**: Selects 110 high-quality multi-turn, multi-image dialogues for benchmark
+           - **Editing**: Carefully edits samples to eliminate hallucinations and errors in GPT-4o's responses
+           - **Quality Assurance**: 
+             - Combined automated and manual screening methods
+             - Multi-round manual review mechanism (at least two rounds: preliminary checks by regular reviewers, in-depth examination by experts)
+             - Specialized web UI for quick browsing and modification of data content
+      - **MMDU-45K Dataset Construction**:
+        - **Same Process**: Uses same process employed in building MMDU
+        - **Difference**: Random sampling of human verification instead of exhaustive human evaluation used in MMDU
+        - **Scale**: 45K high-quality instruction tuning data
+    - **Key Techniques**:
+      - **Clustering-Based Selection**: Ensures logical coherence and rich content by selecting relevant images
+      - **GPT-4o Assistance**: Leverages GPT-4o for question-answer generation while maintaining human oversight
+      - **Multi-turn Design**: Supports both single-image and multi-image questions in same dialogue
+      - **Scalable Format**: Flexible format allows concatenating multiple dialogues, theoretically supporting unlimited length
+  - **MMDU Benchmark Features**:
+    - **Multi-turn and Multi-image**: Maximum of 20 images and 27 turns, at least 5× longer than previous benchmarks
+    - **Long Context**: Maximum of 18K image+text tokens, evaluating LVLMs' capacity to process and comprehend extended contextual information
+    - **Open-ended Evaluation**: Adopts free-form multi-turn outputs, assessing LVLMs' performance through GPT-4o as judge
+    - **Evaluation Dimensions** (6 dimensions):
+      1. **Creativity**: Originality and innovation in responses
+      2. **Richness**: Detail and depth of information
+      3. **Visual Perception**: Accuracy in identifying visual elements
+      4. **Logical Coherence**: Logical structure and flow
+      5. **Answer Accuracy**: Correctness of factual information
+      6. **Image Relationship Understanding**: Understanding relationships between images
+      - **Overall Score**: Comprehensive assessment (aggregated from the 6 dimensions)
+  - **Data Scale**:
+    - **MMDU Benchmark**: 110 high-quality multi-turn, multi-image dialogues with more than 1,600 questions
+      - **Images per Dialogue**: 2 to 20 images
+      - **Average Image & Text Token Length**: 8.2K tokens
+      - **Maximum Image & Text Length**: 18K tokens
+      - **Average Turns**: 15 rounds of Q&A
+    - **MMDU-45K Dataset**: 45K high-quality instruction tuning data
+      - **Average Text Tokens**: 6.4K
+      - **Images per Sample**: 2-20 images
+      - **Average 15 rounds of Q&A**
+  - **Experimental Results**:
+    - **Benchmark Evaluation** (15 LVLMs evaluated):
+      - **Open-source vs. Proprietary Gap**: Best open-source model scores 42.8%, far behind proprietary GPT-4o at 70.2%
+      - **Performance Gap**: Significant performance disparity between proprietary and open-source LVLMs
+    - **Fine-tuning Results** (InternLM-XC2):
+      - **MMDU**: +14.5% improvement
+      - **MMStar**: +1.1% improvement
+      - **MathVista**: +1.5% improvement
+      - **ChartQA**: +1.2% improvement
+    - **Model Improvements**:
+      - **Longer Conversations**: Fine-tuning on MMDU-45K generates longer and more accurate conversations
+      - **Multi-turn Performance**: Significant improvements on multi-turn, multi-image scenarios
+      - **Generalization**: Improvements on both MMDU and existing benchmarks
+  - **Publication**: NeurIPS 2024 (Datasets and Benchmarks Track)
+  - **Institution**: Shanghai Jiao Tong University, Shanghai AI Laboratory, CUHK, CPII under InnoHK, MThreads, Inc.
+  - **Open Source**: ✅ [GitHub](https://github.com/Liuziyu77/MMDU) - Code, MMDU Benchmark (110 dialogues), MMDU-45K Dataset (45K samples)
+  - **Significance**:
+    - **Comprehensive Benchmark**: First benchmark specifically designed for multi-turn, multi-image dialog understanding
+    - **Long Context Evaluation**: Evaluates LVLMs' capacity to process extended contextual information (up to 18K tokens)
+    - **Open-ended Assessment**: Adopts free-form multi-turn outputs with GPT-4o as judge, more realistic than traditional multiple-choice formats
+    - **Scalable Dataset**: MMDU-45K provides large-scale instruction tuning data for improving multi-turn, multi-image capabilities
+    - **Bridging Performance Gap**: Demonstrates that fine-tuning on MMDU-45K significantly addresses gap between open-source and proprietary LVLMs
 
 - **📄 ChartInstruct** [(arXiv 2403.09028)](https://arxiv.org/abs/2403.09028) 🏷️ **[Method + Data]**
   - **Focus**: **Instruction Tuning Data for Chart Comprehension** - Builds large-scale, diverse chart instruction dataset for training general chart understanding models
