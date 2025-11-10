@@ -18,23 +18,111 @@
 
 ---
 
+- **📄 Effective Chart Dataset (ECD)** [(arXiv 2508.06492)](https://arxiv.org/abs/2508.06492) 🏷️ **[Method + Data]**
+  - **Focus**: **High-quality synthetic training data for chart understanding** — Proposes a five-stage modular pipeline to build the ECD training set and the ECDBench benchmark, yielding consistent gains for MLLMs on chart understanding
+  - **Data Synthesis Method** - **Five-stage modular pipeline with quality filtering**:
+    1) **Single-plot generation (code-function + data decoupling)**: 29 chart functions; GPT-4o generates data/args conditioned on themes+APIs; renders 10,875 single plots  
+    2) **Conditional multi-subplot composition**: Sequentially generates subplots conditioned on prior ones to ensure semantic coherence (6,006 figures, avg. 4 subplots)  
+    3) **Chart image diversification**: Adds annotations, area shading, zoom-in inset, font/border/style variants, layout perturbations  
+    4) **Image quality filtering**: Scores with “visual clarity” + “semantic coherence”; filters to 10,535 images from 16,829  
+    5) **QA generation & filtering**: Produces both descriptive and reasoning QA; retains high-confidence pairs (final 321,544 QA)
+  - **Data Scale**:
+    - **ECD (train)**: 10,535 images + 321,544 QA (25 themes, 29 chart types, 252 type combinations)
+    - **ECDBench (test)**: 1,224 images (364 single-plot, 860 multi-subplot) + 2,448 QA (1 descriptive + 1 reasoning per image)
+  - **Results (consistent multi-model gains)**:
+    - On CharXiv, ChartQA, ReachQA, ChartBench, ChartX, and ECDBench, four open-source MLLMs (LLaVA-Next-Llama3-8B, MiniCPM-V2.6, Phi-3-Vision, Qwen2.5-VL-7B) show overall improvements  
+    - Example: Qwen2.5-VL-7B improves on CharXiv Avg. 61.36%→67.40%; ECDBench 38.19%→50.86% (per Tables 2 & 3)
+  - **Key Advantages**:
+    - **Code-data decoupling + conditional subplot generation**: Enhances diversity while maintaining cross-subplot coherence
+    - **Dual-metric quality filter**: Lower FID and higher average entropy vs prior synthetic chart datasets
+    - **Reasoning QA with rationale**: Enables training for explainable reasoning
+  - **Resources & Reproducibility**:
+    - Full pipeline description and ablations provided; code/data planned as per paper
+    - Code/Data: `https://github.com/yuweiyang-anu/ECD` (as indicated by paper)
+  - **Significance**:
+    - **Realism & Complexity**: Closer alignment with real scientific charts (lower FID, higher entropy)
+    - **General & Extensible**: Scales to more subplot combinations/themes/layouts; a strong training basis for chart understanding
+
+- **📄 Text-VQA Aug** [(arXiv 2511.02046)](https://arxiv.org/abs/2511.02046) 🏷️ **[Method + Data]**
+  - **Focus**: **Automated QA synthesis for Text-VQA** — A training-free, scalable pipeline that synthesizes high-quality question-answer pairs from scene-text images for Text-VQA pretraining
+  - **Data Synthesis Method** - **OCR + Grounding + Crop Caption + Answer Selection + Question Generation + Validation**:
+    1) **Text-Spotting (OCR detect+recognize)**: GLASS extracts scene text + boxes  
+    2) **Local Context via Grounding**: Kosmos-2 generates ROI crops (foreground/background) and aligns with OCR  
+    3) **Crop Captioning**: Feed crops+OCR to LLaVA-R for local captions; concatenate to global image description  
+    4) **OCR Answer Selection Algorithm**: From global description, find sequential OCR token groups as candidate answers (pseudo-code provided)  
+    5) **Question Generation (LLM)**: Intel Neural Chat 7B generates concise questions conditioned on description + chosen OCR answer  
+    6) **QA Validation & Length Filtering**: Same LLM judges “Right/Wrong”; filter too short/long questions to reduce noise
+  - **Data Scale**:
+    - **Text-VQAaug Dataset**: 44,581 images, 72,490 QA (≈1.6 questions/image)
+    - Compared to Text-VQA: Questions are more specific (median length ≈14 words); some questions omit OCR tokens while answers still come from OCR
+  - **Key Advantages**:
+    - **Training-free & Scalable**: Leverages pretrained LMM/OCR/grounding; easy to extend to new domains
+    - **Answer-first Conditioning**: Selects answer before generating question, improving controllability and consistency
+    - **Quality Control**: LLM Right/Wrong validation + length constraints reduce hallucinations/noise
+  - **Applications**: Accessibility (reading assistance), retail visual search, educational content, healthcare device/label reading, traffic security (license plates)
+
+- **📄 UI-E2I-Synth** [(arXiv 2504.11257)](https://arxiv.org/abs/2504.11257) 🏷️ **[Method + Data]**
+  - **Focus**: **GUI instruction grounding data synthesis and benchmark** — Proposes a large-scale instruction synthesis pipeline (UI-E2I-Synth) and a comprehensive benchmark (UI-I2E-Bench) for realistic high-resolution GUI scenarios across Web/Windows/Android
+  - **Data Synthesis Method** - **Three-stage divide-and-conquer (Element Parsing → Referring Expressions → Instruction Synthesis)**:
+    1) **Raw Data & Parsing**: Collect screenshot+metadata from multiple platforms; heuristically parse three attributes (type/content/bbox); resample to balance element types and element-to-screen ratios  
+    2) **Referring Expression (RE) Generation**: In Set-of-Marks context, use element attributes + GPT-4o to generate explicit/implicit RE to reduce hallucination from image-only prompting  
+    3) **Parameterized User Instruction Synthesis**: Combine RE with (action type/content/target) to let GPT-4o produce first-person, concise, and faithful user instructions
+  - **Data & Benchmark**:
+    - **Training (UI-E2I-Synth)**: 1,635,594 screenshots, 9,899,581 instructions (Web 1.54M/9.10M; Desktop 14K/334K; AndroidControl 40K/109K; plus MOTIF, WidgetCaption)
+    - **Evaluation (UI-I2E-Bench)**: 1,477 samples with fine-grained annotations (element type, element-to-screen ratio, implicitness; implicit ≥63%)
+  - **Results**:
+    - On ScreenSpot, ScreenSpot-Pro, and UI-I2E-Bench, UI-I2E-VLM-7B outperforms prior SOTA (e.g., OS-Atlas-7B) with ~+9.7% relative average gain; strong on implicit instructions and long-tail elements (Icon/Input)
+    - With 500K web instructions, models trained on UI-E2I-Synth data surpass those trained on OS-Atlas-Web; removing instruction synthesis or attribute-enhancement notably degrades performance (ablation)
+  - **Key Advantages**:
+    - **Realistic element-to-screen ratio** for 1080p/1440p desktop scenarios, emphasizing small targets at high resolution
+    - **Implicit instruction coverage & balanced element types**: boosts generalization to long-tail categories
+    - **Parameterized instruction synthesis**: mirrors authentic user expressions grounded in actions
+  - **Applications**: Integrates with GPT-4o planner for OSWorld tasks, improving real desktop agent usability
+
+- **📄 SK‑VQA** [(ICML 2025)](https://huggingface.co/datasets) 🏷️ **[Method + Data]**
+  - **Focus**: **Large‑scale “image + context + QA” synthesis for multimodal RAG/KB‑VQA** — A pipeline that uses GPT‑4 to generate encyclopedic context documents and diverse questions, building 2M+ context‑augmented VQA samples to train/evaluate context‑aware MLLMs
+  - **Data Synthesis**:
+    - **Joint generation of context and QA**: Conditioned on the image, GPT‑4 outputs both a relevant article‑style context and QA requiring context reasoning, avoiding image‑only answers  
+    - **Multi‑source images**: LAION, WIT (Wikipedia), COCO‑Counterfactuals; with filtered subsets removing image‑referencing contexts (IR) and ensuring extractive answers (IR+CAP)
+  - **Scale & Diversity**:
+    - 2,006,489 QA over 290,266 image‑context pairs; >96% unique questions, richer POS/vocab/length than prior KB‑VQA datasets
+  - **Findings**:
+    - A more challenging benchmark (lower zero‑shot than Enc‑VQA/ViQuAE); as training data, outperforms InfoSeek/Enc‑VQA in cross‑dataset generalization; remains strongest under RAG with external retrieval
+  - **Significance**:
+    - **Image‑invariant text enhancement**: High‑quality “context+QA” around existing images for multimodal RAG/KB‑VQA training  
+    - **Quality control**: IR/IR+CAP filtering preserves/boosts performance with fewer samples, enabling task‑aware tuning
+
+‑ **📄 LLaVA‑Video: Video Instruction Tuning with Synthetic Data** [(arXiv 2410.02713)](https://arxiv.org/abs/2410.02713) 🏷️ **[Method + Data]**
+  - **Focus**: **Synthetic video instruction‑following data + models** — Builds the LLaVA‑Video‑178K dataset and LLaVA‑Video models; dense frame sampling and recurrent 3‑level captioning; covers detailed captioning, open‑ended QA, and multi‑choice QA
+  - **Data Synthesis**:
+    - **Dynamic untrimmed sources (10)**; select most dynamic clips; avoid over‑trimmed static videos
+    - **Dense sampling (1 FPS)** + **recurrent 3‑level descriptions** (10‑sec clip, 30‑sec summary, full‑video); GPT‑4o generates captions and 16‑type QA; de‑dup and non‑answerable filtering
+  - **Scale**:
+    - 178,510 videos → 1.3M instruction samples: 178K captions, 960K open‑ended QA, 196K multi‑choice QA
+  - **Findings**:
+    - More frames ⇒ better results; proposes a SlowFast‑style token budget to include up to 3× frames under the same context limit
+    - Strong zero‑shot across 11 video benchmarks; open‑weight 72B comparable to commercial baselines in several tasks
+  - **Significance**:
+    - Establishes a high‑quality synthetic dataset and effective video tokenization strategy; plans to release data, code, and checkpoints
+
 ## 📊 Statistics
 
-- **Total Papers:** 48+ (data synthesis/construction methods)
+- **Total Papers:** 55+ (data synthesis/construction methods)
 - **Industrial Reports:** 10 (Baidu, Microsoft, Alibaba, ByteDance, Tencent, Hunyuan, etc.)
 - **Data Synthesis Methods:** 
-  - Image Generation - Synthesizing New Visual Content (7): Geometric/mathematical reasoning + document/text-dense scenes + scene text detection + multimodal dialogue + text-driven image synthesis
+  - Image Generation - Synthesizing New Visual Content (9): Geometric/mathematical reasoning + document/text-dense scenes + scene text detection + multimodal dialogue + text-driven image synthesis
   - Image Editing (4): Non-rigid motion, unified editing, referring expression-guided editing
   - Compositionality / Preference-Guided Synthesis (3): Enhancing compositional understanding + multi-concept composition + multi-image customization
-  - Interleaved Image-Text · Coherence & Consistency (3): Multi-perspective quality filtering + iterative refinement + multimodal embedding-based correlation
+  - Interleaved Image-Text · Coherence & Consistency (4): Multi-perspective quality filtering + iterative refinement + multimodal embedding-based correlation
   - Think with Image (1): Interleaved multimodal reasoning with image manipulation
-  - Image-Invariant - Text Enhancement (27): Fixed images, enriched text only
+  - Image-Invariant - Text Enhancement (29): Fixed images, enriched text only
+  - Video - Instruction Tuning (Synthetic Data) (1): Synthetic video instruction-following data (captions + QA)
 - **Notable Datasets:** 
   - 4 interleaved image-text datasets (OmniCorpus, OBELICS, MMC4, CoMM)
   - 2 domain-specific datasets (MMM-RS, MESED)
   - 4 image editing datasets (ByteMorph-6M, ImgEdit, RefEdit, RefCOCO-Edit)
   - 4 large-scale general training datasets
-  - 2 chart reasoning datasets (ChartInstruct, Synthesize Step-by-Step)
+  - 4 chart reasoning datasets (ChartInstruct, Synthesize Step-by-Step, ECD, ChartGen)
   - 1 multimodal dialogue dataset (MAGID)
 - **Open Source Datasets:** 28+ datasets fully open-sourced
 
@@ -1408,6 +1496,22 @@ This category focuses on **generating new images from scratch** as part of the d
     - **Region-Focused Strategy**: Innovative region-level difference annotation avoids inaccuracy of whole-image descriptions
     - **Surpasses Closed-Source Models**: Fine-tuned open 7B models surpass GPT-4V and Gemini on MMVP
     - **General Capability Enhancement**: Not only enhances difference recognition but also comprehensively improves VQA and localization capabilities
+
+- **📄 ChartGen** [(arXiv 2507.19492)](https://arxiv.org/abs/2507.19492) 🏷️ **[Method + Data]**
+  - **Focus**: **Code-guided synthetic chart data and chart-to-code evaluation** — Two-stage automated pipeline: VLM redraws real charts into Python plotting code; code LLM iteratively augments scripts to generate diverse charts, forming a large multimodal corpus and a redraw evaluation protocol
+  - **Data Synthesis Method** - **VLM Redraw → Code LLM Iterative Augmentation**:
+    1) **VLM Chart Redraw**: From seed charts (ChartQA 13K), phi‑3.5‑vision‑instruct produces executable plotting code as structured representations
+    2) **LLM Code Augmentation**: Codestral‑22B performs ~20 rounds of code-level augmentations (type/library/style/topic), executing to render new charts; expands scale and diversity by transforming code, not pixels
+  - **Data & Resources**:
+    - **ChartGen‑200K**: 222.5K image‑code pairs covering 27 chart types and 11 plotting libraries; plus CSV, DocTags, text summaries, and QA; held‑out 4.3K for redraw evaluation
+    - **Evaluation Protocol**: GPT‑4o as judge for code-level (data fidelity 0–1; semantics/style 0–10) and rendered image-level (0–10) similarity
+  - **Findings**:
+    - 6 open‑weight VLMs (3B–26B) show notable gaps (best data fidelity ≤0.58/1, best image similarity ≤7.48/10); chart‑to‑code remains challenging
+    - Compared with Plot2Code, ChartMimic, ChartX, ChartCoder, ChartGen provides larger scale, broader library coverage, and richer multimodal support
+  - **Significance**:
+    - **Code as canonical representation**: Enables derived summaries/QA/CSV for scalable training/evaluation
+    - **Beyond QA/Summary**: Shifts emphasis to redraw/code generation for fine‑grained assessment
+  - **Open Source**: Code, data, and benchmark under CC‑BY‑4.0: `https://github.com/SD122025/ChartGen/`
 
 ---
 
@@ -3319,6 +3423,8 @@ These datasets consist of documents with images and text interleaved in natural 
 | **OBELICS** | 141M documents<br/>353M images<br/>115B tokens | Open web-scale filtered dataset from CommonCrawl. Features **comprehensive filtering strategies** and **preserves original web page structure**. Extraction and filtering pipeline fully documented. | [📄 Paper (NeurIPS 2023 D&B)](https://arxiv.org/abs/2306.16527) |
 | **MMC4 (Multimodal C4)** | 101.2M documents<br/>571M images<br/>43B tokens | Augmentation of text-only C4 corpus with images. Uses **linear assignment algorithm** with **CLIP features** for image-sentence alignment. Currently partially re-hosted with dataset splits available. | [📄 Paper (NeurIPS 2023 D&B)](https://arxiv.org/abs/2304.06939) |
 | **CoMM** | 227K documents<br/>2.28M images<br/>139M tokens | High-quality **coherent** interleaved dataset with **multi-perspective filtering** (text coherence, image consistency, alignment). Emphasizes quality over quantity. See [Methods](#-methods-by-image-processing-type) for detailed methodology. | [📄 Paper (CVPR 2025)](https://arxiv.org/abs/2406.10462) |
+
+| **VLM Dialog Games for Self‑Improvement** | Method-focused dataset | **Dialog-game-based self-improvement data synthesis** — Two VLM agents play a reference game on unlabeled images; successful dialogs are filtered and used for fine-tuning, enabling iterative self-improvement. Key: self-play data generation with automatic quality control, difficulty control. | [📄 Paper (arXiv 2502.02740)](https://arxiv.org/abs/2502.02740) |
 
 ### 📊 Domain-Specific & Knowledge-Oriented Datasets
 
