@@ -20,16 +20,18 @@
 
 ## 📊 Statistics
 
-- **Total Papers:** 60+ (data synthesis/construction methods)
+- **Total Papers:** 67+ (data synthesis/construction methods)
 - **Industrial Reports:** 9 (Baidu, Microsoft, Alibaba, ByteDance, Tencent, Hunyuan, etc.)
 - **Data Synthesis Methods:** 
-  - Image Generation - Synthesizing New Visual Content (10): Geometric/mathematical reasoning + document/text-dense scenes + scene text detection + multimodal dialogue + text-driven image synthesis
+  - Image Generation - Synthesizing New Visual Content (13): Geometric/mathematical reasoning + document/text-dense scenes + scene text detection + multimodal dialogue + text-driven image synthesis + autonomous driving + fully synthetic image-text generation
   - Image Editing (4): Non-rigid motion, unified editing, referring expression-guided editing
   - Compositionality / Preference-Guided Synthesis (3): Enhancing compositional understanding + multi-concept composition + multi-image customization
   - Interleaved Image-Text · Coherence & Consistency (4): Multi-perspective quality filtering + iterative refinement + multimodal embedding-based correlation
   - Think with Image (1): Interleaved multimodal reasoning with image manipulation
-  - Image-Invariant - Text Enhancement (29): Fixed images, enriched text only
+  - VLM Self-Improvement & Reinforcement Learning (1): Gamified self-play frameworks for VLM reasoning enhancement without human annotation
+  - Image-Invariant - Text Enhancement (32): Fixed images, enriched text only + spatial reasoning enhancement + VLM personalization + continual learning
   - Video - Instruction Tuning (Synthetic Data) (1): Synthetic video instruction-following data (captions + QA)
+  - Cross-Domain Methodology Insights (2): Multi-modal model collapse analysis + synthetic data quality assessment
 - **Notable Datasets:** 
   - 4 interleaved image-text datasets (OmniCorpus, OBELICS, MMC4, CoMM)
   - 2 domain-specific datasets (MMM-RS, MESED)
@@ -54,6 +56,10 @@
   - [Compositionality / Preference-Guided Synthesis](#-compositionality--preference-guided-synthesis)
   - [Interleaved Image-Text · Coherence & Consistency](#-interleaved-image-text--coherence--consistency)
   - [Image-Invariant Text Enhancement](#image-invariant-text-enhancement)
+  - [VLM Self-Improvement & Reinforcement Learning](#-vlm-self-improvement--reinforcement-learning)
+    - [Spatial Reasoning Enhancement](#-spatial-reasoning-enhancement)
+    - [Continual Learning & Catastrophic Forgetting Mitigation](#-continual-learning--catastrophic-forgetting-mitigation)
+    - [VLM Personalization & Concept Learning](#-vlm-personalization--concept-learning)
 - [Cross-Domain Methodology Insights](#-cross-domain-methodology-insights)
 - [Notable Multimodal Datasets](#-notable-multimodal-datasets)
   - [Interleaved Image-Text Datasets](#-interleaved-image-text-datasets)
@@ -1450,6 +1456,80 @@ This category focuses on **generating new images from scratch** as part of the d
   - **Significance**:
     - **Realism & Complexity**: Closer alignment with real scientific charts (lower FID, higher entropy)
     - **General & Extensible**: Scales to more subplot combinations/themes/layouts; a strong training basis for chart understanding
+
+- **📄 Synth²** [(arXiv 2403.07750)](https://arxiv.org/abs/2403.07750) 🏷️ **[Fully Synthetic Image-Text Generation]**
+  - **Data Synthesis Method** - **LLM Caption + Text-to-Image Embedding Generation**:
+    - **Core Innovation**: First fully synthetic VLM training approach that synthesizes both captions and image embeddings, operating in embedding space to bypass pixel-level processing
+    - **Two-Stage Pipeline**:
+      1. **Synthetic Caption Generation**: Gemini Pro generates diverse captions using class-based prompting from ImageNet-21k (30-40 word factual descriptions)
+      2. **Image Embedding Generation**: MUSE text-to-image model generates VQ-tokens directly (bypasses pixel rendering/encoding for efficiency)
+    - **Controlled Study Design**: Both text-to-image generator and VLM pre-trained on identical dataset (Conceptual Captions v2) to isolate synthetic data contribution vs. knowledge transfer
+    - **Efficiency Innovation**: VLM architecture uses identical VQ-GAN backbone as image generator, enabling seamless embedding-level training (25% faster than pixel-space)
+  - **Key Technical Components**:
+    - **Fair Evaluation Protocol**: Pre-trains custom MUSE generator on same 10.1M CCv2 pairs used for VLM baseline (prevents off-the-shelf model knowledge leakage)
+    - **VQ-Based Design**: Discrete tokens converted to soft embeddings + Perceiver Resampler for cross-attention
+    - **Mixed Training Strategy**: Combines synthetic + real data during fine-tuning to prevent model collapse
+    - **Semantic Diversity Analysis**: K-means clustering reveals GenPair has more uniform distribution (57.7% in top-5 clusters) vs. real datasets (69.8%-83.0%)
+  - **Experimental Results**:
+    - **Scene Description**: MS-COCO CIDEr 22.1→33.4 (+51%), Flickr-30k 12.7→20.8 (+64%)
+    - **Scene Understanding QA**: VQAv2 29.1→35.3 (+21%)
+    - **External Knowledge QA**: OKVQA 32.4→36.1 (+11%)
+    - **Efficiency Gains**: Achieves baseline parity with ~1/3 training steps, 2.08 vs 1.66 steps/sec (embedding vs pixel)
+    - **Data Efficiency**: Comparable performance to models trained on 40× more paired data (vs. DC-BLIP 5.5B real data)
+  - **Comparative Analysis**:
+    - **vs. ITIT**: 35.4 vs 32.1 CIDEr zero-shot (with similar parameters and data usage)
+    - **vs. DC & SimVLM**: Competitive results with 632M parameters vs 1.4-1.7B parameters
+    - **Semantic Concentration**: GenPair shows highest entropy (3.81) and lowest concentration, indicating superior diversity
+  - **Cost Efficiency**:
+    - **Training Speed**: 25% faster than pixel-space training without performance degradation
+    - **Memory Efficiency**: Eliminates costly pixel encoding/decoding during synthetic data training
+    - **Data Requirements**: 10.1M real + 711M synthetic vs traditional methods requiring billions of real pairs
+  - **Institution**: Google DeepMind
+  - **Authors**: Sahand Sharifzadeh, Christos Kaplanis, Shreya Pathak, Dharshan Kumaran, et al.
+  - **Open Source**: ⚠️ Code/data availability not specified in paper
+  - **Significance**:
+    - **Paradigm Innovation**: First demonstration of fully synthetic image-text pair training for VLMs without reliance on massive real datasets
+    - **Embedding-Space Efficiency**: Proves embedding-level generation maintains quality while dramatically improving computational efficiency
+    - **Controlled Methodology**: Establishes rigorous experimental framework for isolating synthetic data contributions
+    - **Practical Deployment**: Enables customized dataset creation and resource-efficient VLM training for specialized domains
+
+- **📄 DriveMRP** [(arXiv 2507.02948)](https://arxiv.org/abs/2507.02948) 🏷️ **[Autonomous Driving Motion Risk Synthesis]**
+  - **Data Synthesis Method** - **BEV-Based High-Risk Motion Simulation for Autonomous Driving**:
+    - **Core Innovation**: First scalable synthetic dataset for VLM-based motion risk prediction in autonomous driving, addressing long-tail high-risk scenario scarcity
+    - **Three-Dimensional Risk Modeling**: Systematically synthesizes risks from ego-vehicle behavior, other vehicle interactions, and environmental constraints
+    - **BEV Polynomial Simulation**: Uses polynomial trajectory generation with vehicle dynamics constraints to create physically plausible high-risk motions
+    - **Data Scale**: DriveMRP-10K dataset with 10,000 high-quality motion risk scenarios covering collision, hard braking, abnormal acceleration, lane violations
+  - **Key Technical Components**:
+    - **High-Risk Scenario Selection**: Collision events, hard braking/acceleration, lane violations/off-road departures based on real-world traffic accident analysis
+    - **Rule-Based Definition**: Precise thresholds for safety distance (collision), acceleration magnitude/duration (hard braking), geometric relationships (lane violations)
+    - **Motion Projection Visual Prompting**: Projects BEV trajectories onto ego-vehicle's front-view camera to bridge modality gap between coordinates and vision
+    - **Human-in-the-Loop Quality Control**: Manual screening filters out physically implausible trajectories and ensures clear camera projection visibility
+  - **DriveMRP-Agent Framework**:
+    - **VLM-Agnostic Architecture**: Works with multiple VLMs (Qwen2.5-VL-7B, InternVL, LLaVA) using LoRA fine-tuning
+    - **Chain-of-Thought Reasoning**: "Scene Understanding → Motion Analysis → Risk Prediction" cognitive pathway for interpretable risk assessment
+    - **Multi-Modal Input Integration**: Combines BEV layout, front-view scene image, and projected motion waypoints
+    - **GPT-4o Caption Generation**: Structured natural language descriptions covering scene analysis, motion behavior explanation, and risk categorization
+  - **Experimental Results**:
+    - **Synthetic Data Performance**: Accident recognition accuracy 27.13% → 88.03% (+60.9%) on DriveMRP-10K test set
+    - **Zero-Shot Generalization**: Real-world high-risk dataset accuracy 29.42% → 68.50% (+39.1%) without real-world training exposure  
+    - **Cross-Model Enhancement**: Consistent improvements across LLaVA-1.5-7B, Llama3.2-vision-11B, Qwen2.5-VL-7B baselines
+    - **Scene Understanding Metrics**: ROUGE-1-F1 48.54→69.08, BERTScore 68.83→81.25 demonstrating comprehensive environment comprehension
+  - **Ablation Studies**:
+    - **BEV Information**: Critical for global contextual understanding and spatial relationship reasoning
+    - **Visual Trajectory Projection**: Significantly outperforms raw coordinate sequences, bridging vision-language modality gap
+    - **Multi-Input Fusion**: Combined BEV + front-view + projected trajectories achieves optimal performance (88.03% accuracy)
+  - **Cost & Generalization**:
+    - **Training Efficiency**: LoRA fine-tuning on 8 NVIDIA H100 GPUs with Flash Attention acceleration
+    - **Real-World Transfer**: Strong zero-shot performance on proprietary real-world dataset validates synthetic-to-real generalization
+    - **Plug-and-Play**: Dataset enhances multiple general-purpose VLMs for driving safety applications
+  - **Institution**: Westlake University, Xiaomi EV, Zhejiang University
+  - **Authors**: Zhiyi Hou, Enhui Ma, Fang Li, Zhiyi Lai, Kalok Ho, et al.
+  - **Open Source**: ✅ [Code & Dataset](https://github.com/xiaomi-ev/DriveMRP) (as indicated)
+  - **Significance**:
+    - **Autonomous Driving Safety**: Addresses critical gap in high-risk scenario coverage for safer autonomous systems
+    - **Synthetic Data Paradigm**: Demonstrates effective synthesis of rare but critical driving events difficult to collect at scale
+    - **Interpretable AI**: Provides explainable risk predictions with causal analysis for continuous algorithm improvement
+    - **Industry Impact**: Enables development of robust motion planning algorithms for complex, unstructured driving environments
 
 ---
 
@@ -3302,6 +3382,125 @@ This category of methods keeps original images fixed while enriching and improvi
     - **Downstream Validation**: T2I reconstruction and compositional reasoning prove practical value
     - **Quality Leadership**: Surpasses prior datasets in comprehensiveness, specificity, reduced hallucinations across board SOTA
 
+#### 🧠 Spatial Reasoning Enhancement
+
+- **📄 SpaRE** [(ACL 2025, 2025.acl-long.387)](https://aclanthology.org/2025.acl-long.387.pdf) 🏷️ **[Spatial Reasoning]**
+  - **Data Synthesis Method** - **Synthetic Spatial QA Generation from Hyper-Detailed Captions**:
+    - **Core Innovation**: Leverages untapped potential of hyper-detailed image captions to generate synthetic spatial reasoning question-answer pairs
+    - **Data Sources**: DOCCI (15K→10K filtered), Localized Narratives (849K→232K filtered), PixMo-Cap (717K→214K filtered)
+    - **LLM-Based Extraction**: Uses Qwen2.5-3B-Instruct to extract spatial relationships from detailed descriptions and formulate diverse QA pairs
+    - **Data Scale**: 455K samples containing 3.4M spatial reasoning QA pairs covering 66+ spatial relations
+    - **Quality Assurance Pipeline**: 5-step automated filtering (deduplication, reference check, answer-description consistency, image-question consistency, spatial relation verification)
+  - **Key Technical Components**:
+    - **Spatial Relation Analysis**: Quantifies data scarcity - top 17% of relations account for 90% of samples in existing VL datasets
+    - **Multi-Stage Filtering**: Pre-filtering (~65% reduction) → QA generation → post-generation quality verification
+    - **Domain Coverage**: Positions/directions, relative distances, orientations/angles, foreground/background layers, boundaries/edges, shadows/reflections, overlapping/layering, scale/size comparisons
+    - **Hallucination Mitigation**: Aggressive filtering strategy reduces relation/object hallucination to ~4%/3% respectively
+  - **Experimental Results**:
+    - **Spatial Reasoning Benchmarks**: VSR 70.3→85.4% (+15.1%), What's Up A 44.6→100.0% (+55.4%), What's Up B 79.1→100.0% (+20.9%), 3DSRBench 46.5→57.5% (+11.0%), RealWorldQA 58.6→68.8% (+10.2%)
+    - **Peak Performance**: Up to 49% improvement on What's Up benchmark (most significant spatial reasoning gains reported in literature)
+    - **General VL Performance**: Maintains strong performance on MMMU (51.0%), MMBench (78.6%), HallusionBench (56.3%), TextVQA (80.5%), MME (1661.4-642.3-145.5-156.3-127.5)
+    - **Cross-Architecture Validation**: Effective on both Qwen2VL-2B/7B and demonstrates superior performance vs. caption-only training (Molmo-7B-D baseline)
+  - **Error Analysis & Limitations**:
+    - **Frame of Reference Challenge**: Struggles with empathetic spatial reasoning (adopting others' perspectives) - consistent with prior VLM limitations
+    - **3DSRBench Performance**: Relatively weaker on 3D spatial reasoning due to egocentric bias inherited from source datasets
+    - **Qualitative Improvements**: Correctly handles complex perspective-dependent questions (e.g., "is the table on the left or right of me?" from person's vs. viewer's perspective)
+  - **Cost Efficiency**: 
+    - **Data Construction**: Significantly more efficient than manual curation methods
+    - **Synthetic vs. Natural**: Outperforms direct caption training approaches while providing targeted spatial knowledge
+    - **Filtering Strategy**: Balances quality vs. quantity through multi-stage automated verification
+  - **Open Source**: ✅ Code and dataset promised to be released
+  - **Significance**:
+    - **Data Scarcity Solution**: Addresses critical gap in spatial reasoning data through systematic synthesis from rich descriptions
+    - **Systematic Analysis**: First comprehensive quantification of spatial relations distribution in major VL datasets
+    - **Practical Impact**: Enables applications in robotics, navigation, AR/VR requiring precise spatial understanding
+    - **Methodology Transfer**: Demonstrates effective pipeline for extracting task-specific knowledge from hyper-detailed captions
+
+#### 🔄 Continual Learning & Catastrophic Forgetting Mitigation
+
+- **📄 GIFT** [(arXiv 2503.04229)](https://arxiv.org/abs/2503.04229) 🏷️ **[Continual Learning]**
+  - **Data Synthesis Method** - **Stable Diffusion-based Synthetic Data for VLM Continual Learning**:
+    - **Core Innovation**: First framework using diffusion-generated synthetic data to mitigate catastrophic forgetting in Vision-Language Models during continual fine-tuning
+    - **Dual Forgetting Challenge**: Addresses both downstream task forgetting AND pre-training knowledge degradation in VLMs - a unique multi-modal CL challenge
+    - **Synthetic Data Recreation**: Uses Stable Diffusion to recreate both pre-training approximations (ImageNet class names) and historical downstream task data without storage/privacy issues
+    - **Data Scale**: 1K synthetic images per task achieves superior performance vs. 100K real ImageNet images, demonstrating synthetic data efficiency
+  - **Key Technical Components**:
+    - **Class Buffer Pool Strategy**: Maintains P = ∪C_i storing all encountered class names; samples from diverse pool to generate approximated pre-training + downstream data
+    - **Contrastive Distillation Loss**: Aligns current model θ_t with previous model θ_{t-1} on synthetic image-text pairs using image-text matching objective consistent with CLIP pre-training
+    - **Image-Text Alignment Constraint**: Corrects teacher model errors by enforcing KL divergence between identity matrix and contrastive similarity matrix as hard target
+    - **Adaptive Weight Consolidation (AWC)**: Dynamic Fisher information calculation from synthetic data during training (not static like EWC), enabling real-time parameter importance adjustment
+  - **Experimental Framework**:
+    - **MTIL Benchmark**: 11 datasets (Aircraft, Caltech101, CIFAR100, DTD, EuroSAT, Flowers, Food, MNIST, OxfordPet, StanfordCars, SUN397) with 1,201 classes across diverse domains
+    - **Two Task Orders**: Alphabetical (Order I) and random (Order II) arrangements introducing different domain shift challenges
+    - **Comprehensive Metrics**: Transfer (zero-shot capability preservation), Last (downstream task retention), Avg. (stability-plasticity balance)
+  - **Experimental Results**:
+    - **MTIL Order I**: Transfer 69.3% (+8.3% vs l2 baseline), Avg. 77.3% (+14.6%), Last 86.0% (+10.1%) - achieves new SOTA across all metrics
+    - **MTIL Order II**: Transfer 65.9% (+5.3%), Avg. 75.7% (+6.9%), Last 85.3% (+8.1%) - maintains strong performance under high domain shift
+    - **CIL Benchmarks**: CIFAR100 (10/20/50 steps) and TinyImageNet (5/10/20 steps) - consistent improvements over traditional CL methods
+    - **Synthetic vs Real Data**: 1K synthetic images outperform 1K real ImageNet images in Avg./Last metrics while maintaining comparable Transfer scores
+  - **Ablation Studies**:
+    - **Contrastive > Other Losses**: Contrastive distillation (85.0% Last) >> feature distance (80.5%) > image-only (84.1%) > text-only (81.8%)
+    - **Teacher Model Choice**: Last CLIP model optimal vs. initial CLIP (higher Transfer but lower Last) vs. WiSE interpolation (suboptimal balance)
+    - **ITA Scale Analysis**: β=0.25 provides optimal soft-hard target balance; higher β causes synthetic data overfitting
+    - **AWC vs EWC**: Adaptive Fisher information (86.0% Last) significantly outperforms static EWC variants (≤86.2% with 256 samples)
+  - **Synthetic Data Analysis**:
+    - **Generation Quality**: High-quality diverse images across domains; 50→25 denoising steps minimal performance impact (fast generation)
+    - **Guidance Scale Robustness**: Consistent performance across CFG scales (4.5-10.5) due to inter-class diversity focus over intra-class variation  
+    - **Domain-Specific Impact**: Eliminating synthetic data for specific tasks (Aircraft, StanfordCars) significantly exacerbates forgetting of those tasks
+    - **Distribution Coverage**: Synthetic pre-training data (ImageNet classes) + downstream classes provides comprehensive feature space anchoring
+  - **Computational Efficiency**:
+    - **Storage-Free**: Generated images discarded after each task; regenerated before next task ensuring diversity
+    - **Privacy-Preserving**: No historical data storage required; synthetic recreation eliminates privacy concerns
+    - **Cost-Effective**: 1K images per task via Stable Diffusion vs. storing/accessing massive real datasets
+  - **Institution**: Wuhan University, Chinese Academy of Sciences, Wuhan AI Research
+  - **Authors**: Bin Wu, Wuxuan Shi, Jinqiao Wang, Mang Ye
+  - **Open Source**: ✅ [Code](https://github.com/Luo-Jiaming/GIFT_CL)
+  - **Significance**:
+    - **Multi-Modal CL Breakthrough**: First successful application of diffusion-generated synthetic data to VLM continual learning
+    - **Dual Knowledge Preservation**: Simultaneously maintains pre-training generalization AND downstream task performance - critical for practical VLM deployment
+    - **Synthetic Data Paradigm**: Demonstrates synthetic data superiority over real data replay for CL when properly designed
+    - **Practical Impact**: Enables efficient VLM updates in production without catastrophic forgetting, storage overhead, or privacy issues
+
+#### 🎭 VLM Personalization & Concept Learning
+
+- **📄 Concept-as-Tree (CaT)** [(arXiv 2503.12999)](https://arxiv.org/abs/2503.12999) 🏷️ **[VLM Personalization]**
+  - **Data Synthesis Method** - **Hierarchical Concept Tree Framework for Controllable Synthetic Data Generation**:
+    - **Core Innovation**: First controllable synthetic data pipeline for VLM personalization using tree-structured concept representation to generate positive/negative samples with varying difficulty and diversity
+    - **Three-Layer Tree Structure**: Root node (concept category: "cat", "dog"), Dimensions (attribute aspects: "appearance", "behavior", "location"), Attributes (specific features: "sitting", "lying", "climbing")
+    - **Automated Tree Construction**: VLM description → Batch summarization → Self-refinement with multi-round voting mechanism for orthogonality and completeness
+    - **Data Scale**: Works with 1-3 user-provided images, generates controllable positive/negative samples for personalization fine-tuning
+  - **Key Technical Components**:
+    - **Tree Editing Operations**: (1) Add Dimension - increases diversity and conversational capabilities, (2) Remove Dimension - decreases diversity for focused learning, (3) Modify Dimension - balanced diversity control
+    - **Controllable Sample Generation**: Positive samples via fine-tuned diffusion on user images + root node; Easy negatives via root category replacement; Hard negatives via dimension modification while preserving root
+    - **PCS Score Filtering**: Perturbation-based Concept-Specific score distinguishes concept-specific (CS) vs concept-agnostic (CA) information through patch shuffling and CLIP similarity difference
+    - **Multi-Type Sample Strategy**: Easy negatives boost recognition; Hard negatives enhance VQA/conversation; Combined approach achieves optimal performance across tasks
+  - **Experimental Framework**:
+    - **Systematic Analysis**: Studies positive/negative sample impact and diversity requirements across recognition, VQA, captioning, and choice tasks
+    - **Cross-Model Validation**: MyVLM, Yo'LLaVA, MC-LLaVA baselines show consistent improvements with synthetic data integration
+    - **Diversity Optimization**: Identifies optimal diversity levels - excessive diversity introduces noise, insufficient diversity limits generalization
+  - **Experimental Results**:
+    - **MyVLM Enhancement**: Recognition +3.4%, VQA +4.5%, Caption +2.6% (Real+Syn+Plus setting)
+    - **Yo'LLaVA Enhancement**: Recognition +2.2%, VQA +3.9%, Caption +5.3% achieving near GPT-4o performance in certain scenarios
+    - **MC-LLaVA Enhancement**: Recognition +3.0%, VQA +4.2%, Caption +5.3% with stable cross-dataset improvements
+    - **Quality Validation**: Human evaluation shows synthetic positive samples comparable to originals, synthetic hard negatives significantly outperform retrieved negatives
+  - **Data Quality Insights**:
+    - **PCS Score Effectiveness**: High PCS scores (>0.3 for positives, >0.1 for hard negatives) correlate with concept-specific information content
+    - **Synthetic vs Retrieved**: Synthetic negative samples show lower proportion of low-quality samples compared to retrieval-based negatives
+    - **Tree Operation Analysis**: Add operations increase diversity most, Remove operations decrease it, Modify provides balanced control
+  - **Practical Guidelines**:
+    - **Minimal Data Requirements**: 1-3 concept images sufficient for effective personalization (vs. traditional 10+ images)
+    - **Controllable Generation**: Tree editing frequency and type directly control synthetic data diversity and task-specific improvements  
+    - **Quality Assurance**: PCS score filtering more effective than cosine similarity alone for concept-centric data selection
+    - **Mixed Training**: Combination of original + synthetic data achieves best performance, pure synthetic data shows distribution shift challenges
+  - **Institution**: Peking University, Intel Labs China, CUHK MMLab
+  - **Authors**: Ruichuan An, Kai Zeng, Ming Lu, Sihan Yang, Renrui Zhang, et al.
+  - **Open Source**: ✅ [Code](https://github.com/zengkaiya/CaT)
+  - **Significance**:
+    - **Personalization Breakthrough**: First systematic framework for VLM personalization with minimal user data requirements
+    - **Controllable Synthesis**: Enables precise control over synthetic data characteristics through interpretable tree operations
+    - **Quality Assessment Innovation**: PCS score provides novel method for evaluating concept-specific information in synthetic images
+    - **Practical Impact**: Makes VLM personalization accessible for real-world deployment with limited user-provided examples
+
 ---
 
 #### 🛠️ Tool-Assisted Annotation Generation (For Data Synthesis)
@@ -3316,6 +3515,41 @@ This category of methods keeps original images fixed while enriching and improvi
   - **This is true data synthesis**: Uses tool combination to generate new annotations
   - **Open Source**: ✅ [Dataset](https://huggingface.co/datasets/OpenGVLab/AS-V2) | [Code](https://github.com/OpenGVLab/all-seeing)
 
+---
+
+## 🎯 VLM Self-Improvement & Reinforcement Learning
+
+This emerging category focuses on **scalable VLM self-improvement** through reinforcement learning and gamified environments, enabling models to enhance their reasoning capabilities **without human annotation**. These methods leverage competitive dynamics, strategic gameplay, and iterative policy optimization to achieve sustained performance improvements across diverse reasoning tasks.
+
+- **📄 Vision-Zero** [(arxiv 2509.25541)](https://arxiv.org/abs/2509.25541) 🏷️ **[VLM Self-Improvement & RL]**
+  - **Data Synthesis Method** - **Strategic Gamified Self-Play Framework**:
+    - **Core Innovation**: First **zero-human-in-the-loop** training paradigm for VLMs using "Who Is the Spy" style visual games
+    - **Label-Free & Domain-Agnostic**: Accepts arbitrary image pairs (CLEVR synthetic, charts, real-world) to generate strategic reasoning games
+    - **Iterative Self-Play Policy Optimization (Iterative-SPO)**: Novel algorithm alternating between self-play and RLVR to prevent performance plateaus
+    - **Strategic Environment**: Models compete in two-stage games (Clue Stage: provide visual clues, Decision Stage: identify the spy)
+    - **Data Scale**: 2K CLEVR pairs (~6 GPU hours), 1K chart pairs, 1K real-world pairs - minimal cost compared to traditional human annotation
+    - **Quality Assurance**: Zero-sum reward design with Role-Advantage Estimation (RAE) to handle asymmetric role information
+  - **Key Technical Components**:
+    - **Game Environment**: Civilians vs. Spy setup with subtly different image pairs (missing/added/modified objects)
+    - **Reward System**: Clue stage uses zero-sum rewards based on votes received; Decision stage uses discrete +1/-0.5/-1 rewards
+    - **Training Algorithm**: Dynamic stage switching based on performance thresholds (accuracy ≥0.9 or "n/a" rates)
+    - **Domain Flexibility**: Automated image editing pipeline supports procedural generation (CLEVR) and tool-based editing (Gemini2.5-Flash)
+  - **Experimental Results**:
+    - **Reasoning & Math**: MathVista 68.2→72.6% (+4.4%), MathVision 25.4→28.1% (+2.7%), WeMath 36.1→39.8% (+3.7%)
+    - **Chart/OCR**: ChartQA 86.1→87.2% (+1.1%), OCRBench 88.3→89.0% (+0.7%)
+    - **Vision-Centric**: MMVP 76.8→79.5% (+2.7%), RealWorldQA 68.1→68.5% (+0.4%)
+    - **Cross-Capability Transfer**: Mitigates negative transfer common in traditional RL methods (vs. 10% decline in MM-Eureka)
+    - **Model Generalization**: Effective across Qwen2.5-VL-7B, InternVL3-8B, InternVL3-14B architectures
+  - **Cost Efficiency**: 
+    - **Dataset Construction**: Orders of magnitude cheaper than traditional methods (6 GPU hours vs. months/years)
+    - **Performance**: Outperforms SOTA methods trained on expensive human-labeled datasets (MM-Eureka, VLAA-Thinker, R1-OneVision)
+    - **Sustainable Growth**: Win rates improve from 50% to 71% during training with increasing reasoning complexity
+  - **Open Source**: ✅ [Code](https://github.com/wangqinsi1/Vision-Zero) | Models & datasets promised
+  - **Significance**: 
+    - **Paradigm Shift**: Eliminates dependency on human-curated datasets through competitive self-play
+    - **Scalable Framework**: Domain-agnostic approach enables rapid dataset construction for specific domains
+    - **Strategic Reasoning**: Joint visual-linguistic analysis strengthens spatial understanding and mitigates text shortcut bias
+    - **Practical Impact**: Provides economical, accessible training paradigm for VLM development
 
 ---
 
@@ -3406,6 +3640,49 @@ This category of methods keeps original images fixed while enriching and improvi
 - Two-stage VLM pre-training with specialized branches
 
 </details>
+
+### 🔄 Multi-Modal Model Collapse & Synthetic Data Robustness
+
+- **📄 Multi-modal Synthetic Data Training and Model Collapse** [(arXiv 2505.08803)](https://arxiv.org/abs/2505.08803) 🏷️ **[Synthetic Data Quality Assessment]**
+  - **Domain**: Multi-modal generative systems (VLMs + Diffusion Models)
+  - **Core Contribution**: First comprehensive study of model collapse in multi-modal vision-language generative systems, expanding beyond single-modality investigations to multi-agent recursive training scenarios
+  - **Key Research Questions**:
+    1. How does recursive synthetic data training impact multi-modal generative systems?
+    2. What properties characterize multi-modal model collapse vs. single-modal collapse?
+    3. Do model interactions make collapse better or worse?
+    4. How can we improve generative synthetic data to mitigate model collapse?
+  - **Experimental Framework**:
+    - **Three Training Settings**: (1) Single-model recursive fine-tuning, (2) Two-model with frozen relabeling, (3) Joint recursive fine-tuning
+    - **Model Architectures**: BLIP-2 (VLM) + Stable Diffusion 1.5 (text-to-image)
+    - **Evaluation Dataset**: MS-COCO subset (1K samples) with comprehensive metrics across modalities
+    - **Recursive Training**: Models generate synthetic data → fine-tune on generated data → repeat for multiple generations
+  - **Key Findings**:
+    - **VLM Collapse Differs from LLMs**: Variance increases (not decreases) in VLM image captioning due to cross-modal interactions bridging modality gaps
+    - **Improved Vision-Language Alignment**: Model collapse paradoxically improves CLIP alignment scores through reduced variance, though with quality degradation
+    - **Bias-Variance Trade-off Critical**: Balanced bias-variance (not just increased variance) key for collapse mitigation
+    - **Decoding Budget Correlation**: Higher decoding budgets (50+ diffusion steps) generate more robust synthetic datasets resistant to collapse
+  - **Multi-Modal Collapse Characteristics**:
+    - **Diffusion Models**: 4× faster CLIP variance drop, improved caption-image alignment, saturation-driven gender bias shifts
+    - **VLMs**: Vocabulary explosion (200+ more tokens), perplexity increase, improved semantic alignment but reduced grammatical coherence
+    - **Distinct from Single-Modal**: Multi-modal systems show alignment improvements absent in unimodal collapse patterns
+  - **Mitigation Strategies**:
+    - **Model Diversity**: Both hyperparameter diversity (different CFG/temperatures) and architectural diversity (multiple model variants) reduce collapse
+    - **Frozen Relabeling**: Using frozen models from different paradigms to relabel synthetic data significantly slows collapse (223.1 vs 253.2 FID)
+    - **Joint Training Warning**: Simultaneous training of both models accelerates collapse (312.5 FID) - requires frozen anchoring models
+    - **Statistical Quality Correlation**: Common metrics (FID for images, BLEU-4 for captions) reliably predict synthetic data robustness
+  - **Practical Guidelines**:
+    - **Decoding Optimization**: Increase generation steps for diffusion models to improve collapse resistance
+    - **Multi-Agent Setup**: Maintain at least one frozen model trained on human-authored data to prevent co-degradation
+    - **Quality Monitoring**: Use standard quality metrics as early warning indicators for model collapse onset
+    - **Distribution Anchoring**: Avoid completely self-contained recursive loops without external reference points
+  - **Institution**: University of Southern California  
+  - **Authors**: Zizhao Hu, Mohammad Rostami, Jesse Thomason
+  - **Open Source**: ⚠️ Code availability not specified in paper
+  - **Significance**: 
+    - **Multi-Modal Extension**: First rigorous investigation of model collapse beyond single-modality systems
+    - **Practical Framework**: Provides concrete guidelines for safe deployment of recursive synthetic data training in multi-agent AI systems
+    - **Quality Assurance**: Establishes correlation between standard metrics and collapse resistance for practical monitoring
+    - **Self-Improving Systems**: Critical insights for developing stable autonomous multi-modal AI agents that train on self-generated data
 
 ---
 
