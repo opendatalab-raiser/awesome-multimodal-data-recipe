@@ -20,16 +20,16 @@
 
 ## 📊 Statistics
 
-- **Total Papers:** 67+ (data synthesis/construction methods)
+- **Total Papers:** 75+ (data synthesis/construction methods)
 - **Industrial Reports:** 9 (Baidu, Microsoft, Alibaba, ByteDance, Tencent, Hunyuan, etc.)
 - **Data Synthesis Methods:** 
-  - Image Generation - Synthesizing New Visual Content (13): Geometric/mathematical reasoning + document/text-dense scenes + scene text detection + multimodal dialogue + text-driven image synthesis + autonomous driving + fully synthetic image-text generation
+  - Image Generation - Synthesizing New Visual Content (15): Geometric/mathematical reasoning + document/text-dense scenes + scene text detection + multimodal dialogue + text-driven image synthesis + autonomous driving + fully synthetic image-text generation + 3D physics simulation + 3D scene synthesis
   - Image Editing (4): Non-rigid motion, unified editing, referring expression-guided editing
-  - Compositionality / Preference-Guided Synthesis (3): Enhancing compositional understanding + multi-concept composition + multi-image customization
+  - Compositionality / Preference-Guided Synthesis (5): Enhancing compositional understanding + multi-concept composition + multi-image customization + hard negative contrastive learning + 3D physics simulation VLC enhancement
   - Interleaved Image-Text · Coherence & Consistency (4): Multi-perspective quality filtering + iterative refinement + multimodal embedding-based correlation
-  - Think with Image (1): Interleaved multimodal reasoning with image manipulation
+  - Think with Image (2): Interleaved multimodal reasoning with image manipulation + large-scale reasoning trajectory synthesis
   - VLM Self-Improvement & Reinforcement Learning (1): Gamified self-play frameworks for VLM reasoning enhancement without human annotation
-  - Image-Invariant - Text Enhancement (32): Fixed images, enriched text only + spatial reasoning enhancement + VLM personalization + continual learning
+  - Image-Invariant - Text Enhancement (35): Fixed images, enriched text only + adaptive weighted synthetic captions + medical domain purely synthetic data + cost-efficient LVLM data refinement + spatial reasoning enhancement + VLM personalization + continual learning
   - Video - Instruction Tuning (Synthetic Data) (1): Synthetic video instruction-following data (captions + QA)
   - Cross-Domain Methodology Insights (2): Multi-modal model collapse analysis + synthetic data quality assessment
 - **Notable Datasets:** 
@@ -990,6 +990,74 @@ This category focuses on **generating new images from scratch** as part of the d
 
 ---
 
+- **📄 SyViC** [(arXiv 2303.17590)](https://arxiv.org/abs/2303.17590) 🏷️ **[Method + Synthetic Data]** - **March 2023**
+  - **Focus**: **Going Beyond Nouns With Vision & Language Models Using Synthetic Data** - Using physics simulation and human action synthesis to enhance VLM understanding of attributes, actions, relations, and states
+  - **Data Synthesis Method** - **3D Physics Simulation + Human Motion Synthesis + Spatial Relationship Modeling**:
+    - **Core Innovation**: Constructs million-scale synthetic dataset focusing on "beyond nouns" Visual Language Concepts (VLC), addressing VLM weaknesses in compositional reasoning and non-object word understanding
+    - **Base Platform**: **ThreeDWorld (TDW)** - Multimodal physics simulation platform
+      - **3D Resources**: 2,304 object models, 585 unique materials, 30+ indoor and 9 outdoor scenes
+      - **Material Types**: Metal, cardboard, wood, ceramic, glass with diverse textures
+      - **Physics Engine**: Supports realistic physical interactions and collision detection
+    - **Three Synthesis Components**:
+      1. **Multi-Object Scene Synthesis**:
+         - **Object Placement**: Randomly place 1-8 3D object models per scene, using colliders for reasonable layouts
+         - **Multi-Viewpoint Rendering**: Deploy 4-12 camera positions simultaneously for different perspectives of same scene
+         - **Attribute Randomization**: Programmatic randomization of object colors, sizes, materials
+         - **Spatial Relations**: Auto-generate positional relationship descriptions (left/right, front/back, above/below) based on 3D world coordinates
+      2. **Human Motion & Interaction Synthesis**:
+         - **Body Model**: Use **SMPL-X** parametric human model for precise pose control
+         - **Motion Data Sources**: Integrate **AMASS**, **BABEL**, **TEACH** large-scale motion capture databases
+         - **Diversity Design**: 
+           - **Gender Diversity**: Male and female prefabs (Unity Prefabs)
+           - **Clothing Diversity**: SURREAL + Multi-Garment system supporting multi-layer clothing combinations
+           - **Motion Diversity**: Cover daily activities (walking, running, jumping, dancing) and complex interactions
+         - **Human-Object Interactions**: Physical interactions between humans and scene objects (grasping, moving, avoiding)
+      3. **Dense Caption Generation**:
+         - **Rule-Based Grammar**: Develop metadata-driven grammar system automatically generating detailed captions from scene metadata
+         - **Multi-Level Descriptions**: 
+           - **Object Descriptions**: Shape, color, material, position
+           - **Human Descriptions**: Gender, clothing, hairstyle, action states
+           - **Relationship Descriptions**: Spatial relations between objects, human-object relations
+           - **Scene Descriptions**: Environmental background, overall layout
+         - **Long Caption Handling**: Develop caption splitting module to handle captions exceeding CLIP text encoder context length
+    - **Data Augmentation Strategies**:
+      - **Domain Adaptive Stylization**: Use style transfer to reduce synthetic-real data domain gap  
+      - **Parameter Efficient Fine-tuning**: LoRA adapters for low-parameter updates, avoiding catastrophic forgetting
+      - **Model Averaging**: Combine multiple checkpoint weights to balance VLC understanding gains and zero-shot capability retention
+  - **Data Scale**: 
+    - **SyViC Dataset**: 767,000 image-text pairs
+    - **Caption Quality**: Average multi-sentence descriptions covering objects, attributes, actions, relations, states
+    - **Diversity**: Covers thousands of object-attribute-action combinations ensuring compositional reasoning training coverage
+  - **Training Strategy**:
+    - **LoRA Fine-tuning**: Freeze base model parameters, train only low-rank adaptation layers
+    - **Caption Splitting**: Split long captions into sub-captions, encode separately then average features
+    - **Contrastive Learning**: Maintain original model (CLIP/CyCLIP) contrastive loss functions
+    - **Domain Adaptation**: Combine stylization and parameter-efficient methods to reduce forgetting
+  - **Experimental Results**:
+    - **Compositional Understanding Benchmarks**:
+      - **VL-Checklist**: syn-CLIP vs CLIP shows +5.82% relation understanding, +2.86% attribute understanding
+      - **ARO Benchmark**: VG-Relation +12.56%, VG-Attribution +3.75%
+      - **Winoground**: +1.75% compositional reasoning accuracy improvement
+    - **Ablation Study Findings**:
+      - **Human Characters Crucial**: Including human interactions significantly outperforms object-only scenes
+      - **Object Attribute Randomization**: Color, size, material variations contribute greatly to compositional understanding  
+      - **Clothing Diversity**: Multi-Garment vs SURREAL vs simple textures, Multi-Garment performs best
+    - **Zero-Shot Capability Retention**: Comparable performance to baseline CLIP on 21 zero-shot tasks (only -0.8%)
+  - **Key Findings**:
+    - **Synthetic Data Effectiveness**: Pure synthetic data can significantly improve VLM understanding of beyond-noun concepts
+    - **Human-Centric Importance**: Including human actions and interactions crucial for compositional reasoning improvement
+    - **Balanced Training Strategy**: LoRA+domain adaptation+model averaging effectively balances new capability acquisition and original capability retention
+    - **Dense Caption Value**: Detailed multi-level captions more conducive to VLC learning than simple object labels
+  - **Publication**: arXiv March 2023 | MIT-IBM Watson AI Lab & Rice University et al.
+  - **Open Source**: ✅ SyViC Dataset + Data Generation Codebase + Training Strategy Code
+  - **Significance**: 
+    - **VLM Capability Boundary Extension**: First systematic solution to VLM "beyond nouns" understanding fundamental problem
+    - **Synthetic Data Methodology**: Establishes complete framework for physics simulation-based VL data synthesis
+    - **Compositional Reasoning Breakthrough**: Proves synthetic data can effectively improve model compositional reasoning and VLC understanding
+    - **Scalability**: Open-source data generation codebase provides good scalability and adaptability
+
+---
+
 #### 📐 Geometric & Mathematical Reasoning
 
 - **📄 R-CoT** [(OpenReview ICLR 2025)](https://openreview.net/pdf?id=iwVkB9zaVb)
@@ -1322,6 +1390,94 @@ This category focuses on **generating new images from scratch** as part of the d
     - **Impact**: SynthText dataset widely used in text detection research as pre-training data
     - **Transfer Learning**: Demonstrated effective synthetic-to-real transfer for text detection tasks
 
+#### 🏠 3D Scene Synthesis
+
+- **📄 SynVL3D** [(arXiv 2407.06084)](https://arxiv.org/abs/2407.06084) 🏷️ **[Method + Synthetic Data]** - **July 2024**
+  - **Focus**: **3D Vision-Language Pretraining with Large-Scale Synthetic Data** - Building comprehensive synthetic 3D scene-text corpus to address limited scene-level diversity and insufficient fine-grained annotations in 3D-VLP datasets
+  - **Data Synthesis Method** - **3D Simulator-Driven Scene Generation + Multi-Granularity Text Description Synthesis**:
+    - **Core Innovation**: Leverages free 3D simulator to construct large-scale, diverse synthetic 3D scene datasets with 1M descriptions across object, view, and room levels
+    - **Problem Identification**: Existing 3D-VLP datasets suffer from small scale and limited annotations
+      - **Data Scarcity**: ScanScribe only has 1.2K scenes and 280K textual annotations
+      - **Limited Diversity**: Restricted scene types and object categories
+      - **High Collection Cost**: 3D scene data collection and annotation extremely expensive
+      - **Missing Fine-Grained Associations**: Lack of object-level, view-level, room-level multi-tier correlations
+    - **3D Scene Generation**:
+      - **Simulator Platform**: Based on AI2-THOR 3D simulator environment
+      - **Scene Scale**: 10,000 indoor 3D scenes with 108 object categories
+      - **Scene Graph Construction**: 
+        - Build scene graph for each house (scene) describing spatial relationships between objects
+        - Define relationships based on object spatial position, size, and shape
+        - Three major relationship types:
+          1. **Support Relations** (e.g., on, in): Based on physical contact and containment
+          2. **Spatial Relations** (e.g., next to, in front of): Based on relative positions
+          3. **Comparative Relations** (e.g., bigger than, same shape as): Based on size and shape
+      - **Precise Annotations**: Provide semantic (category), visual (high-quality mesh), fine-grained visual annotations (error-free position, orientation, segmentation masks)
+    - **Multi-Granularity Text Description Synthesis**:
+      - **Total Count**: Over 1M templated and free-form descriptions
+      - **Three Description Types**:
+        1. **Template-Based Descriptions**:
+           - **Object Appearance**: Use off-the-shelf image captioner to generate captions for each object's front view
+           - **Relation Triplets**: <object1, relation, object2> format using template "the object1 is relation to object2"
+           - **Instance Descriptions**: Merge appearance descriptions with neighboring object relation descriptions into paragraphs
+        2. **Free-Form Descriptions**: Use GPT-3 to rephrase templated descriptions for enhanced naturalness
+        3. **Multi-View Descriptions**: Generate descriptions for different perspectives and room levels
+      - **Phrase-Region Association**: Train distinct identifiers for each noun phrase, establishing phrase-spatial region connections
+    - **Multi-Level Association Establishment**:
+      - **Object-Level Association**: Phrase identifiers precisely correspond to 3D object bounding boxes
+      - **View-Level Association**: Object-text alignment across multiple perspectives
+      - **Room-Level Association**: Scene-wide descriptions associated with 3D scenes
+  - **SynFormer3D Pretraining Framework**:
+    - **Unified Transformer Architecture**: Simple unified model for aligning 3D scenes with language
+    - **Three Components**:
+      1. **3D Object Encoder**: Processes point cloud features
+      2. **Text Encoder**: Processes natural language descriptions
+      3. **Cross-Modal Fusion Module**: Achieves 3D-text alignment
+    - **Fine-Grained Pretraining Tasks**:
+      1. **Object Relation Prediction (ORP)**: Predict spatial relationships between 3D objects
+      2. **Multi-Level Region-Word Alignment (MRWA)**: Alignment across object, room, scene levels
+      3. **View-Aggregated Region-Word Alignment (VRWA)**: Multi-view information aggregation alignment
+    - **Synthetic-to-Real Domain Adaptation**:
+      - **Triple Domain Discriminator**: Vision domain, language domain, vision-language joint domain
+      - **Gradient Reversal Layer**: Min-max optimization to address domain shift
+      - **Joint Adaptation**: Simultaneously handles unimodal and cross-modal domain shifts
+  - **Data Scale**: 
+    - **SynVL3D Dataset**: 10,000 indoor scenes with 1M+ text descriptions
+    - **Object Coverage**: 108 object categories
+    - **Relationship Types**: Three major categories: support, spatial, comparative
+    - **Multi-Granularity Annotations**: Object-level, view-level, room-level three-tier associations
+  - **Experimental Results** - **SOTA Performance on 3D-VL Tasks**:
+    - **3D Visual Grounding**:
+      - Nr3D: 65.5% accuracy (vs 3D-VISTA 64.2%, +1.3%)
+      - Sr3D: 77.9% accuracy (vs 3D-VISTA 76.4%, +1.5%)
+      - ScanRefer: 52.3%@0.25IoU, 46.2%@0.5IoU
+    - **3D Dense Captioning**:
+      - Scan2Cap: CIDEr score 72.1@0.25IoU (vs 3D-VISTA 71.0, +1.1%)
+      - Comprehensive improvements across BLEU-4, METEOR, ROUGE metrics
+    - **3D Question Answering**:
+      - ScanQA: EM@1 reaches 27.6% (vs 3D-VISTA 26.5%, +1.1%)
+      - Improvements in BLEU-4, ROUGE, METEOR language generation metrics
+  - **Ablation Study Findings**:
+    - **Fine-Grained Pretraining Task Contributions**:
+      - Object Relation Prediction (+6.2% VG, +6.8% Cap, +2.0% QA)
+      - Multi-Level Region-Word Alignment (+5.8% VG, +6.4% Cap, +2.2% QA)
+      - View-Aggregated Alignment (+1.6% VG, +1.2% Cap, +0.3% QA)
+    - **Synthetic-to-Real Adaptation**: Triple domain adaptation significantly improves performance (+14.4% VG, +13.4% Cap, +3.9% QA)
+    - **Multi-Level Alignment**: Object, room, scene-level alignments all contribute, with combination achieving best results
+  - **Key Findings**:
+    - **Synthetic Data Effectiveness**: Pure synthetic data pretraining models excel on real 3D scenes
+    - **Multi-Granularity Association Value**: Object-view-room three-tier associations crucial for performance improvement
+    - **Domain Adaptation Importance**: Synthetic-to-real domain adaptation critical for generalization capability
+    - **Scalability**: Compared to real data collection, synthetic approach offers low cost and high scalability
+  - **Publication**: arXiv July 2024 | Peking University
+  - **Open Source**: ✅ SynVL3D Dataset (10K scenes + 1M descriptions) + SynFormer3D Model + Training Code
+  - **Significance**: 
+    - **3D-VLP Data Breakthrough**: First large-scale, multi-level synthetic 3D vision-language dataset
+    - **Cost-Effective Solution**: Provides low-cost, high-quality data acquisition approach for 3D scene understanding
+    - **Multi-Granularity Framework**: Establishes object-view-room three-tier 3D-text association framework
+    - **Domain Adaptation Innovation**: Proposes effective domain adaptation methods for 3D vision-language tasks
+
+---
+
 #### 🔄 Contrastive Learning & Image Difference
 
 - **📄 Img-Diff** [(CVPR 2025)](https://github.com/modelscope/data-juicer/tree/ImgDiff) 🏷️ **[Method + Data]**
@@ -1558,6 +1714,79 @@ This emerging category constructs **image-text interleaved reasoning traces** wh
   - **Institution**: National University of Singapore, Zhejiang University, University of Washington, Stanford, CUHK
   - **Open Source**: ✅ [Code & Models](https://github.com/ThinkMorph/ThinkMorph) | [Dataset](https://huggingface.co/ThinkMorph)
 
+- **📄 ImageNet-Think-250K** [(arXiv 2510.01582)](https://arxiv.org/abs/2510.01582) 🏷️ **[Synthetic Data]** - **October 2024**
+  - **Focus**: **Large-Scale Multimodal Reasoning Synthetic Dataset** - Building multimodal reasoning dataset with explicit thinking processes to aid Vision Language Model reasoning capability development
+  - **Data Synthesis Method** - **Multi-Modal Large Model Driven Thinking Trajectory Synthesis**:
+    - **Core Innovation**: Leverages SOTA vision-language models to generate large-scale synthetic dataset with explicit reasoning steps, capturing VLM's step-by-step thinking processes and final descriptive answers
+    - **Problem Identification**: Existing multimodal dataset limitations
+      - **Lack of Reasoning Transparency**: Most datasets focus only on input-output mappings without capturing intermediate reasoning steps
+      - **Difficult Reasoning Diagnosis**: Cannot understand model decision processes or diagnose model failures
+      - **Domain Limitations**: Existing reasoning datasets typically domain-specific or limited in scale
+      - **Proprietary Data Barriers**: Training data usually proprietary or limited in scope, hindering broader research
+    - **Data Generation Pipeline**:
+      - **Data Source**: 250,000 images from carefully selected ImageNet-21k dataset samples
+      - **Image Selection Criteria**:
+        1. **Visual Quality**: High resolution and clarity
+        2. **Content Integrity**: No significant occlusion or corruption
+        3. **Semantic Diversity**: Diverse semantic categories to promote generalization
+        4. **Complexity Balance**: Balanced representation across different visual complexity levels
+      - **Dual-Model Generation Strategy**:
+        - **GLM-4.1V-9B-Thinking**: Generates thinking trajectory 1
+        - **Kimi-VL-A3B-Thinking-2506**: Generates thinking trajectory 2
+        - Each image paired with two thinking-answer sequence sets, providing reasoning diversity
+    - **Unified Prompt Design**:
+      - **Prompt Template**: "Please analyze this image step by step. Explain your reasoning process. Describe this image and give as much information as possible"
+      - **Guiding Objectives**: 
+        1. First describe observed content
+        2. Explain reasoning process
+        3. Provide final detailed answer
+      - **Standardized Process**: Ensures consistency and quality in thinking chain generation
+    - **Thinking-Answer Separation**:
+      - **Thinking Tokens (Think)**: Intermediate reasoning steps describing objects, context, relationships
+      - **Answer Tokens (Answer)**: Final descriptive answers that refine or finalize image interpretation
+      - **Paired Structure**: Each image → 2×(thinking, answer) pairs, supporting reasoning quality and outcome accuracy evaluation
+  - **Data Scale and Statistics**:
+    - **Total Data Volume**: 250,000 images, 500,000 thinking-answer pairs
+    - **Category Coverage**: 15,234 unique ImageNet-21k categories
+    - **Average Distribution**: 16.4 images per category, standard deviation 12.8
+    - **Token Statistics**:
+      - **Minimum Tokens**: 521 tokens/sample
+      - **Maximum Tokens**: 196,388 tokens/sample  
+      - **Average Tokens**: 1,542 tokens/sample
+      - **Total Token Count**: 300 million tokens
+    - **Diversity Metrics**: Spans broad semantic categories across scientific, natural, and social sciences
+  - **Synthetic Quality Control**:
+    - **Consistency Verification**: Ensure generated thinking and answers are logically consistent
+    - **Multi-Model Validation**: Cross-validation from two SOTA VLMs improves reliability
+    - **Length Filtering**: Remove excessively short or abnormally long responses
+    - **Content Quality**: Assess response quality and relevance through LLM evaluation
+  - **Benchmark Evaluation Framework**:
+    - **Reasoning Quality Metrics**:
+      - **Semantic Similarity**: BERTScore, Sentence-BERT cosine similarity
+      - **Lexical Overlap**: ROUGE-1, ROUGE-L, Jaccard index, overlap coefficient
+      - **Vector Space**: TF-IDF cosine similarity
+    - **Model Comparison**: Performance evaluation of 5 SOTA VLMs on ImageNet-Think
+      - InternVL-3.5-8B, VL-Rethinker-7B, VisionThink-Efficient
+      - OpenVLThinker-7B, R1-OneVision-7B
+    - **Thinking vs Answer Analysis**: Thinking tokens superior in semantic alignment, answer tokens better in lexical overlap
+  - **Experimental Findings**:
+    - **Reasoning Richness**: Thinking trajectories provide rich intermediate reasoning steps, helping understand VLM decision processes
+    - **Model Differences**: Different VLMs show significant differences in reasoning style and quality
+    - **Evaluation Dimensions**: Multi-dimensional evaluation reveals different patterns in semantic understanding and lexical expression
+    - **Scalability**: Synthetic approach can be scaled to larger scales and more visual domains
+  - **Key Contributions**:
+    - **First Large-Scale Reasoning Dataset**: ImageNet-Think provides largest-scale multimodal reasoning dataset
+    - **Explicit Thinking Capture**: Systematically captures VLM's step-by-step reasoning processes
+    - **Multi-Model Perspective**: Leverages multiple SOTA VLMs to provide reasoning diversity
+    - **Standardized Evaluation**: Establishes multi-dimensional reasoning quality evaluation framework
+  - **Publication**: arXiv October 2024 | Argonne National Laboratory
+  - **Open Source**: ✅ ImageNet-Think-250K Dataset + Evaluation Benchmarks + Data Generation Code - Publicly available to support research
+  - **Significance**: 
+    - **Reasoning Transparency**: Provides transparent thinking process data for multimodal reasoning research
+    - **Model Diagnostic Tool**: Helps researchers understand and improve VLM reasoning capabilities
+    - **Standardized Benchmark**: Establishes standards for multimodal reasoning model evaluation
+    - **Research Acceleration**: Reduces barriers to reasoning data acquisition, promoting broader research
+
 ---
 
 ### ✂️ Image Editing (Method + Data)
@@ -1716,6 +1945,64 @@ This category focuses on **instruction-guided image editing** where models learn
 ### 🧩 Compositionality / Preference-Guided Synthesis
 
 This category focuses on **synthetic data generation for enhancing compositional understanding** in Vision-Language Models. These methods use controlled data synthesis to improve models' ability to understand complex compositional relationships (e.g., attribute binding, spatial relationships, counting) and align with human preferences.
+
+- **📄 TripletCLIP** [(arXiv 2411.02545)](https://arxiv.org/abs/2411.02545) 🏷️ **[Method + Synthetic Data]** - **November 2024**
+  - **Focus**: **Improving CLIP's Compositional Reasoning via Synthetic Vision-Language Hard Negatives**
+  - **Data Synthesis Method** - **LLM-Guided Hard Negative Caption Generation + T2I Model Corresponding Image Synthesis**:
+    - **Core Innovation**: Generate semantically similar but compositionally different hard negative image-text pairs, train CLIP using triplet contrastive learning
+    - **Two-Stage Pipeline**:
+      1. **LLM-Generated Hard Negative Captions**:
+         - Use **Mistral-7B-Instruct-v0.2** with in-context learning to generate high-quality hard negative captions
+         - **Prompting Strategy**: Requires generation of "mostly similar descriptions with sufficient significant differences so two descriptions cannot possibly be for the same image"
+         - **Variation Types**:
+           - **Object Replacement**: "dog looking from window" → "cat observing from window"  
+           - **Spatial Relations**: "dog to the left of cat" → "cat to the left of dog"
+           - **Attribute Changes**: "red car" → "blue car"
+           - **Action Variations**: "person running" → "person walking"
+         - **Quality Control**: Single high-quality negative caption outperforms multiple low-quality negatives
+      2. **T2I Model Generated Corresponding Negative Images**:
+         - Use **SDXL-Turbo** for rapid negative image generation (corresponding to negative captions)
+         - **Efficiency**: 3 days on 8×RTX A6000 to generate 13M negative captions
+         - **LLM Selection**: Mistral-7B-Instruct-v0.2 performs best with easily parseable output
+         - **Quality Assessment**: ViLT model validates generated images achieve 76% average accuracy following text prompts
+    - **TripletCLIP Training Strategy**:
+      - **Triplet Contrastive Loss**: L_TCL = L_NegCLIP(X,Y,Y') + L_NegCLIP(X',Y',Y)
+      - **Alternating Supervision**: Train using both (X,Y,Y') and (X',Y',Y) triplets alternately
+      - **Hard Negative Regularization**: Negative images regularize negative caption effects and stabilize pre-training
+  - **Data Scale**: 
+    - **TripletData Dataset**: 13M image-text hard negative pairs
+    - **Base Data**: Built upon CC3M (2.6M) and CC12M (12M) datasets
+    - **Data Type**: Each positive sample paired with one carefully constructed negative sample
+  - **Training Strategy**:
+    - **Fair Computational Budget**: Maintains same training compute as baseline methods
+    - **Modality-Specific Ablations**: Separately validate contributions of hard negative captions and images
+    - **Concept Coverage Analysis**: Evaluate performance across different concept diversity levels
+  - **Experimental Results**:
+    - **Compositional Understanding Benchmarks**:
+      - **SugarCrepe**: +9.4% (CC3M) and +10.9% (CC12M) over LaCLIP
+      - **SugarCrepe**: +6.3% (CC3M) and +6.5% (CC12M) over NegCLIP
+      - **All Sub-categories**: Comprehensive improvements across object/attribute replace, swap, add tasks
+    - **Zero-Shot Tasks**:
+      - **Image-Text Retrieval**: Significant R@5 improvements (CC3M: +11.1%, CC12M: +16.1%)  
+      - **ImageNet Classification**: Top-1 accuracy gains (CC3M: +3.5%, CC12M: +7.0%)
+      - **VTAB Benchmark**: Maintains competitiveness on visual task adaptation
+    - **Ablation Study Findings**:
+      - **Negative Captions Alone**: +7.6% over LaCLIP on SugarCrepe
+      - **Negative Images Alone**: +2.2% over LaCLIP on SugarCrepe  
+      - **Combined**: Achieves best performance +9.4%
+  - **Key Findings**:
+    - **Dual-Modal Hard Negatives Effect**: Negative captions + negative images more effective than either alone
+    - **Data Efficiency**: Using half positive + half negative samples outperforms full positive baseline
+    - **LLM Generation Quality**: LLM-generated negative captions significantly superior to rule-based replacement
+    - **Concept Coverage Independence**: Maintains performance advantages even at lower concept coverage levels
+  - **Publication**: arXiv November 2024 | Arizona State University & University of Maryland, Baltimore County
+  - **Open Source**: ✅ Code, Models, TripletData Dataset - [tripletclip.github.io](https://tripletclip.github.io)
+  - **Significance**: 
+    - **CLIP Compositional Understanding Breakthrough**: First method to simultaneously leverage hard negative images and text for CLIP training
+    - **Scalability**: Provides general triplet contrastive learning framework applicable to other VLMs  
+    - **Practicality**: Achieves significant performance gains under equal computational budget with favorable efficiency-effectiveness trade-off
+
+---
 
 - **📄 SPARCL** [(arXiv 2503.01167)](https://arxiv.org/abs/2503.01167) 🏷️ **[Method + Synthetic Data]** - **CVPR 2025**
   - **Focus**: **Enhancing VLM compositional understanding through multimodal synthetic data with subtle variations**
@@ -2125,6 +2412,239 @@ This category focuses on **high-quality interleaved image-text data construction
 This category of methods keeps original images fixed while enriching and improving paired text quality through various techniques. **This is currently the most mainstream multimodal data synthesis paradigm.**
 
 > **Note**: Only includes papers that explicitly describe data synthesis/generation methods, with specific synthesis components annotated.
+
+- **📄 ALIP** [(arXiv 2308.08428)](https://arxiv.org/abs/2308.08428) 🏷️ **[Method + Synthetic Data]** - **August 2023**
+  - **Focus**: **Adaptive Language-Image Pre-training with Synthetic Caption** - Using synthetic captions to reduce web data noise, optimizing contrastive learning through adaptive weighting mechanisms
+  - **Data Synthesis Method** - **OFA Model Generated Synthetic Captions + Adaptive Weight Gating Mechanisms**:
+    - **Core Innovation**: Addresses image-text mismatch in web data by using large multimodal models to generate high-quality synthetic captions, designing adaptive weighting systems to dynamically balance contributions of raw text and synthetic captions
+    - **Problem Identification**: Web-crawled data contains intrinsic noise and mismatched image-text pairs
+      - **Content Mismatch**: Raw text too abstract (e.g., "Leisure Sunday") doesn't match concrete visual signals
+      - **Information Insufficiency**: Web text lacks detailed descriptions of image content
+      - **Noise Impact**: Mismatched data affects representation learning performance
+    - **Synthetic Caption Generation**:
+      - **Generation Model**: Use **OFA (One For All)** model to generate synthetic captions
+      - **Guiding Prompt**: "What does the image describe?" guides generation of image content descriptions
+      - **Quality Advantages**: Synthetic captions provide more accurate, detailed image content descriptions
+        - Example: "A woman sitting on a step reading a book" vs "Leisure Sunday"
+        - Contains specific object information (book, woman, steps) and action information (sitting, reading)
+    - **Bi-Path Architecture**:
+      - **Raw Path**: Process image-raw text pairs (x, t)
+      - **Synthetic Path**: Process image-synthetic caption pairs (x, c)  
+      - **Triplet Input**: (image x, raw text t, synthetic caption c) as complete training unit
+    - **Adaptive Weight Gating System**:
+      1. **Language Consistency Gate (LCG)**:
+         - **Function**: Predict sample weight Ws based on similarity between raw text and synthetic caption
+         - **Computation**: Ws = sigmoid(MLP(|t-c|, t⊙c, t, c)), where ⊙ denotes element-wise multiplication
+         - **Role**: Identify high-quality samples (consistent text-caption) vs low-quality samples (mismatched text-caption)
+      2. **Description Consistency Gate (DCG)**:
+         - **Function**: Compute image-text pair weight Wt and image-caption pair weight Wc
+         - **Based on Historical Similarity**: Use historical average similarities Hxt and Hxc as thresholds
+         - **Weight Formulas**: 
+           - Wt = exp((Sxt - Hxt) × γp) when Ws < 1
+           - Wc = exp((Sxc - Hxc) × γp) when Ws < 1
+         - **Adaptive Adjustment**: Mine high-quality image-text/image-caption pairs from low-quality samples
+    - **Adaptive Contrastive Loss**:
+      - **Traditional InfoNCE Limitations**: Uniformly weights all training samples, ignoring data quality differences
+      - **Improvement Strategy**: Integrate sample weights Ws and pair weights (Wt, Wc) into InfoNCE loss
+      - **Loss Functions**: 
+        - Lxt = -Σ WsWt × log(softmax(image-text similarity))
+        - Lxc = -Σ WsWc × log(softmax(image-caption similarity))
+      - **Dynamic Adjustment**: Weights adapt based on data quality during training
+  - **Data Scale**: 
+    - **Base Dataset**: YFCC15M (15M image-text pairs)
+    - **Synthetic Captions**: Generate one high-quality synthetic caption per image
+    - **Computational Efficiency**: Synthetic captions can be pre-computed and stored, no online generation needed
+  - **Training Strategy**:
+    - **Dual Encoder Architecture**: Follow CLIP architecture (image encoder + text encoder)
+    - **Joint Optimization**: Train both contrastive losses Lxt + Lxc simultaneously
+    - **Weight Scheduling**: Use historical similarity statistics to dynamically adjust weight parameters
+    - **Hyperparameters**: γs=2 (sample weight), γp=2 (pair weight), temperature parameter τ optimized during training
+  - **Experimental Results**:
+    - **Zero-shot Image-Text Retrieval**:
+      - **Flickr30K**: Text→Image R@1 reaches 70.5% (vs CLIP 34.9%, +35.6%)
+      - **MSCOCO**: Image→Text R@1 reaches 48.9% (vs CLIP 23.4%, +25.5%)
+      - **Significant Improvements**: Achieves new SOTA performance on all retrieval metrics
+    - **Linear Probing**:
+      - **10 downstream datasets**: Average accuracy 72.2% (vs CLIP 63.0%, +9.2%)
+      - **Zero-shot Classification**: 11 datasets average accuracy 41.7% (vs CLIP 31.8%, +9.9%)
+    - **Large-scale Validation**: Validates method robustness and scalability on LAION-10M and LAION-30M
+  - **Ablation Study Findings**:
+    - **Weight Component Contributions**: Ws, Wt, Wc each contribute significantly, combination works best
+    - **Synthetic Caption Quality**: OFA-generated captions have higher image-text similarity and more compact distribution compared to raw text
+    - **Caption Length**: Synthetic caption token count concentrated in 10-15 range, significantly lower than raw text
+    - **Different Capacity Models**: OFA-base and OFA-large generate captions with comparable effectiveness
+  - **Key Findings**:
+    - **Synthetic Caption Advantages**: Synthetic captions more accurately describe image content than raw web text, but raw text still valuable for zero-shot classification tasks
+    - **Weight Mechanism Effectiveness**: Adaptive weighting system effectively identifies and utilizes high-quality data while suppressing noise impact
+    - **Computational Efficiency**: Pre-computed synthetic captions more efficient than online filtering methods (avoiding extra computational overhead during training)
+    - **Data Utilization Maximization**: Through adaptive weighting rather than direct filtering, fully utilizes all training data
+  - **Publication**: arXiv August 2023 | DeepGlint & Huawei UK R&D & InsightFace & University of Sydney
+  - **Open Source**: ✅ Code and model weights - Paper promises open source release
+  - **Significance**: 
+    - **Web Data Noise Solution**: Provides effective framework for handling large-scale web data noise
+    - **Synthetic Caption Paradigm**: Establishes standard method for using multimodal models to generate high-quality captions
+    - **Adaptive Learning**: Pioneering introduction of adaptive weighting mechanisms into multimodal contrastive learning
+    - **Strong Practicality**: Simple and effective method, easy to integrate into existing CLIP training pipelines
+
+- **📄 Medical VLP** [(arXiv 2410.13523)](https://arxiv.org/abs/2410.13523) 🏷️ **[Method + Synthetic Data]** - **October 2024**
+  - **Focus**: **Can Medical Vision-Language Pre-training Succeed with Purely Synthetic Data?** - Exploring the feasibility of medical VLP based entirely on synthetic data to address paired data scarcity in medical domain
+  - **Data Synthesis Method** - **Entity-Driven Synthetic Report Generation + Specialized CXR Image Generation**:
+    - **Core Innovation**: First systematic validation of purely synthetic data effectiveness in medical VLP, proposing automated pipeline to generate high-quality, distribution-balanced synthetic medical image-text pairs
+    - **Problem Identification**: Real medical datasets like MIMIC-CXR have serious defects
+      - **Low-Quality Images**: Blurry, poor contrast, artifact issues
+      - **Unpaired Samples**: Image and text mismatches
+      - **Long-Tail Distribution**: Severe imbalance in medical entity distribution affecting model learning
+      - **Data Scarcity**: Difficult and expensive to obtain high-quality paired medical data
+    - **Real Data Quality Assessment**:
+      - **Multimodal Filtering**: Use InternVL2-26B with 6 designed queries to assess CXR image quality
+      - **Query Types**: Frontal view detection, image quality assessment, artifact detection, contrast evaluation, clarity detection, diagnostic suitability
+      - **Similarity Filtering**: Use RAD-DINO to extract features, filter images similar to low-quality samples
+      - **Results**: Filtered out 1,448 low-quality samples from MIMIC-CXR's 213,384 pairs
+    - **Entity Distribution Analysis**:
+      - **NER Extraction**: Use RaTE model to extract 154,049 unique medical entities from reports
+      - **Five Categories**: Abnormality (55,047), Non-Abnormality (36,365), Disease (23,017), Non-Disease (22,103), Anatomy (40,517)
+      - **Long-Tail Problem**: All categories exhibit severe long-tail distribution affecting learning of rare entities
+    - **Synthetic Report Generation**:
+      - **Entity Sampling Strategy**: 
+        - Sample entity combinations from S1 (Abnormality+Disease, k=9) and S2 (Non-Abnormality+Non-Disease+Anatomy, m=3)
+        - Set frequency threshold τmax=15 to ensure balanced entity distribution
+        - Dynamic resampling to avoid over-representation of high-frequency entities
+      - **LLM Generation**: Use Llama 3.1-70B to generate synthetic radiology reports based on sampled entities
+      - **Structured Output**: Generate complete reports containing both FINDINGS and IMPRESSION sections
+      - **Quality Control**: Use RaTE to verify generated reports actually contain specified entities, regenerate if mismatched
+    - **Synthetic Image Generation**:
+      - **Specialized Model**: Use RoentGen (clinically validated CXR-specific T2I model) to generate paired CXR images
+      - **Conditional Generation**: Generate corresponding CXR images based on IMPRESSION section of synthetic reports
+      - **Quality Assurance**: Only use clinically expert-validated generation models to ensure medical accuracy
+    - **Data Balancing Strategy**:
+      - **Distribution Control**: Actively balance synthetic data distribution through entity sampling and frequency limiting
+      - **Diversity Guarantee**: Ensure reasonable representation of both rare and common diseases
+      - **Pairing Guarantee**: Each synthetic report has corresponding synthetic image, avoiding unpaired issues
+  - **Data Scale**: 
+    - **SynCXR Dataset**: 200,000 synthetic CXR image-report pairs
+    - **No Manual Checking**: Fully automated generation without manual quality checks
+    - **Entity Coverage**: Generated from balanced sampling of 154,049 medical entities
+  - **Training Strategy**:
+    - **Baseline Models**: Use ConVIRT and GLoRIA two classic MedVLP methods
+    - **Training Setup**: Strictly control model and training configurations, focus on data perspective impact assessment
+    - **Comparative Experiments**: Pure real data vs pure synthetic data vs mixed data three settings
+  - **Experimental Results** - **Pure Synthetic Data Significantly Outperforms Real Data**:
+    - **Zero-shot Classification** (Seen Diseases):
+      - **ConVIRT**: Average AUC improvement +4.7%, F1 improvement +4.53%
+      - **GLoRIA**: Consistently outperforms real data training on all 5 datasets
+      - **Mixed Data**: AUC improvement +10.08%, F1 improvement +7.62%
+    - **Zero-shot Classification** (Unseen Diseases):
+      - Significantly enhanced generalization to unseen diseases
+      - Improved performance on Covid-19, PadChest unseen/rare disease detection
+    - **Zero-shot Grounding**:
+      - Average IoU improvement +1.42%, Dice score improvement +0.97%
+      - Mixed data further improvement: IoU +4.06%, Dice +2.92%
+    - **Fine-tuning Tasks**:
+      - Synthetic data pre-trained models consistently outperform real data on classification and segmentation tasks
+      - Proves synthetic data benefits not only cross-modal learning but also single-modal visual understanding
+  - **Ablation Study Findings**:
+    - **Entity Balanced Sampling**: Using more entity types (25%→75%) significantly improves performance
+    - **LLM Choice**: Llama 3.1-70B outperforms other LLMs and medical-specific LLMs
+    - **Image Generation Model**: RoentGen (clinically validated) significantly outperforms general T2I models
+    - **Data Cleaning Value**: Cleaned MIMIC-CXR performance still inferior to pure synthetic data
+  - **Key Findings**:
+    - **Pure Synthetic Data Feasibility**: First proof that medical VLP can be successfully trained entirely on synthetic data
+    - **Synthetic Superior to Real**: Pure synthetic data training outperforms real data across multiple tasks
+    - **Distribution Balance Importance**: Balanced entity distribution more critical than data authenticity
+    - **Quality Over Quantity**: High-quality synthetic data more effective than large-scale noisy real data
+  - **Publication**: arXiv October 2024 | Imperial College London & AstraZeneca & Ohio State University et al.
+  - **Open Source**: ✅ SynCXR Dataset (200K image-text pairs) + Data Generation Pipeline + Evaluation Code
+  - **Significance**: 
+    - **Medical AI Breakthrough**: Provides revolutionary solution to data scarcity problem in medical domain
+    - **Synthetic Data Paradigm**: Proves synthetic data can completely replace real data for medical VLP
+    - **Data Quality Redefinition**: Reveals distribution balance and quality control more important than data authenticity
+    - **Clinical Application Prospects**: Provides new pathway for rapid medical AI system construction and privacy-sensitive data handling
+
+- **📄 HQ-CLIP** [(arXiv 2507.22431)](https://arxiv.org/abs/2507.22431) 🏷️ **[Method + Synthetic Data]** - **July 2025**
+  - **Focus**: **Leveraging Large Vision-Language Models to Create High-Quality Image-Text Datasets and CLIP Models** - Enhancing existing image caption quality through LVLMs to build large-scale high-quality image-text datasets
+  - **Data Synthesis Method** - **Cost-Efficient LVLM-Driven Data Refinement Pipeline + Multi-Granularity Text Generation**:
+    - **Core Innovation**: Proposes scalable LVLM-driven data refinement paradigm, fine-tuning open-source LVLMs with small GPT-4o samples to achieve large-scale high-quality image-text data generation
+    - **Cost Efficiency Solution**: 
+      - **Problem**: Direct use of top-tier LVLMs like GPT-4o, Gemini too expensive for large-scale data processing
+      - **Solution**: Three-step cost optimization strategy
+        1. Use GPT-4o to curate 10,000 high-quality recaption samples as seed data
+        2. Perform supervised fine-tuning (SFT) on lightweight open-source LVLM (Qwen2-VL-7B) to align with GPT-4o on specific task
+        3. Deploy fine-tuned lightweight LVLM for efficient large-scale data processing
+      - **Efficiency Validation**: SFT-enhanced Qwen2-VL-7B achieves comparable performance to 72B version while requiring only 1/9 computing resources
+    - **Multi-Granularity Text Synthesis Strategy**:
+      - **Four Complementary Text Types**:
+        1. **Detailed Positive Description (d+)**: Long detailed image content descriptions, 4× longer than original captions on average
+        2. **Short Positive Tags (t+)**: Key semantic tags extracted from detailed descriptions
+        3. **Detailed Negative Description (d-)**: Semantically similar but content-mismatched detailed negative descriptions
+        4. **Short Negative Tags (t-)**: Negative semantic tags mismatched with image content
+      - **Prompt Engineering Optimization**: 
+        - Design specialized prompt templates to guide LVLM generation of high-quality, structured multi-level descriptions
+        - Complete workflow including positive/negative description generation and tag extraction
+      - **Quality Control**: Ensure generated text quality through multi-round iteration and automatic evaluation
+    - **Data Processing Pipeline**:
+      1. **Raw Data Collection**: Start from large-scale datasets like DFN-Large
+      2. **LVLM Enhancement**: Use fine-tuned Qwen2-VL-7B to generate four complementary texts for each image
+      3. **Quality Filtering**: Filter based on image-text similarity and generation quality
+      4. **Final Integration**: Build multi-granularity dataset containing original + enhanced texts
+  - **HQ-CLIP Training Framework**:
+    - **Hard Negative Identification (HNI)**: 
+      - Utilize detailed negative descriptions and negative tags for fine-grained understanding training
+      - Enhance model sensitivity to semantic nuances
+      - Loss Function: L_HNI = -log(exp(sim(x,t+)/τ) / (exp(sim(x,t+)/τ) + exp(sim(x,t-)/τ)))
+    - **Short-Tag Classification (STC)**:
+      - Use extracted semantic tags for classification training
+      - Improve model categorical semantic recognition capability
+      - Loss Function: L_STC based on tag classification cross-entropy
+    - **Mixed Training Strategy**:
+      - Combine original captions and enhanced texts for training
+      - Optimal mixing ratio: 75% enhanced text + 25% original captions
+      - Dynamic weight adjustment: α=0.2 (HNI weight), β=100 (STC weight)
+  - **Data Scale**: 
+    - **VLM-150M Dataset**: 150 million high-quality image-text pairs
+    - **Base Data**: Filtered and enhanced based on DFN-Large (1.47B original data)
+    - **Text Enhancement**: Each image equipped with 4 complementary text descriptions
+    - **Processing Efficiency**: Using fine-tuned LVLM reduces cost by 90%+ compared to GPT-4o
+  - **Experimental Results** - **Three Orders of Magnitude Validation (1M to 150M)**:
+    - **Small Scale (1.4M)**:
+      - ImageNet Accuracy: 8.7% (vs DFN 5.8%, +2.9%)
+      - Average 38 datasets performance: 20.0% (vs DFN 17.1%, +2.9%)
+    - **Medium Scale (14.7M)**:
+      - ImageNet Accuracy: 40.5% (vs DFN 37.6%, +2.9%)
+      - Retrieval Tasks: 38.4% (vs DFN 28.6%, +9.8%)
+      - Average 38 datasets performance: 41.1% (vs DFN 36.8%, +4.3%)
+    - **Large Scale (147M)**:
+      - ImageNet Accuracy: 70.6% (vs DFN 68.7%, +1.9%)
+      - ImageNet-V2: 63.1% (vs DFN 60.0%, +3.1%)
+      - Retrieval Average: 60.9% (vs DFN 54.5%, +6.4%)
+      - **SOTA Performance**: Achieves 58.6% average across 38 benchmarks
+    - **Extra Large Scale (1.4B)**:
+      - Continues performance improvements, validating method scalability
+  - **Ablation Study Findings**:
+    - **LVLM Selection**: Qwen2-VL performs best among multiple open-source LVLMs
+    - **SFT Effectiveness**: GPT-4o fine-tuning significantly improves data quality and downstream performance
+    - **Text Type Contributions**: 
+      - Detailed descriptions contribute most (+3.4% performance gain)
+      - Hard negative training (+0.8% performance gain)  
+      - Short tag classification (+0.4% performance gain)
+    - **Mixing Ratios**: 75% enhanced text is optimal ratio
+  - **Quality Assessment**:
+    - **Image-Text Similarity**: OpenAI CLIP-Large evaluation shows enhanced data has higher similarity
+    - **GPT-4o Scoring**: Synthetic caption quality scores significantly superior to original captions
+    - **Downstream Task Validation**: CLIP models trained on enhanced data perform best
+  - **Key Findings**:
+    - **Cost Efficiency**: Lightweight LVLMs after SFT can match large model performance with 9× cost reduction
+    - **Multi-Granularity Text Value**: Combination of detailed descriptions + short tags + negative samples most effective
+    - **Scalability**: Method excels from 1M to 1.5B scale
+    - **Quality Enhancement**: Significantly outperforms existing methods at same data scale
+  - **Publication**: arXiv July 2025 | University of Science and Technology of China & Tencent WeChat Vision
+  - **Open Source**: ✅ VLM-150M Dataset (150M image-text pairs) + HQ-CLIP Models + Data Refinement Pipeline
+  - **Significance**: 
+    - **New CLIP Data Quality Standard**: Establishes new paradigm for LVLM-based large-scale data enhancement
+    - **Cost Efficiency Breakthrough**: Proves lightweight models with proper fine-tuning can replace expensive large models
+    - **Multi-Granularity Text Framework**: Proposes complete text enhancement framework combining positive/negative samples and long/short texts
+    - **Scalable Solution**: Provides practical path for building larger-scale, higher-quality vision-language datasets
+
+---
 
 - **📄 Text-VQA Aug** [(arXiv 2511.02046)](https://arxiv.org/abs/2511.02046) 🏷️ **[Method + Data]**
   - **Focus**: **Automated QA synthesis for Text-VQA** — A training-free, scalable pipeline that synthesizes high-quality question-answer pairs from scene-text images for Text-VQA pretraining
