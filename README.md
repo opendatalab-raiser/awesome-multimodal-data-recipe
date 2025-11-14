@@ -20,16 +20,16 @@
 
 ## 📊 Statistics
 
-- **Total Papers:** 75+ (data synthesis/construction methods)
+- **Total Papers:** 82+ (data synthesis/construction methods)
 - **Industrial Reports:** 9 (Baidu, Microsoft, Alibaba, ByteDance, Tencent, Hunyuan, etc.)
 - **Data Synthesis Methods:** 
-  - Image Generation - Synthesizing New Visual Content (15): Geometric/mathematical reasoning + document/text-dense scenes + scene text detection + multimodal dialogue + text-driven image synthesis + autonomous driving + fully synthetic image-text generation + 3D physics simulation + 3D scene synthesis
-  - Image Editing (4): Non-rigid motion, unified editing, referring expression-guided editing
-  - Compositionality / Preference-Guided Synthesis (5): Enhancing compositional understanding + multi-concept composition + multi-image customization + hard negative contrastive learning + 3D physics simulation VLC enhancement
+  - Image Generation - Synthesizing New Visual Content (17): Geometric/mathematical reasoning + document/text-dense scenes + scene text detection + multimodal dialogue + text-driven image synthesis + ChatGPT-guided synthesis + autonomous driving + fully synthetic image-text generation + 3D physics simulation + 3D scene synthesis + robotic action synthesis
+  - Image Editing (5): Non-rigid motion, unified editing, referring expression-guided editing, generative visual instruction tuning
+  - Compositionality / Preference-Guided Synthesis (6): Enhancing compositional understanding + multi-concept composition + multi-image customization + hard negative contrastive learning + multimodal counterfactual samples + 3D physics simulation VLC enhancement
   - Interleaved Image-Text · Coherence & Consistency (4): Multi-perspective quality filtering + iterative refinement + multimodal embedding-based correlation
   - Think with Image (2): Interleaved multimodal reasoning with image manipulation + large-scale reasoning trajectory synthesis
   - VLM Self-Improvement & Reinforcement Learning (1): Gamified self-play frameworks for VLM reasoning enhancement without human annotation
-  - Image-Invariant - Text Enhancement (35): Fixed images, enriched text only + adaptive weighted synthetic captions + medical domain purely synthetic data + cost-efficient LVLM data refinement + spatial reasoning enhancement + VLM personalization + continual learning
+  - Image-Invariant - Text Enhancement (38): Fixed images, enriched text only + adaptive weighted synthetic captions + medical domain purely synthetic data + cost-efficient LVLM data refinement + spatial reasoning enhancement + VLM personalization + continual learning + multimodal RAG training + self-instructed code formatting + multilingual embedding enhancement
   - Video - Instruction Tuning (Synthetic Data) (1): Synthetic video instruction-following data (captions + QA)
   - Cross-Domain Methodology Insights (2): Multi-modal model collapse analysis + synthetic data quality assessment
 - **Notable Datasets:** 
@@ -990,6 +990,55 @@ This category focuses on **generating new images from scratch** as part of the d
 
 ---
 
+- **📄 Enhanced Visual Instruction Tuning** [(ACL Findings 2024)](https://aclanthology.org/2024.findings-acl.864/) 🏷️ **[Method + Data]** - **ACL Findings 2024**
+  - **Focus**: **Synthesized Image-Dialogue Data for Visual Instruction Tuning** - Generate comprehensive image-dialogue datasets using ChatGPT and Stable Diffusion to enhance multimodal LLM capabilities across diverse visual tasks
+  - **Data Synthesis Method** - **Dual-Stage ChatGPT-Guided Generation Pipeline**:
+    - **Core Innovation**: First systematic approach leveraging LLM (ChatGPT) to generate both Stable Diffusion prompts and corresponding dialogue data, addressing limitations in existing visual instruction datasets' capability coverage and dialogue diversity
+    - **Stage 1: ChatGPT Prompt & Dialogue Generation**:
+      - **Prompt Generation**: Use **ChatGPT** with capability-specific instructions to generate Stable Diffusion prompts targeting 11 visual abilities
+      - **Capability Categories**: Animal, Action, Color, Abnormal Detection, Scene, Style, Food, Profession, Vehicle, Furniture, Plant recognition
+      - **Prompt Engineering Techniques**:
+        - **Length Control**: Max 10 keywords per prompt to ensure clear focus and accurate image generation
+        - **Keyword Prioritization**: Most crucial keywords at beginning, double-bracketed for emphasis
+        - **Stability Enhancements**: Add capability-specific instructions and cautions to encourage diversity
+        - **Abnormal Image Guidance**: For joke understanding tasks, direct ChatGPT to create prompts for "abnormal images" (e.g., "giraffe walking through narrow corridor")
+      - **Dialogue Generation**: Generate corresponding question-answer pairs with constraints:
+        - **Length Limit**: ≤500 characters per dialogue for conciseness  
+        - **Diversity Requirements**: Include misleading either-or questions to increase complexity
+        - **Task-Specific Restrictions**: Address model biases (e.g., construction workers → add human attributes to avoid building focus)
+    - **Stage 2: Stable Diffusion Image Generation**:
+      - **Model**: **Stable Diffusion v1.4** for text-to-image generation
+      - **Generation Settings**: Multiple candidates per prompt, select best based on alignment scores
+      - **Multi-Image Data**: Generate paired prompts simultaneously for image similarity/difference/logical relation tasks (3K pairs)
+      - **Quality Control**: CLIP-based alignment verification with threshold γ=0.25
+    - **Advanced Data Types**:
+      - **Interleaved Multi-Turn Dialogues**: Step-by-step instructional conversations with image inputs at each turn
+      - **Multi-Image Tasks**: Similarity comparison, difference analysis, logical relationship reasoning
+      - **Specialized Content**: Abnormal image detection, profession recognition, fine-grained attribute understanding
+  - **Technical Architecture Integration**:
+    - **Base Model**: LLaVA architecture with CLIP visual encoder + projection layer + LLM (Vicuna)
+    - **Training Strategy**: Two-stage fine-tuning (modality alignment + visual instruction tuning)
+    - **Token Processing**: Convert visual features to language embedding tokens through linear/MLP projection
+  - **Data Scale**:
+    - **Primary Dataset**: **38K image-dialogue pairs** across 11 capability categories
+    - **Multi-Image Data**: **3K specialized multi-image instances**
+    - **Interleaved Dialogues**: Step-by-step instructional conversations with visual feedback
+    - **Total Coverage**: Comprehensive training set combined with raw LLaVA dataset for enhanced capabilities
+  - **Evaluation & Results**:
+    - **Benchmarks**: VizWiz (58.4% vs 53.6% LLaVA-1.5), MM-Vet (36.1% vs 35.4%), MME (1532.3 vs 1531.3), MMBench (69.4% vs 67.7%)
+    - **Manual Evaluation**: Significant improvements across all 11 capabilities, especially abnormal detection (+25%), style recognition (+50%)
+    - **GPT-4 Scoring**: Consistent performance gains with detailed capability-specific analysis
+    - **Multi-Image Tasks**: Substantial improvements in difference detection (2.7→3.6), similarity analysis (2.2→2.8), logical relations (3.1→3.7)
+  - **Key Technical Contributions**:
+    - **Automated Pipeline**: First fully automated approach combining LLM prompt generation with diffusion model image synthesis
+    - **Capability-Specific Design**: Targeted generation for underrepresented visual tasks (jokes, abnormal detection, multi-image reasoning)
+    - **Quality Assurance**: Multi-level filtering including CLIP alignment, length constraints, and task-specific restrictions
+    - **Scalability**: Template-based approach easily extensible to new capabilities and domains
+  - **Institution**: University of Technology Sydney, Tencent, Nanyang Technological University, Zhejiang University, Beijing Jiaotong University, Westlake University, PengCheng Laboratory
+  - **Open Source**: ✅ Dataset and generation templates (see supplementary materials)
+
+---
+
 - **📄 SyViC** [(arXiv 2303.17590)](https://arxiv.org/abs/2303.17590) 🏷️ **[Method + Synthetic Data]** - **March 2023**
   - **Focus**: **Going Beyond Nouns With Vision & Language Models Using Synthetic Data** - Using physics simulation and human action synthesis to enhance VLM understanding of attributes, actions, relations, and states
   - **Data Synthesis Method** - **3D Physics Simulation + Human Motion Synthesis + Spatial Relationship Modeling**:
@@ -1787,11 +1836,104 @@ This emerging category constructs **image-text interleaved reasoning traces** wh
     - **Standardized Benchmark**: Establishes standards for multimodal reasoning model evaluation
     - **Research Acceleration**: Reduces barriers to reasoning data acquisition, promoting broader research
 
+#### 🤖 Robotic Action Synthesis
+
+- **📄 GraspVLA** [(arXiv 2505.03233)](https://arxiv.org/abs/2505.03233) 🏷️ **[Method + Data]**
+  - **Focus**: **Grasping Foundation Model Pre-trained on Billion-scale Synthetic Action Data** - First VLA model trained exclusively on large-scale synthetic action data with direct sim-to-real transfer capabilities
+  - **Data Synthesis Method** - **Billion-Scale Photorealistic Robotic Action Generation**:
+    - **Core Innovation**: First systematic approach to train Vision-Language-Action (VLA) models entirely on large-scale synthetic action data, demonstrating that synthetic data can replace real-world teleoperation data for robotic learning
+    - **SynGrasp-1B Dataset Generation**:
+      - **Massive Scale**: **1 billion frames** of robotic grasping data (10M trajectories × ~100 frames each)
+      - **Object Diversity**: 10,680 unique objects from 240 categories sourced from Objaverse
+      - **Scene Diversity**: 1M unique scenes with extensive domain randomization
+      - **Photorealistic Rendering**: Advanced ray-tracing rendering using NVIDIA IsaacSim for high-fidelity visual synthesis
+    - **Comprehensive Domain Randomization**:
+      - **Visual Randomization**: Materials (table/robot), lighting (point/directional/dome), camera views, backgrounds
+      - **Physical Randomization**: Object layouts, grasp poses, robot trajectories, table heights (-0.1m to 0.2m)
+      - **Temporal Randomization**: Trajectory variations with CuRobo motion planning
+      - **Instruction Randomization**: Natural language instruction templates for object manipulation
+    - **Progressive Action Generation (PAG)**:
+      - **Chain-of-Thought Architecture**: Integrates autoregressive perception (VLM) + flow-matching action generation
+      - **Multi-Modal Training**: Joint training on synthetic action data + Internet grounding data (GRIT)
+      - **Hierarchical Prediction**: Bounding box → grasp pose → action chunk generation
+      - **Cross-Modal Alignment**: Bridges sim-to-real gap through Internet data co-training
+    - **Efficient Data Generation Pipeline**:
+      - **Caching Mechanism**: Avoids redundant object loading while ensuring diversity
+      - **Asynchronous Writing**: Parallel image saving and label generation
+      - **Parallel Simulation**: Multi-threaded physics simulation and rendering
+      - **Quality Assurance**: Force-closure based grasp synthesis with trajectory validation
+  - **Technical Architecture**:
+    - **Vision-Language Backbone**: Autoregressive transformer processing dual-camera inputs (front + side view)
+    - **Action Expert**: Flow-matching based continuous action generation conditioned on VLM features
+    - **Proprioception Integration**: Robot state tokens from latest two timesteps for accurate 3D sensing
+    - **Unified Training**: Single framework handling both Internet grounding and synthetic action tasks
+  - **Data Scale & Quality**:
+    - **Total Synthetic Data**: 1B frames with precise annotations (camera calibration, 3D poses, bounding boxes)
+    - **Object Coverage**: 240 categories ensuring comprehensive real-world object generalization
+    - **Annotation Richness**: Fine-grained labels including depth maps, segmentation masks, force-closure metrics
+    - **Cross-Embodiment Ready**: Scalable pipeline adaptable to different robots and camera configurations
+  - **Evaluation & Results**:
+    - **Zero-Shot Performance**: 93.3% success rate on synthetic categories, 84.7% on web categories (vs. π₀: 42.3%/17.8%)
+    - **Sim-to-Real Transfer**: Direct deployment without real-world fine-tuning, superior to teleoperation-trained models
+    - **Cross-Domain Generalization**: Strong performance on objects never seen during training
+    - **Few-Shot Adaptability**: 90% success with bounding box annotations only, 90% with full trajectory data
+    - **LIBERO Benchmark**: Surpasses fine-tuned π₀ and OpenVLA in zero-shot setting (82.0% vs 62.7%/33.7%)
+  - **Key Technical Contributions**:
+    - **Synthetic-Only Training**: Proves synthetic data sufficiency for robotic foundation model training
+    - **Billion-Scale Action Data**: First dataset of this scale globally for robotic manipulation
+    - **Progressive Action Generation**: Novel architecture enabling joint perception and action synthesis
+    - **Domain Bridging**: Systematic approach to sim-to-real transfer through Internet data integration
+  - **Institution**: Peking University, Galbot
+  - **Open Source**: ✅ [SynGrasp-1B Dataset & Pre-trained Weights](https://pku-epic.github.io/GraspVLA-web)
+
 ---
 
 ### ✂️ Image Editing (Method + Data)
 
 This category focuses on **instruction-guided image editing** where models learn to transform images based on natural language instructions. These works typically combine **method innovation** (novel editing pipelines, architectures) with **large-scale data synthesis** (automated data engines, quality benchmarks), making them distinct from pure dataset construction efforts.
+
+- **📄 GenLLaVA** [(arXiv 2406.11262)](https://arxiv.org/abs/2406.11262) 🏷️ **[Method + Data]**
+  - **Focus**: **Generative Visual Instruction Tuning** - First unified multimodal model achieving image understanding, generation, and editing capabilities simultaneously without performance degradation
+  - **Data Synthesis Method** - **Triple-Capability Unified Training Pipeline**:
+    - **Core Innovation**: First systematic approach integrating three pre-trained models (Mistral-7B + SigLIP + Stable Diffusion v1.4) through instruction fine-tuning for unified visual understanding, generation, and editing
+    - **Architecture Design**:
+      - **Language Model**: **Mistral-7B** as foundation LLM for superior language capabilities
+      - **Visual Encoder**: **SigLIP-L/384px** (stronger than CLIP) for robust image-text matching
+      - **Generation Module**: **Stable Diffusion v1.4** with Q-former generation head for text-to-image synthesis
+      - **Projection Layer**: 2-layer GELU MLP projecting visual patches to language embedding space
+    - **Visual Generation Mechanism**:
+      - **Visual Tokens**: Append N learnable [IMG] tokens after instructions, with trainable word embeddings
+      - **Generation Head**: Q-former sequence-to-sequence model T converts [IMG] tokens to semantic latent set U = {u₁, u₂, ..., uₗ}
+      - **Latent Diffusion Integration**: Visual latent U guides Stable Diffusion for image generation/editing in latent space
+      - **Special Tokens**: [SOI]/[EOI] mark start/end of visual generation tokens for task disambiguation
+    - **Training Data Composition** (GVIT-mix-2076K):
+      - **Image Understanding** [61.56%]: LLaVA fine-tuning instruction set for visual comprehension tasks
+      - **Image Generation** [26.88%]: ~558K inverted image-text pairs from LAION/SBU/CC3M with GPT-4 generated prompts (e.g., "Please generate an image of [caption]")
+      - **Image Editing** [11.56%]: GPT-4V processed editing datasets with natural language editing instructions
+    - **Single-Stage Training**: Unlike LLaVA's two-stage approach, GenLLaVA uses unified single-phase instruction tuning across all capabilities
+  - **Technical Implementation Details**:
+    - **Task Token System**: Specialized tokens guide model behavior ([SOI], [EOI] for generation tasks)
+    - **Multi-Task Loss**: Combined autoregressive language modeling + diffusion denoising objectives
+    - **Generation Token Count**: Optimal N=16 visual tokens (ablation shows N=4 overfits, N>16 degrades performance)
+    - **Vision Encoder Ablation**: SigLIP-L/384px > CLIP-L/336px > CLIP-B/224px across all tasks
+  - **Data Scale**:
+    - **Total Training Set**: **2.076M instruction-following examples** (GVIT-mix-2076K)
+    - **Generation Data**: 558K image-text pairs with dynamically generated instruction prefixes
+    - **Understanding Data**: LLaVA-1.5 instruction tuning dataset (visual reasoning, VQA, etc.)
+    - **Editing Data**: Natural language instruction-guided editing examples processed by GPT-4V
+  - **Evaluation & Results**:
+    - **Advanced Knowledge**: MathVista (30.5% vs 28.3% Unified-IO2), MMMU (37.1% vs 35.5% Unified-IO2)
+    - **General Understanding**: SEED-B (64.5% vs 61.6% Unified-IO2), MMBench (66.8% vs 57.9% Unified-IO2)
+    - **Generation Tasks**: CC3M (12.5 FID), MS-COCO (0.73 CLIPScore) competitive with specialized models
+    - **Editing Capability**: EVR benchmark (66.9% vs 50.2% Unified-IO2) demonstrates superior instruction-guided editing
+    - **Multi-Task Trade-off**: Maintains competitive performance across all tasks vs. specialized models
+  - **Key Technical Contributions**:
+    - **Unified Architecture**: First end-to-end model for understanding + generation + editing without capability conflicts
+    - **Instruction Integration**: Seamless natural language control for all visual tasks through shared instruction interface
+    - **Performance Preservation**: Demonstrates multi-capability training doesn't degrade individual task performance when properly designed
+    - **Scalable Framework**: Modular design allowing easy integration of stronger visual encoders, LLMs, or diffusion models
+  - **Institution**: Rice University, Google DeepMind
+  - **Open Source**: ✅ [Dataset, Code, Model Checkpoints, Visual Chat Demo](https://arxiv.org/abs/2406.11262)
 
 - **📄 ByteMorph** [(arXiv 2506.03107)](https://arxiv.org/abs/2506.03107) 🏷️ **[Method + Data + Benchmark]**
   - **Focus**: **Non-rigid motion editing** - First large-scale dataset addressing camera motion, object deformation, human articulation, and human-object interaction
@@ -1945,6 +2087,35 @@ This category focuses on **instruction-guided image editing** where models learn
 ### 🧩 Compositionality / Preference-Guided Synthesis
 
 This category focuses on **synthetic data generation for enhancing compositional understanding** in Vision-Language Models. These methods use controlled data synthesis to improve models' ability to understand complex compositional relationships (e.g., attribute binding, spatial relationships, counting) and align with human preferences.
+
+- **📄 COMO** 🏷️ **[Method + Data]**
+  - **Focus**: **Improving Vision and Language Concepts Understanding with Multimodal Counterfactual Samples** - Generate both textual and visual counterfactual samples to improve VL models' concept understanding beyond "bag-of-objects" limitations
+  - **Data Synthesis Method** - **Multimodal Counterfactual Generation Pipeline**:
+    - **Core Innovation**: First framework to simultaneously generate textual and visual counterfactual samples, addressing VL models' weaknesses in attribute, relation, and word order understanding
+    - **Counterfactual Text Generation**:
+      - Use **BERT** masked language models to replace key concept words (nouns, verbs, adjectives) in original captions
+      - **NLP Parsing**: Identify objects (nouns), relations (verbs/adverbs), and attributes (adjectives) using spaCy
+      - **Word Replacement Strategy**: Mask selected concept → retrieve most probable replacements → filter synonyms using WordNet
+      - **Quality Control**: Choose highest-scoring candidate that creates true negative (non-synonymous replacement)
+    - **Counterfactual Image Generation**:
+      - Use **Stable Diffusion** to generate corresponding counterfactual images from counterfactual captions
+      - **Image Selection**: Generate 10 candidates, select best based on dual CLIP similarity: score = ε_T(T_c)·ε_V(V_i) + ε_V(V_o)·ε_V(V_i)
+      - **Quality Assurance**: Ensure changed concept (causal) is learnable while preserving unchanged concepts (spurious)
+    - **Contrastive Learning Enhancement**:
+      - **Counterfactual Guided Loss**: Feed factual and counterfactual pairs into same mini-batch as hard negatives
+      - **Weighted Hard Negative Loss**: Dynamically reweight importance using normalized similarity: α_ij = (n-1)·S(T_i,V_j) / Σ_k≠i S(T_i,V_k)
+      - **Dual Contrastive Objectives**: Push counterfactual embeddings away from factual anchors while matching counterfactual image-text pairs
+  - **Data Scale**: 
+    - **Base Dataset**: MS-COCO (113K images, 567K captions)
+    - **COCO-CF Dataset**: 680K images + 1,134K captions (567K counterfactual image-text pairs added)
+    - **Augmentation Ratio**: 5× increase in caption diversity, 6× increase in image diversity
+  - **Experimental Results**:
+    - **VL-Checklist**: Attribute +3.17%, Relation +2.12%, Object +1.70% over best baselines
+    - **Winoground**: Text +1.60%, Image +4.35%, Group +2.63% improvements
+    - **Compositional Reasoning**: Significant gains in understanding spatial relations, object attributes, and word order changes
+    - **Ablation Findings**: Both text and image counterfactuals necessary; In-Batch strategy crucial vs Random sampling
+  - **Institution**: School of Computer Science and Technology, Xidian University, Xi'an, China
+  - **Open Source**: ✅ [Dataset & Code](https://github.com/laichengen/COMO)
 
 - **📄 TripletCLIP** [(arXiv 2411.02545)](https://arxiv.org/abs/2411.02545) 🏷️ **[Method + Synthetic Data]** - **November 2024**
   - **Focus**: **Improving CLIP's Compositional Reasoning via Synthetic Vision-Language Hard Negatives**
@@ -2412,6 +2583,157 @@ This category focuses on **high-quality interleaved image-text data construction
 This category of methods keeps original images fixed while enriching and improving paired text quality through various techniques. **This is currently the most mainstream multimodal data synthesis paradigm.**
 
 > **Note**: Only includes papers that explicitly describe data synthesis/generation methods, with specific synthesis components annotated.
+
+- **📄 mmE5** [(arXiv 2502.08468)](https://arxiv.org/abs/2502.08468) 🏷️ **[Method + Data]**
+  - **Focus**: **Improving Multimodal Multilingual Embeddings via High-quality Synthetic Data** - Develop high-quality synthetic data generation framework for multimodal multilingual embeddings covering diverse tasks, modality combinations, and languages
+  - **Data Synthesis Method** - **MLLM-Guided Single-Pass Multi-Aspect Generation Pipeline**:
+    - **Core Innovation**: First systematic approach identifying three key criteria for high-quality synthetic multimodal data (broad scope, robust cross-modal alignment, high fidelity) and implementing comprehensive generation framework covering 93 languages and 7 modality combinations
+    - **Three Quality Criteria Framework**:
+      1. **Broad Scope**: Ensure generated data covers diverse tasks (classification, VQA, retrieval) and modality combinations, making it applicable to various downstream scenarios
+      2. **Robust Cross-modal Alignment**: Make different modalities semantically consistent through deep thinking process and comprehensive interpretation
+      3. **High Fidelity**: Maintain realistic details in synthetic data through self-evaluation and refinement mechanisms
+    - **Single-Pass Generation Process**:
+      - **Visual Interpretation**: Multi-aspect analysis from four perspectives (general description, object-level details, contextual features, task-specific brainstorming)
+      - **Data Synthesis**: Generate task-specific data samples based on comprehensive visual understanding
+      - **Self-Evaluation**: Assess data quality across relevance, plausibility, clarity, and diversity dimensions
+      - **Refinement**: Produce revised versions based on evaluation feedback for improved quality
+    - **Comprehensive Task & Modality Coverage**:
+      - **3 Tasks**: Classification (genre/theme identification), VQA (visual question answering), Retrieval (cross-modal search)
+      - **7 Modality Combinations**: I→T, IT→T, T→IT, T→I, I→I, IT→I, IT→IT (comprehensive coverage vs. prior works' 1-2 combinations)
+      - **93 Languages**: English, Arabic, Spanish, Chinese, French, German, Dutch, Portuguese, Russian, Polish, Japanese, Italian, Indonesian, Persian + 75 low-resource languages
+    - **Multi-Aspect Visual Analysis**:
+      - **General Description**: Overall summary including primary objects, scene, notable features
+      - **Object-Level Details**: Individual objects, attributes (color, size, position), relationships
+      - **Contextual Features**: Scene environment, background details, lighting, actions
+      - **Task-Specific Brainstorming**: Analysis of how image relates to specific task requirements
+    - **Quality Assurance Mechanisms**:
+      - **Deep Thinking Process**: Comprehensive pre-generation analysis ensuring robust cross-modal alignment
+      - **Self-Evaluation Metrics**: Automated assessment across multiple quality dimensions
+      - **Hard Negative Mining**: Generate challenging negative samples for contrastive learning
+      - **Multilingual Consistency**: Ensure quality maintenance across all 93 supported languages
+  - **Technical Implementation**:
+    - **Base Images**: Sampled from LAION-400M for diversity and scale
+    - **MLLM Integration**: Single-pass generation using LLaMA-3-Vision to avoid information loss
+    - **Training Strategy**: Contrastive learning with LoRA fine-tuning (rank 8) on multimodal embedding models
+    - **Language Distribution**: Balanced coverage with 23% English, equal distribution across other languages
+  - **Data Scale**:
+    - **Total Synthetic Data**: **560K high-quality samples** across all tasks and modality combinations
+    - **Task Distribution**: Classification (140K), VQA (140K), Retrieval (280K) ensuring balanced coverage
+    - **Multilingual Coverage**: Comprehensive support for 93 languages including low-resource languages
+    - **Quality Filtering**: Rigorous self-evaluation and refinement ensuring high synthetic data fidelity
+  - **Evaluation & Results**:
+    - **MMEB Benchmark**: Achieves SOTA performance (69.8% avg.) significantly outperforming previous methods (VLM2Vec: 62.9%, MMRet: 64.1%)
+    - **Multilingual Performance**: Superior results on XTD benchmark across all 7 languages (95.3% avg. vs. GME: 94.1%)
+    - **Zero-Shot Capability**: Strong performance with synthetic data only (58.6% vs. previous best 44.0% on MMEB)
+    - **Scaling Effect**: Linear-log relationship between performance and data size, demonstrating high synthetic data quality
+  - **Key Technical Contributions**:
+    - **Quality Criteria Framework**: First systematic identification of three key criteria for synthetic multimodal data quality
+    - **Single-Pass Generation**: Avoids information loss through comprehensive one-pass MLLM generation
+    - **Comprehensive Coverage**: Unprecedented breadth across tasks, modalities, and languages in single framework
+    - **Multilingual Excellence**: Demonstrates superior multilingual embedding capabilities across diverse language families
+  - **Institution**: Renmin University of China, Microsoft Corporation
+  - **Open Source**: ✅ [Code, Data, and Model](https://github.com/haon-chen/mmE5)
+
+- **📄 World to Code (W2C)** [(arXiv 2409.20424)](https://arxiv.org/abs/2409.20424) 🏷️ **[Method + Data]**
+  - **Focus**: **Multi-modal Data Generation via Self-Instructed Compositional Captioning and Filtering** - Generate structured Python code representations of visual scenes through VLM self-instruction, reducing dependency on specialist models and human annotation
+  - **Data Synthesis Method** - **Self-Instructed Compositional Pipeline with Code Formatting**:
+    - **Core Innovation**: First framework using VLMs themselves to extract cross-modal information via different prompts and filter generated outputs through consistency strategies, organizing final outputs in Python code format for enhanced structural representation
+    - **Four-Stage Construction Pipeline**:
+      1. **Visual Concepts Extraction**: 
+         - **Global Caption Generation**: Simple sentence describing the image accurately
+         - **Detail Caption Generation**: Comprehensive description of all visual concepts (≤120 words)
+         - **Concept Extraction**: Use NLTK to extract noun phrases from captions, post-process with WordNet to remove duplicates
+         - **Grounding**: Map visual concepts to bounding boxes using Grounding DINO
+      2. **Self-Instructed Information Extraction**:
+         - **Region-Level Captioning**: Generate compositional captions for each detected visual concept using cropped image regions
+         - **OCR Information Extraction**: Guide VLMs to extract text information via instructed prompts (better than traditional OCR tools for complex scenarios)  
+         - **Prompt Templates**: Predefined universal templates ensuring better instruction compliance
+      3. **Information Filtering via Self-Consistency**:
+         - **Counting Consistency Filtering**: Verify existence of grouped visual concepts through VLM validation
+         - **Caption Re-ranking**: Score and rank caption quality using VLM self-assessment
+         - **Rule-based Filtering**: Remove counting-inconsistent samples using structured rules
+      4. **Structured Code Formatting**:
+         - **Python Class Organization**: Structure visual information as Python classes with object attributes
+         - **Rich Annotations**: Include description, bounding boxes, OCR text for each visual element
+         - **Hierarchical Grouping**: Group similar concepts (e.g., elephant_group, people_group) for better organization
+    - **Self-Consistency Strategy**:
+      - **Generator-Validator Approach**: VLM acts as both generator and validator to ensure consistency
+      - **Multi-Round Verification**: Iterative validation of extracted concepts and descriptions
+      - **Scoring Mechanism**: Manual scoring system for caption quality assessment
+    - **Quality Assurance**:
+      - **Beam Search**: Encourage VLMs to provide as many visual concepts as possible
+      - **Concept Validation**: Check existence and counting accuracy of each extracted concept
+      - **Consistency Scoring**: Use VLM-based scoring to rank and filter high-quality samples
+  - **Technical Implementation**:
+    - **Base Dataset**: ShareGPT4V images (after deduplication) for fair comparison
+    - **VLM Integration**: Compatible with LLaVA-1.5 and LLaVA-NeXT architectures 
+    - **Processing Tools**: NLTK for concept extraction, WordNet for deduplication, Grounding DINO for spatial grounding
+    - **Code Structure**: Natural environment classes with grouped objects and detailed attributes
+  - **Data Scale**:
+    - **Generated Samples**: 34K (LLaVA-1.5-7B), 33K (LLaVA-1.5-13B), 37K (LLaVA-NeXT-7B), 29K (LLaVA-NeXT-13B)
+    - **Processing Time**: 1-1.5 days on 32 A100s (LLaVA-1.5), 2-3 days on 48 A100s (LLaVA-NeXT)
+    - **Consistency Filtering**: Significant data elimination during filtering ensures high quality
+  - **Evaluation & Results**:
+    - **VQA Benchmarks**: Superior performance on 7/9 benchmarks (LLaVA-NeXT-7B), 6/9 benchmarks (LLaVA-NeXT-13B)
+    - **Visual Grounding**: Average 1.5/1.6 IoU improvement (LLaVA-1.5 7B/13B), 3.5/1.3 IoU improvement (LLaVA-NeXT 7B/13B)
+    - **Few-Shot Learning**: 5% accuracy gain on GQA 2-shot evaluation, demonstrating improved code parsing ability
+    - **Code vs. Caption**: Python code format consistently outperforms single/multi-round conversation formats
+  - **Key Technical Contributions**:
+    - **Self-Sufficiency**: Eliminates need for multiple specialist models through VLM self-instruction
+    - **Code Representation**: Novel Python code formatting for structured multimodal data organization
+    - **Consistency Filtering**: Robust self-consistency strategies for quality assurance without human annotation
+    - **Scalability**: Fully automated pipeline enabling large-scale structured data generation
+  - **Institution**: University of Chinese Academy of Sciences, ByteDance Inc.
+  - **Open Source**: ✅ Pipeline code and data construction methodology
+
+- **📄 SK-VQA** [(arXiv 2406.19593)](https://arxiv.org/abs/2406.19593) 🏷️ **[Method + Data]**
+  - **Focus**: **Synthetic Knowledge Generation at Scale for Context-Augmented Multimodal LLMs** - Generate large-scale synthetic context documents and knowledge-based VQA pairs for training multimodal retrieval-augmented generation (RAG) systems
+  - **Data Synthesis Method** - **GPT-4 Guided Context Document & QA Generation Pipeline**:
+    - **Core Innovation**: First large-scale approach using GPT-4 to automatically generate both context documents and knowledge-requiring QA pairs for arbitrary images, enabling context-augmented multimodal learning beyond Wikipedia-linked images
+    - **Multi-Source Image Integration**:
+      - **LAION Images**: 908K QA pairs with GPT-4 generated contexts for diverse web images
+      - **Wikipedia Images**: 702K QA pairs with synthetic contexts + 182K with real Wikipedia contexts
+      - **COCO-Counterfactuals**: 214K QA pairs enabling controlled evaluation scenarios
+      - **Broader Coverage**: Supports arbitrary image sources vs. existing datasets limited to Wikipedia-linkable images
+    - **GPT-4 Context Generation Process**:
+      - **Context Document Creation**: Generate Wikipedia-style articles related to images without directly referencing them
+      - **8-Condition QA Generation**: Strict criteria ensuring questions require both image and context reasoning:
+        1. Questions must refer to the image
+        2. Avoid mentioning object names directly  
+        3. Answers must require reasoning over context document
+        4. Natural and concise question formulation
+        5. Extractive answers from context documents
+        6. Answers cannot be objects visible in image
+        7. Single word/phrase answers with comma separation for multiple correct answers
+        8. No conjunctions ('and'/'or') in answers
+    - **Quality Assurance Pipeline**:
+      - **Multi-Stage Filtering**: IR (Image Retrieval) + IR+CAP (Image Retrieval + Caption) filtering strategies
+      - **Grammar Validation**: LanguageTool assessment shows 93.31% grammar accuracy on 10K sample context documents
+      - **Human Evaluation**: 77% accuracy on full dataset, 87% on filtered subsets (comparable to other VQA datasets)
+      - **Bias & Toxicity Detection**: State-of-the-art models used to screen generated content
+      - **Factuality Verification**: 86% of randomly sampled QA pairs verified as factual using online sources
+  - **Technical Implementation**:
+    - **Context Diversity**: Topics span 40+ categories from sports to science, arts to geography
+    - **Question Uniqueness**: 96% of 2M+ questions are unique (11× more unique questions than Encyclopedic-VQA)
+    - **Vocabulary Richness**: 926K unique POS sequences, 138K vocabulary size, 12.7 average question length
+    - **Filtering Effectiveness**: Post-filtering retains 984K highest-quality QA pairs while maintaining diversity
+  - **Data Scale**:
+    - **Total Dataset**: **2.006M QA pairs** (largest knowledge-based VQA dataset to date)
+    - **Filtered Subsets**: SK-VQA IR (1.530M), SK-VQA IR+CAP (984K)
+    - **Context Documents**: Each QA pair associated with rich context document containing necessary reasoning information
+    - **Image Sources**: 4 diverse sources ensuring domain coverage and evaluation robustness
+  - **Evaluation & Impact**:
+    - **Challenge Level**: More challenging than existing datasets - state-of-the-art MLLMs achieve 38-50% accuracy vs 47-84% on ViQuAE
+    - **Generalization Boost**: Fine-tuning on SK-VQA consistently improves out-of-domain performance across model sizes on InfoSeek, Enc-VQA, ViQuAE
+    - **RAG System Training**: Enables training of context-augmented multimodal models for real-world RAG scenarios
+    - **Benchmark Stability**: Provides more consistent evaluation across model scales compared to existing datasets
+  - **Key Technical Contributions**:
+    - **Scalable Synthetic Generation**: Demonstrates viability of fully automated context+QA generation at million-scale
+    - **Multi-Modal RAG Training**: First dataset specifically designed for training multimodal RAG systems  
+    - **Quality-Quantity Balance**: Achieves both scale (2M+ samples) and quality (high human evaluation scores)
+    - **Domain Generalization**: Multi-source approach ensures robust performance across diverse image types and knowledge domains
+  - **Institution**: Multiple collaborating institutions
+  - **Open Source**: ✅ [Dataset & Generation Code](https://arxiv.org/abs/2406.19593)
 
 - **📄 ALIP** [(arXiv 2308.08428)](https://arxiv.org/abs/2308.08428) 🏷️ **[Method + Synthetic Data]** - **August 2023**
   - **Focus**: **Adaptive Language-Image Pre-training with Synthetic Caption** - Using synthetic captions to reduce web data noise, optimizing contrastive learning through adaptive weighting mechanisms
