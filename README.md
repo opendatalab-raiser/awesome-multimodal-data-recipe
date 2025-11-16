@@ -20,16 +20,16 @@
 
 ## 📊 Statistics
 
-- **Total Papers:** 89+ (data synthesis/construction methods)
+- **Total Papers:** 96 (data synthesis/construction methods)
 - **Industrial Reports:** 9 (Baidu, Microsoft, Alibaba, ByteDance, Tencent, Hunyuan, etc.)
 - **Data Synthesis Methods:** 
-  - Image Generation - Synthesizing New Visual Content (18): Geometric/mathematical reasoning + document/text-dense scenes + scene text detection + multimodal dialogue + text-driven image synthesis + ChatGPT-guided synthesis + autonomous driving + fully synthetic image-text generation + 3D physics simulation + 3D scene synthesis + robotic action synthesis
+  - Image Generation - Synthesizing New Visual Content (21): Geometric/mathematical reasoning + document/text-dense scenes (OCR-free scene text, document layout analysis) + scene text detection + multimodal dialogue + text-driven image synthesis + ChatGPT-guided synthesis + autonomous driving + fully synthetic image-text generation + 3D physics simulation + 3D scene synthesis (3D visual instruction data) + robotic action synthesis
   - Image Editing (5): Non-rigid motion, unified editing, referring expression-guided editing, generative visual instruction tuning
   - Compositionality / Preference-Guided Synthesis (6): Enhancing compositional understanding + multi-concept composition + multi-image customization + hard negative contrastive learning + multimodal counterfactual samples + 3D physics simulation VLC enhancement
   - Interleaved Image-Text · Coherence & Consistency (4): Multi-perspective quality filtering + iterative refinement + multimodal embedding-based correlation
   - Think with Image (2): Interleaved multimodal reasoning with image manipulation + large-scale reasoning trajectory synthesis
-  - VLM Self-Improvement & Reinforcement Learning (3): Calibrated self-rewarding VLM + gamified self-play frameworks for VLM reasoning enhancement without human annotation
-  - Image-Invariant - Text Enhancement (42): Fixed images, enriched text only + adaptive weighted synthetic captions + medical domain purely synthetic data + cost-efficient LVLM data refinement + spatial reasoning enhancement + VLM personalization + continual learning + multimodal RAG training + self-instructed code formatting + multilingual embedding enhancement + MLLM data generators + programmatic instruction generation + information bottleneck concept selection + image comprehension self-training
+  - VLM Self-Improvement & Reinforcement Learning (4): Calibrated self-rewarding VLM + gamified self-play frameworks + chart understanding self-improvement (code-driven synthesis)
+  - Image-Invariant - Text Enhancement (45): Fixed images, enriched text only + adaptive weighted synthetic captions + medical domain purely synthetic data + cost-efficient LVLM data refinement + spatial reasoning enhancement + VLM personalization + continual learning + multimodal RAG training + self-instructed code formatting + multilingual embedding enhancement + MLLM data generators + programmatic instruction generation + information bottleneck concept selection + image comprehension self-training + multimodal instruction following (constraint-driven) + composed image retrieval triplet synthesis + multimodal question generation (style & modality controllable)
   - Video - Instruction Tuning (Synthetic Data) (1): Synthetic video instruction-following data (captions + QA)
   - Cross-Domain Methodology Insights (2): Multi-modal model collapse analysis + synthetic data quality assessment
 - **Notable Datasets:** 
@@ -1039,6 +1039,139 @@ This category focuses on **generating new images from scratch** as part of the d
 
 ---
 
+- **📄 Ultimate3D** [(arXiv 2507.08513)](https://arxiv.org/abs/2507.08513) 🏷️ **[Method + Data]**
+  - **Focus**: **Large-Scale 3D Visual Instruction Dataset Generation for Camera-Object Relation Understanding** - Automatically generate 240K VQA data with precise camera-object relation annotations using 3D assets + rendering + diffusion models
+  - **Data Synthesis Method** - **3D Rendering + Multi-ControlNet Diffusion + LLM Four-Step Pipeline**:
+    - **Core Innovation**: First systematic framework utilizing 3D assets to generate photorealistic images and camera-object relation VQA data, addressing dataset bias in MLLMs' spatial understanding
+    - **Problem Identification**:
+      - Existing MLLMs show significant deficiencies in camera-object relation understanding (GPT-4o achieves only 43.1% on object orientation tasks)
+      - Root cause: Severe bias in training datasets (most images captured from front-facing, side, or above viewpoints)
+      - Lack of high-quality annotated data with diverse camera-object relations
+    - **Four-Step Generation Pipeline**:
+      1. **3D Visual Prior Rendering (Stage 1)**:
+         - **Input**: 3D asset A (from open-source libraries like Objaverse), arbitrary camera-object relation parameter β
+         - **Camera-Object Relation Definition**:
+           - **Azimuth φ**: Object rotation angle relative to camera, divided into 8 directions (right, front-right, front, front-left, left, back-left, back, back-right), each covering π/4 radians
+           - **Elevation θ**: Camera elevation angle, divided into 3 categories (top view, horizontal, bottom view)
+           - **Distance**: Camera-to-object distance, divided into 3 categories (close-up, medium shot, long shot)
+         - **Renderer**: Blender 3D engine
+         - **Output multimodal visual priors I_β**:
+           - RGB images
+           - Pixel-level depth maps (DepthAnyThing V2)
+           - Semantic segmentation masks
+           - Canny edge detection maps
+         - **Key Advantage**: Preserves precise ground truth camera-object relation β as strong constraints for subsequent image generation
+      2. **Diverse Image Description Generation (Stage 2)**:
+         - **LLM**: GPT-4o
+         - **Prompt Engineering**:
+           - **System Prompt**: Guides LLM to generate diverse descriptions of background context and object appearance details
+           - **Few-shot Examples**: Provides style references to ensure description naturalness
+         - **Output T_img**: Detailed image description text, including:
+           - Background scene description (indoor/outdoor, lighting conditions, environmental atmosphere)
+           - Object detail description (material, color, state)
+           - Contextual information (object's role in the scene)
+         - **Diversity Guarantee**: Generates multiple different scene descriptions for the same 3D asset category to enhance data diversity
+      3. **Controlled Photorealistic Image Generation (Stage 3)**:
+         - **Core Technology**: Multi-ControlNet stacking + SDXL diffusion model
+         - **Conditional Inputs**:
+           - Visual conditions: Depth map + Canny edge map (from Stage 1)
+           - Text condition: Image description T_img (from Stage 2)
+         - **Multi-ControlNet Architecture**:
+           - **Depth ControlNet**: Weight 0.5, maintains object 3D geometric structure
+           - **Canny ControlNet**: Weight 0.8, maintains object edges and contours
+           - **Formula**: z_{t-1} = G_θ(T_img, z_t, t, Σw_k·C^k(I^k_β))
+         - **Diffusion Steps T=30**: Balances generation quality and speed
+         - **Output I_syn**: Photorealistic image maintaining precise camera-object relation β
+         - **Quality Assurance**:
+           - Through strong constraints from 3D priors, ensures generated images' camera-object relation matches β
+           - Generated images have realistic lighting, textures, and backgrounds
+      4. **3D-Aware Text Instruction Generation (Stage 4)**:
+         - **LLM**: GPT-4o
+         - **Input**: Ground truth camera-object relation β (azimuth φ, elevation θ, distance)
+         - **Three Types of Question Generation**:
+           a) **Object Orientation Questions**:
+              - Examples: "Which direction is the object facing?", "Is the object facing toward or away from the camera?"
+              - Answers: Generate classification answers based on φ (8 direction categories)
+           b) **Camera Viewpoint Questions**:
+              - Examples: "Was the photo taken from above the object or from the side?", "What is the camera viewpoint?"
+              - Answers: Generate classification answers based on θ (top/horizontal/bottom)
+           c) **Shot Distance Questions**:
+              - Examples: "Was the photo taken close or far away?", "Is this a close-up or long shot?"
+              - Answers: Generate classification answers based on distance (close-up/medium/long shot)
+         - **Prompt Engineering Techniques**:
+           - Use system prompts and few-shot examples to ensure question naturalness and diversity
+           - Generate up to 3 VQA pairs for each camera-object relation (1 per question type)
+         - **Output T_qa**: High-quality question-answer pairs with answers precisely matching ground truth
+    - **Key Technical Advantages**:
+      - **Precise Annotation**: 3D rendering ensures ground truth accuracy of camera-object relations, avoiding human annotation errors
+      - **Photorealism**: Multi-ControlNet+SDXL generates image quality close to real photographs
+      - **Fully Automated**: Fully automated pipeline from 3D assets to VQA data without human intervention
+      - **Scalability**: Applicable to any 3D asset library (Objaverse, ShapeNet, etc.), theoretically infinitely scalable
+      - **Diversity**: Each 3D asset generates 72 camera-object relation combinations (8 directions × 3 viewpoints × 3 distances), covering wide spatial configurations
+  - **Ultimate3D Dataset**:
+    - **Total Scale**: 240K VQA pairs
+    - **Composition**:
+      - **Synthetic Data**: 85K images (from 1180 3D assets)
+      - **Real Data**: 18K images (cropped single-person photos from MEBOW dataset + human orientation labels)
+    - **3D Asset Library**: 1180 3D models covering 100 object categories
+    - **Camera-Object Relation Coverage**:
+      - Each 3D asset: 72 configurations (8 directions × 3 viewpoints × 3 distances)
+      - Each configuration: Up to 3 VQA pairs (corresponding to 3 question types)
+    - **Benchmark Test Set**: 8K high-quality samples for evaluation
+    - **Data Format**: (Image I_syn, Question T_qa, Answer, Category Label, Ground Truth β)
+  - **Experimental Results** - **Open-Source Models After Fine-tuning Surpass All Commercial SOTA**:
+    - **Baseline Model Performance (Unfinetuned)**:
+      - LLaVA-1.5-7B: Orientation 18.3%, Viewpoint 25.0%, Shot Distance 29.2%
+      - LLaVA-1.6-13B: Orientation 16.1%, Viewpoint 15.9%, Shot Distance 33.3%
+      - Llama-3.2-Vision-11B: Orientation 5.6%, Viewpoint 6.8%, Shot Distance 38.1%
+      - **Conclusion**: All baseline models approach random guess level (<40%) on camera-object relation understanding
+    - **Fine-tuned Performance (Trained on Ultimate3D)**:
+      - **Object Orientation Task**:
+        - Finetuned LLaVA-1.6-13B: **72.4%** (synthetic) / 63.1% (real) vs GPT-4o 43.1% (+29.3%)
+        - Finetuned Llama-3.2-V-11B: **74.2%** (synthetic) / 66.4% (real)
+      - **Camera Viewpoint Task**:
+        - Finetuned LLaVA-1.6-13B: **72.3%** (synthetic) / 61.8% (real) vs GPT-4o 54.1% (+18.2%)
+        - Finetuned Llama-3.2-V-11B: **69.1%** (synthetic) / 58.7% (real)
+      - **Shot Distance Task**:
+        - Finetuned LLaVA-1.6-13B: **94.8%** (synthetic) / 71.4% (real) vs GPT-4o 41.7% (+53.1%)
+        - Finetuned LLaVA-1.5-7B: **94.0%** (synthetic) / 66.7% (real)
+    - **Commercial Model Performance Comparison**:
+      - GPT-4o: Orientation 43.1%, Viewpoint 54.1%, Shot Distance 41.7%
+      - Claude-3-Sonnet: Orientation 43.1%, Viewpoint 54.3%, Shot Distance 41.7%
+      - Claude-3.5-Sonnet: Orientation 40.3%, Viewpoint 55.6%, Shot Distance 41.8%
+      - **Conclusion**: All commercial models perform poorly on Ultimate3D benchmark, revealing camera-object relation understanding as a common weakness of current MLLMs
+    - **Cross-Dataset Generalization (MMVP Benchmark)**:
+      - Fine-tuned models also show significant improvements on MMVP, proving learned spatial understanding capabilities are transferable
+    - **User Study**:
+      - 93.07% of generated images evaluated as successfully maintaining 3D geometric structure and camera-object relations
+      - Far higher than baseline method (only 55.11% success rate)
+  - **Ablation Study Key Findings**:
+    - **Multi-ControlNet Necessity**: Using both depth + Canny edges achieves best results (using either prior alone decreases performance)
+    - **Importance of 3D Priors**: Removing 3D visual priors significantly reduces camera-object relation preservation rate
+    - **Synthetic Data vs Real Data**:
+      - Models trained only on synthetic data perform best on synthetic test sets
+      - On real test sets, synthetic data-trained models still significantly outperform unfinetuned baselines
+    - **Data Scale Impact**: Performance continues to improve from 100K to 240K with no saturation signs
+  - **Qualitative Analysis**:
+    - **Bias Identification**:
+      - GPT-4o and Claude tend to underestimate viewpoint angles (misjudge top view as horizontal)
+      - Tend to overestimate shot distance (misjudge medium shot as long shot)
+      - Near random on object orientation judgment
+    - **LLaVA Baseline Bias**: Original LLaVA models give fixed answers to all questions ("front-left", "top", "close-up"), showing severe dataset bias
+    - **Post-Finetuning Improvement**: Fine-tuned LLaVA models can accurately recognize various camera-object relations with no obvious bias
+  - **Institution**: Purdue University, Amazon
+  - **Authors**: Shengyuan Ding, Xiaoyi Dong, Yuhang Zang, Haodong Duan, Min Sun, Cheng-Hao Kuo, Daniel Aliaga et al.
+  - **Publication**: arXiv July 2025 (v2)
+  - **Open Source**: ✅ [Code, Data, and Models](https://github.com/opendatalab/Ultimate3D)
+  - **Significance**:
+    - **Problem Identification**: First systematic revelation of severe deficiencies in MLLMs (including GPT-4o, Claude) on camera-object relation understanding
+    - **Dataset Contribution**: Provides first large-scale, precisely annotated 3D camera-object relation VQA dataset and evaluation benchmark
+    - **Method Innovation**: Proposes complete 3D asset-driven visual instruction data generation framework, extensible to other 3D understanding tasks
+    - **Performance Breakthrough**: Proves only 240K high-quality synthetic data needed to make open-source 7B models surpass all commercial SOTA (average +33.4%)
+    - **Bias Correction**: Provides solution for correcting spatial relation bias in existing MLLMs' training data
+
+---
+
 - **📄 SyViC** [(arXiv 2303.17590)](https://arxiv.org/abs/2303.17590) 🏷️ **[Method + Synthetic Data]** - **March 2023**
   - **Focus**: **Going Beyond Nouns With Vision & Language Models Using Synthetic Data** - Using physics simulation and human action synthesis to enhance VLM understanding of attributes, actions, relations, and states
   - **Data Synthesis Method** - **3D Physics Simulation + Human Motion Synthesis + Spatial Relationship Modeling**:
@@ -1191,6 +1324,223 @@ This category focuses on **generating new images from scratch** as part of the d
   - **Open Source**: ✅ [Code & Data](https://github.com/FreedomIntelligence/ShareGPT-4o-Image)
 
 #### 📄 Document / Text-Dense Scenes
+
+- **📄 TextFlux** [(arXiv 2505.17778)](https://arxiv.org/abs/2505.17778) 🏷️ **[Method]**
+  - **Focus**: **OCR-Free High-Fidelity Multilingual Scene Text Synthesis** - A DiT-based OCR-free framework that achieves multilingual scene text generation through spatial concatenation of glyph-rendered images
+  - **Data Synthesis Method** - **Glyph-Guided Spatial Concatenation Strategy**:
+    - **Core Innovation**: Eliminates the dependency on OCR encoders, leveraging DiT model's contextual reasoning capabilities for text synthesis
+    - **Method Pipeline**:
+      1. **Glyph Rendering**:
+         - Renders target text as white foreground on black background to create binary glyph mask `I_glyph`
+         - Ensures resolution matches scene image `I_scene`
+      2. **Spatial Concatenation**:
+         - Horizontally or vertically concatenates glyph and scene images: `I_concat = Concat([I_glyph, I_scene], axis)`
+         - Forms unified input image without additional visual conditioning modules
+      3. **Prompt Design** (In-Context Learning Paradigm):
+         - Template: "The pair of images highlights some white words on a black background, as well as their style on a real-world scene image. [IMAGE1] is a template image rendering the text, with the words {words}; [IMAGE2] shows the text content {words} naturally and correspondingly integrated into the image."
+         - Guides model to understand semantic relationship between glyph template and scene image
+      4. **Model Architecture**:
+         - Built on pre-trained FLUX.1-Fill-dev (DiT architecture, latent rectified flow transformer)
+         - Directly leverages DiT's context-aware capabilities without specialized OCR encoders or additional loss functions
+    - **Key Technical Advantages**:
+      - **OCR-free**: Completely eliminates need for OCR encoders, simplifying model architecture
+      - **Multilingual Scalability**: Achieves strong performance on low-resource languages (<1000 samples)
+      - **Data Efficiency**: Requires only 1% of training data compared to competing methods (30,405 vs 3M-10M images)
+      - **Controllable Multi-line Generation**: Supports flexible multi-line text synthesis with precise line-level control over position and content
+      - **Zero-shot Capability**: Can render languages unseen during training (e.g., minority languages)
+  - **Training Data Scale**:
+    - **Total 30,405 images** (vs AnyWord-3M's 3M, MARIO-10M's 10M)
+      - English: ~10,000 images (MLT2017, TotalText, CTW1500)
+      - Chinese: ~15,000 images (ReCTS, RCTW)
+      - Other languages: 1,000 each (Japanese, Korean, French, German, Italian from MLT2019)
+    - **Training Configuration**:
+      - Batch size 1, gradient accumulation 8
+      - AdamW optimizer, learning rate 2e-5
+      - Total 30,000 iterations
+      - Multi-resolution augmentation (512-1024)
+      - Two versions: Full-parameter (2×A100 80GB) + LoRA (1×A100 80GB, rank=128)
+  - **Experimental Results** - **Comprehensively Outperforms Existing Methods on 4 Benchmarks**:
+    - **Multi-line Text Generation (Core Task)**:
+      - AnyWord(EN): TextFlux **80.3%** vs AnyText2 45.1% (+35.2%)
+      - AnyWord(CH): TextFlux **62.3%** vs AnyText2 35.9% (+26.4%)
+      - TotalText: TextFlux **65.3%** vs AnyText2 20.5% (+44.8%)
+      - ReCTS: TextFlux **68.5%** vs AnyText2 41.5% (+27.0%)
+    - **Single-line Text Generation**:
+      - Lightweight LoRA version comprehensively surpasses all baselines
+      - Flux base model has 0% Chinese accuracy; applying TextFlux achieves 62.3%
+    - **Qualitative Results**:
+      - Significantly outperforms existing methods under challenging conditions (complex backgrounds, curved text, handwriting styles)
+      - Generated results nearly indistinguishable from real images
+  - **Key Findings from Ablation Studies**:
+    - **Necessity of Glyph Concatenation Strategy**: Without concatenation, Chinese accuracy only 5.2%
+    - **Importance of Training**: Concatenation without training completely fails on complex backgrounds
+    - **Text Encoder Impact**: Removing CLIP or T5 encoder has minimal impact on non-Latin scripts, indicating visual context guidance is sufficiently effective
+  - **Institution**: bilibili Inc., Soochow University, Wangxuan Institute of Computer Technology at Peking University
+  - **Authors**: Yu Xie, Jielei Zhang, Pengyu Chen, Ziyue Wang, Weihang Wang, Longwen Gao, Peiyi Li, Huyang Sun, Qiang Zhang, Qian Qiao, Jiaqing Fan, Zhouhui Lian
+  - **Publication**: arXiv May 2025 (v1)
+  - **Project Page**: [https://yyyyyxie.github.io/textflux-site/](https://yyyyyxie.github.io/textflux-site/)
+  - **Significance**:
+    - **Architectural Simplification**: Proves that complex OCR encoders are unnecessary; DiT's contextual reasoning capability is sufficient for high-quality scene text synthesis
+    - **Data Efficiency**: Achieves SOTA with 1% of data, providing viable solution for low-resource scenarios
+    - **Multilingual Breakthrough**: First to demonstrate high-quality text rendering in low-resource languages with minimal data (<1000 samples)
+    - **Enhanced Controllability**: Supports flexible multi-line text control, breaking through single-line or fixed layout limitations of existing methods
+
+---
+
+- **📄 DocLayout-YOLO** [(arXiv 2410.12628)](https://arxiv.org/abs/2410.12628) 🏷️ **[Method + Data]**
+  - **Focus**: **Enhancing Document Layout Analysis Through Diverse Synthetic Data and Global-to-Local Adaptive Perception** - Generates DocSynth-300K large-scale diverse document synthetic dataset and designs GL-CRM module to handle multi-scale variations of document elements
+  - **Data Synthesis Method** - **Mesh-candidate BestFit Algorithm + Element Augmentation**:
+    - **Core Innovation**: First method framing document synthesis as 2D bin packing problem, generating aesthetically pleasing and diverse layouts through iterative best matching
+    - **Problem Identification**:
+      - Existing unimodal DLA methods (e.g., YOLO, DINO) are fast but have lower accuracy
+      - Multimodal methods (e.g., LayoutLMv3, DiT) achieve higher accuracy but suffer significant latency
+      - Existing document pre-training datasets (e.g., PubLayNet, DocBank) are limited to single document types (academic papers only) with insufficient element diversity (<10 categories)
+      - Diffusion-based generation methods produce homogeneous layouts, unable to cover diverse real-world document types
+    - **Three-Stage Generation Pipeline**:
+      1. **Preprocessing: Ensuring Element Diversity**:
+         - **Data Source**: M6Doc test set (2,800 diverse document pages with 74 fine-grained element categories)
+         - **Element Pool Construction**:
+           - Fragment pages by fine-grained category to extract elements from each category
+           - Augment rare categories with quantity <100
+         - **5 Augmentation Techniques**:
+           a) **Style Transfer**: Apply different fonts, colors, styles to text elements
+           b) **LLM Rewriting**: GPT-4 rewrites text element content (maintaining semantic similarity)
+           c) **Background Replacement**: Replace element backgrounds
+           d) **Elastic Transformation**: Slight distortion simulating jitter or low resolution
+           e) **Gaussian Noise**: Add noise simulating real-world distortion
+         - **Result**: Ensure ≥100 diverse elements per category
+      2. **Layout Generation: Ensuring Layout Diversity**:
+         - **Algorithm**: **Mesh-candidate BestFit** - Inspired by 2D bin packing problem
+         - **Key Insight**: Random arrangement produces chaotic layouts; Diffusion models produce homogeneous layouts (academic paper style only)
+         - **Core Concept**: Treat available grids in current layout as "bins" of different sizes, iteratively perform best matching
+         - **Detailed Steps**:
+           a) **Candidate Sampling**: Stratified sampling from element pool based on element size → candidate set C_set
+           b) **Mesh Engine**: Analyze current layout L → generate available grid position set M
+           c) **Iterative Best Matching**:
+              - For each candidate element e_i and each grid g_j, compute fill rate fr = match(e_i, g_j)
+              - Select (e_i, g_j) pair with highest fill rate fr > threshold fr_thr
+              - Place e_i at position g_j, update layout L
+              - Remove e_i from candidate set
+              - Repeat until no satisfying match found
+           d) **Constraint**: Small element count ≤ Mini_num=5 (avoid excessive small elements reducing aesthetics)
+         - **Advantage**: Balances layout diversity (randomness) and aesthetics (fill rate and alignment)
+      3. **Image Rendering and Post-processing**:
+         - **Rendering**: Render layout L and elements into complete document image
+         - **Post-processing**:
+           - Apply augmentation techniques: style transfer, LLM rewriting, background replacement
+           - Add elastic transformation and Gaussian noise to simulate real scenarios
+         - **Output**: Final document image with corresponding layout annotations
+    - **Key Technical Advantages**:
+      - **Aesthetic Guarantee**: Generated layouts conform to human design principles through fill rate and alignment optimization
+        - **Alignment Score**: Δx* = min|x*_i - x*_j| (lower=better aligned), experiments show Mesh-BF 0.0009 vs Random 0.0171 vs Diffusion 0.0032
+        - **Density Score**: L_dst = Σ|e_i| / |L| (higher=more compact), experiments show Mesh-BF 0.645 vs Random 0.259 vs Diffusion 0.476
+      - **Layout Diversity**: Generates various layouts from dense (many small elements) to sparse (few large elements)
+      - **Element Diversity**: 74 fine-grained categories, far exceeding PubLayNet (6 categories), DocBank (13 categories)
+      - **Scalability**: Can generate arbitrary scale datasets based on any document element pool
+  - **DocSynth-300K Dataset**:
+    - **Original Generation**: 594K document images
+    - **Filtered Scale**: 300K high-quality documents (discarded bottom filtered samples)
+    - **Element Coverage**: 74 fine-grained element categories
+    - **Layout Diversity**: Covers academic papers, textbooks, market analysis reports, financial documents, etc.
+    - **Annotations**: Category and position (bounding box) for each element
+    - **Characteristics**: 
+      - Far exceeds existing dataset diversity (PubLayNet 360K academic-only, DocBank 500K weak supervision with lower quality)
+      - Aesthetic scores significantly better than Random and Diffusion methods
+  - **DocStructBench Evaluation Benchmark**:
+    - **Objective**: Quantitatively evaluate model performance on different document types
+    - **Scale**: 9,955 images (7,310 train + 2,645 test)
+    - **Four Subsets**:
+      - **Academic**: Academic papers (1,605 train + 402 test)
+      - **Textbook**: Textbooks and test papers (2,345 train + 587 test)
+      - **Market Analysis**: Industry and market analysis reports (2,660 train + 651 test)
+      - **Financial**: Financial business documents (2,472 train + 592 test)
+    - **10 Element Categories**: Title, Plain Text, Abandoned Text, Figure, Figure Caption, Table, Table Caption, Table Footnote, Isolated Formula, Formula Caption
+    - **Source Diversity**: Documents from diverse institutions, publishers, websites across broad domains
+    - **Manual Annotation**: Each image precisely annotated by human annotators
+  - **Global-to-Local Controllable Receptive Module (GL-CRM)**:
+    - **Problem**: Document elements have large scale variations (one-line title vs full-page table)
+    - **Solution**: Hierarchical architecture for global-to-local perception
+    - **Controllable Receptive Module (CRM)**:
+      - **Input**: Feature map X
+      - **Multi-granularity Feature Extraction**: Use weight-shared convolution w (kernel size k) with different dilation rates d=[d_1, d_2, ..., d_n]
+      - **Formula**: F_i = GELU(BN(Conv(X, w, d_i)))
+      - **Feature Fusion**: Fˆ = Concat(F_1, ..., F_n) → Conv → Sigmoid weighting
+      - **Adaptive Fusion**: Network learns to automatically fuse features of different granularities
+    - **Global-to-Local Design (Three Levels)**:
+      a) **Global-level (Shallow Layer)**: CRM with k=7, d=[1,3,5,7] - Perceive whole-page scale elements
+      b) **Block-level (Middle Layer)**: CRM with k=3, d=[1,2,3] - Perceive document sub-blocks (medium scale)
+      c) **Local-level (Deep Layer)**: Basic bottleneck - Focus on local semantic information (small scale)
+    - **Advantage**: Adapts to multi-scale characteristics of document elements, significantly improving detection accuracy
+  - **Experimental Results - Speed and Accuracy Breakthrough**:
+    - **D4LA Dataset** (11,092 complex documents, 27 categories, 12 document types):
+      - DocLayout-YOLO: mAP **70.3%**, AP50 82.4%, FPS **144.9**
+      - YOLO-v10 (Baseline): mAP 68.6%, AP50 80.7%, FPS 144.9%
+      - DINO-4scale: mAP 64.7%, AP50 76.9%, FPS 26.7
+      - DiT-Cascade-L: mAP 68.2%, AP50 80.1%, FPS 6.0
+      - LayoutLMv3-B: mAP 60.0%, AP50 72.6%, FPS 9.0
+      - **Conclusion**: Surpasses all unimodal and multimodal methods while maintaining fastest speed
+    - **DocLayNet Dataset** (80,863 pages, 11 categories, 7 document types):
+      - DocLayout-YOLO: mAP **79.7%**, AP50 93.4%
+      - YOLO-v10 (Baseline): mAP 76.2%, AP50 93.0%
+      - DINO-4scale: mAP 77.7%, AP50 93.5%
+      - DiT-Cascade-B/L: mAP 73.2%/72.6%
+      - LayoutLMv3-B: mAP 75.4%, AP50 92.1%
+      - **Conclusion**: Significantly surpasses all methods (+2.0% vs DINO, +7.1% vs DiT-L)
+    - **DocStructBench Four Subset Performance**:
+      - **Academic**: 81.8% (vs YOLO-v10 80.5%, DiT-L 81.0%)
+      - **Textbook**: 73.7% (vs YOLO-v10 70.2%, DiT-L 70.8%)
+      - **Market Analysis**: 69.4% (vs YOLO-v10 68.9%, DiT-L 70.8%)
+      - **Financial**: 90.1% (vs YOLO-v10 89.9%, DiT-L 89.3%)
+      - **Conclusion**: Achieves best or near-best performance on all document types
+    - **Speed Comparison** (Single A100 GPU):
+      - DocLayout-YOLO: **85.5 FPS**
+      - YOLO-v10: 144.9 FPS (slightly faster but lower accuracy)
+      - DINO-4scale: 26.7 FPS
+      - DiT-Cascade-L: 6.0 FPS
+      - LayoutLMv3: 9.0 FPS
+      - **Conclusion**: Maintains high accuracy while being significantly faster than multimodal methods (9-14×)
+  - **Pre-training Dataset Comparison** (100K samples finetuned on DocStructBench):
+    - **DocSynth-300K**: Academic 82.1%, Textbook 71.5%, Market 69.3%, Financial 90.3%
+    - **PubLayNet (300K)**: Academic 81.0%, Textbook 71.5%, Market 69.1%, Financial 89.7%
+    - **DocBank (400K)**: Academic 81.6%, Textbook 70.9%, Market 69.1%, Financial 90.1%
+    - **Diffusion (300K)**: Academic 80.7%, Textbook 71.9%, Market 68.9%, Financial 89.3%
+    - **Random (300K)**: Academic 80.5%, Textbook 71.2%, Market 68.1%, Financial 89.6%
+    - **M6Doc (2K)**: Academic 80.4%, Textbook 70.0%, Market 68.9%, Financial 89.7%
+    - **Conclusion**: DocSynth-300K achieves best or near-best performance on all document types, demonstrating superior generalization capability
+  - **Ablation Study Key Findings**:
+    - **GL-CRM Component Effects**:
+      - **Global-level CRM**: +0.5% mAP when used alone
+      - **Block-level CRM**: +0.7% mAP when used alone
+      - **Combined**: +1.2% mAP (D4LA: 68.6%→69.8%)
+      - **Conclusion**: Hierarchical design effectively adapts to multi-scale characteristics of document elements
+    - **DocSynth-300K Pre-training Effects**:
+      - **No Pre-training**: D4LA 68.6%, DocLayNet 76.2%
+      - **+DocSynth-300K Pre-training**: D4LA 69.8% (+1.2%), DocLayNet 79.3% (+3.1%)
+      - **Conclusion**: Pre-training significantly improves downstream task performance, especially on complex datasets
+    - **Data Filtering Necessity**: Performance further improves after filtering low-quality samples
+    - **Pre-training Data Scale**: Performance continuously improves with data increase (0→30K→50K→100K→200K→300K)
+  - **Generated Data Visualization Analysis**:
+    - DocSynth-300K generated documents exhibit high diversity:
+      - Dense layouts (many small elements) vs sparse layouts (few large elements)
+      - Different element combinations (S/M/L = Small/Medium/Large dominated)
+      - High aesthetic quality (alignment and density both superior to Random and Diffusion)
+    - Compared with Diffusion and Random methods, DocSynth layouts are more reasonable and aesthetically pleasing
+  - **Institution**: Shanghai AI Laboratory
+  - **Authors**: Zhiyuan Zhao, Hengrui Kang, Bin Wang, Conghui He
+  - **Publication**: arXiv October 2024 (v1)
+  - **Open Source**: ✅ [Code, Data & Models](https://github.com/opendatalab/DocLayout-YOLO)
+  - **Significance**:
+    - **Speed-Accuracy Trade-off Breakthrough**: First unimodal method achieving accuracy surpassing multimodal methods while maintaining speed advantage (9-14× faster)
+    - **Dataset Contribution**: 
+      - DocSynth-300K provides first large-scale, diverse, high-aesthetic-quality document synthesis dataset
+      - DocStructBench offers comprehensive multi-document-type evaluation benchmark
+    - **Method Innovation**:
+      - Mesh-candidate BestFit algorithm frames document synthesis as bin packing problem for first time, generating aesthetically pleasing and diverse layouts
+      - GL-CRM module effectively handles extreme scale variations of document elements
+    - **Generalization Capability**: Proves pre-training on diverse synthetic data significantly improves model generalization on various real documents
+    - **Practical Value**: Provides fast and accurate layout analysis solution for document parsing systems, directly applicable to RAG systems, document OCR, and real-world scenarios
+
+---
 
 - **📄 Multimodal Self-Instruct** [(arXiv 2407.07053)](https://arxiv.org/abs/2407.07053) 🏷️ **[Method + Data]**
   - **Focus**: **Synthetic Abstract Image and Visual Reasoning Instruction Using Language Model** - Leveraging LLMs and their code capabilities to synthesize massive abstract images (charts, maps, dashboards, etc.) and visual reasoning instructions without relying on GPT-4V
@@ -2667,6 +3017,264 @@ This category focuses on **high-quality interleaved image-text data construction
 This category of methods keeps original images fixed while enriching and improving paired text quality through various techniques. **This is currently the most mainstream multimodal data synthesis paradigm.**
 
 > **Note**: Only includes papers that explicitly describe data synthesis/generation methods, with specific synthesis components annotated.
+
+- **📄 MM-IFEngine** [(ICCV 2025)](https://arxiv.org/abs/2411.17194) 🏷️ **[Method + Data]** - **ICCV 2025**
+  - **Focus**: **Multimodal Instruction Following Data Generation Engine** - Automatically generating high-quality multimodal instruction following data and evaluation benchmarks with complex constraints
+  - **Data Synthesis Method** - **LLM-Driven Constraint Integration and Verification Pipeline**:
+    - **Core Innovation**: First systematic multimodal instruction following (MMIF) data generation engine that automatically integrates diverse constraints into visual instructions and constructs comprehensive evaluation benchmarks through LLM
+    - **Problem Identification**:
+      - Existing MMIF training data is scarce and constraints are simple (e.g., VisIT-Bench, MIA-Bench only contain atomic-level constraints)
+      - Weak correlation between constraints and visual content leads to insufficient instruction following ability in real-world scenarios
+      - Imprecise evaluation methods: LLM-as-a-judge has misjudgment issues on tasks requiring precise output constraints (e.g., word count)
+    - **Four-Step Generation Pipeline**:
+      1. **Image Filtering (Step 1)**:
+         - **Objective**: Select semantically rich natural scene images
+         - **Data Sources**: CC3M, ALLaVA, MultiUI, Geo170k, ChartQA and other multi-source data
+         - **Quality Metrics**:
+           - **IC9600 Metric**: Evaluates image semantic complexity (information content, category diversity, etc.)
+           - **RAM Metric**: Identifies salient objects and scene elements in images
+         - **Selection Criteria**: Prioritize natural scene images with rich semantic content (non-low-resolution, non-simple backgrounds)
+         - **Rationale**: Rich semantic content supports designing more comprehensive and complex instruction following tasks
+      2. **Task Generation (Step 2)**:
+         - **For datasets with original QA (e.g., ALLaVA)**:
+           - Use regular expressions and length limits to filter questions
+           - Exclude questions containing few-shot examples (Q_fs)
+           - Exclude questions containing options (Q_op)
+           - Formula: Q_s = {q∈Q | q∉Q_fs ∧ q∉Q_op}
+           - Obtain task instruction set T* suitable for constraint integration
+         - **For datasets without original QA (e.g., CC3M)**:
+           - Design predefined task instruction template pool P_T
+           - Include multiple task types such as description, creation, analysis
+           - Task design considers compatibility with subsequent constraint integration
+      3. **Constraint Integration (Step 3 - Core Step)**:
+         - **Constraint Pool P_C Construction**:
+           - **6 major categories with 32 subcategories**, forming multi-level constraint taxonomy:
+             a) **Format Constraints**: JSON format, list format, code block format, paragraph structure
+             b) **Length Constraints**: Word limit, sentence limit, paragraph limit
+             c) **Style Constraints**: Formal/informal tone, humorous style, poetic form, academic style
+             d) **Keyword Constraints**: Must include specific words, avoid specific words, use synonyms
+             e) **Composition Constraints**: Complex requirements combining multiple constraint types
+             f) **Perception Constraints**: Constraints based on visual content (color, objects, position, etc.)
+           - **Constraint-Visual Content Association**: Ensure constraints are related to image semantics, avoiding conflicts
+         - **Constraint Sampling and Generation**:
+           - Sample k constraint types from constraint pool P_C (typically 3-12)
+           - **Two-Stage Selection Strategy** (for data with original QA):
+             - First stage: Roughly select mostly compatible constraint types from P_C
+             - Second stage: LLM precisely selects and generates specific constraint content
+           - **Direct Sampling Strategy** (for data without original QA):
+             - Directly sample k constraint types
+             - LLM generates compatible specific constraint content
+         - **Constraint Integration**:
+           - LLM (GPT-4o) naturally integrates selected constraints into task instructions
+           - Ensures mutual compatibility between constraints (no contradictions)
+           - Outputs complex instructions containing multiple constraints
+      4. **Answer Generation and Quality Control (Step 4)**:
+         - **Answer Generation**: GPT-4o generates high-quality answers based on images and constraint instructions
+         - **Quality Control**:
+           - **Accuracy Threshold**: 80% (through GPT-4o self-evaluation)
+           - **Constraint Verification**: Generated answers must satisfy all specified constraints
+           - **Multi-round Iteration**: Samples not meeting quality requirements are discarded or regenerated
+    - **Key Technical Advantages**:
+      - **Complex Constraints**: Average 6.5 constraints per sample, far exceeding existing datasets (typically 1-2)
+      - **Visual-Constraint Association**: Constraint design considers image content, ensuring instruction rationality and executability
+      - **Automation**: End-to-end automated generation without human annotation
+      - **Scalability**: Constraint pool can be flexibly expanded to support new constraint types
+  - **MM-IFInstruct-23K Dataset**:
+    - **Total Scale**: 23K high-quality instruction following data
+    - **Data Source Distribution**:
+      - CC3M: 16K (70%)
+      - ALLaVA: 6K (26%)
+      - MultiUI/Geo170k/ChartQA: 1K (4%)
+    - **Constraint Statistics**:
+      - **Average Constraints**: 6.5 per sample
+      - **Constraint Distribution**: 3-12 constraints per sample, forming systematic complexity gradient
+      - **Constraint Type Distribution**: 6 major categories with 32 subcategories, covering multi-dimensional instruction following requirements
+    - **Data Characteristics**:
+      - Contains complex constraints common in real application scenarios (e.g., "output in JSON format", "use at least 2 synonyms")
+      - Diverse constraint combinations, training model's ability to satisfy multiple constraints simultaneously
+  - **MM-IFDPO-23K Preference Dataset**:
+    - **Objective**: For Direct Preference Optimization (DPO) training
+    - **Construction Method**:
+      - **Chosen Samples**: Directly use high-quality data from MM-IFInstruct-23K
+      - **Rejected Samples**: 4 negative sample generation strategies
+        1. Randomly delete 33% of constraints (retain 67%)
+        2. Randomly delete 66% of constraints (retain 34%)
+        3. Delete all constraints (retain 0%)
+        4. Do not provide image input, generate answers based on text only
+      - Use Qwen2-VL-7B-Instruct to generate rejected answers
+    - **Scale**: 23K (chosen, rejected) pairs
+    - **Effect**: DPO training further improves instruction following precision
+  - **MM-IFEval Evaluation Benchmark**:
+    - **Scale**: 400 high-quality evaluation samples
+    - **Constraint Classification**: 6 major categories with 32 subcategories, forming complete instruction following evaluation system
+    - **Question Types**:
+      - **Compose-Level**: Text constraint-focused (300 samples)
+      - **Perception-Level**: Requires strong visual perception ability constraints (100 samples)
+        - Includes multiple image types such as natural scenes, user interfaces, charts, mathematical expressions
+    - **Hybrid Evaluation Method** (Innovation):
+      1. **Rule-Based Evaluation**: For precise constraints (e.g., word count, format)
+         - Design predefined functions to verify if output satisfies constraints
+         - LLM extracts relevant parameters, function executes verification
+      2. **LLM Direct Judgment**: For clearly verifiable constraints (e.g., keyword inclusion)
+      3. **Comparative Judgment**: For subjective constraints (e.g., tone, style)
+         - Generate unconstrained control output
+         - LLM compares both outputs to judge which better conforms to constraints
+      - **Advantage**: Avoids LLM-as-a-judge misjudgment on precise constraints, improving evaluation accuracy
+  - **Experimental Results** - **Open-Source Models Show Significant Improvements After Fine-tuning, Maintain VQA Capabilities**:
+    - **Performance on MM-IFEval**:
+      - Qwen2-VL-7B Baseline: 42.0% (Compose) / 80.5% (Overall)
+      - +MM-IFInstruct-23K: 52.3% (+10.3%)
+      - +MM-IFDPO-23K: **52.2%** (+10.2%)
+      - LLaVA-NeXT-Llama3-8B Baseline: 39.7%
+      - +MM-IFDPO-23K: **49.3%** (+9.6%)
+    - **Cross-Benchmark Generalization (MIA-Bench)**:
+      - Qwen2-VL-7B: Baseline 80.5% → Finetuned **88.1%** (+7.6%)
+      - LLaVA-NeXT-Llama3-8B: Baseline 83.3% → Finetuned **90.0%** (+6.7%)
+    - **Text Instruction Following (IFEval)**:
+      - Qwen2-VL-7B: Baseline 47.4% → Finetuned **59.7%** (+12.3%)
+      - LLaVA-NeXT-Llama3-8B: Baseline 50.7% → Finetuned **69.1%** (+18.4%)
+    - **VQA Capability Preservation** (Key Validation):
+      - On 8 VQA benchmarks including MMMU, MMBench, MMStar, MMT-Bench, AI2D, OCRBench, MMVet, POPE
+      - Fine-tuned model performance comparable to or slightly better than baseline
+      - **Conclusion**: MM-IFDPO-23K training does not harm model's original visual understanding capabilities
+    - **Commercial Model Comparison** (MM-IFEval):
+      - GPT-4o: 64.6% (Compose) / 44.0% (Perception)
+      - Claude-3.5-Sonnet: 67.5% (Compose) / 44.0% (Perception)
+      - Finetuned Qwen2-VL-7B: 55.2% (Compose) / 43.0% (Perception)
+      - **Conclusion**: Open-source 7B models after fine-tuning approach commercial models on Compose-Level, but still have gaps on Perception-Level
+  - **Ablation Study Key Findings**:
+    - **DPO Negative Sample Strategy Comparison**:
+      - Deleting 100% constraints (no constraints) negative samples work best
+      - Deleting 33% or 66% constraints negative samples also effective
+      - No image input negative samples slightly less effective
+      - **Conclusion**: Clear positive-negative contrast (with constraints vs without constraints) most effective for DPO training
+    - **Data Scale Impact**: 23K data volume achieves good performance-cost balance
+    - **Constraint Quantity Impact**: Gradient distribution of 3-12 constraints helps model learn instruction following at different complexity levels
+  - **Institution**: Fudan University, Shanghai AI Laboratory, Shanghai Jiao Tong University, The Chinese University of Hong Kong
+  - **Authors**: Shengyuan Ding, Shenxi Wu, Xiangyu Zhao, Yuhang Zang, Haodong Duan, Xiaoyi Dong, Pan Zhang, Yuhang Cao, Dahua Lin, Jiaqi Wang
+  - **Publication**: ICCV 2025
+  - **Open Source**: ✅ [Code and Data](https://github.com/xxx/MM-IFEngine) (GitHub link TBD)
+  - **Significance**:
+    - **Problem Solving**: Systematically addresses scarcity of multimodal instruction following training data and imprecise evaluation methods
+    - **Method Innovation**:
+      - Proposes first constraint pool-driven multimodal instruction data automatic generation framework
+      - Innovative hybrid evaluation method (rule + LLM + comparative), solving LLM-as-a-judge limitations
+    - **Data Contribution**:
+      - Provides 23K high-quality complex constraint instruction data (MM-IFInstruct-23K)
+      - Provides 23K DPO preference data (MM-IFDPO-23K)
+      - Provides 400-sample comprehensive evaluation benchmark (MM-IFEval)
+    - **Practical Value**:
+      - Significantly improves open-source models' instruction following ability, narrowing gap with commercial models
+      - Does not harm original VQA capabilities, directly applicable to practical applications
+      - Constraint pool is extensible, supporting customized instruction following capability cultivation
+
+---
+
+- **📄 CIRHS** [(arXiv 2507.05970)](https://arxiv.org/abs/2507.05970) 🏷️ **[Method + Data]**
+  - **Focus**: **Automatic Synthesis of High-Quality Triplet Data for Composed Image Retrieval** - Automatically generating large-scale high-quality triplet training data for Composed Image Retrieval (CIR) tasks
+  - **Data Synthesis Method** - **LLM + T2I + MLLM Three-Stage Pipeline**: First complete pipeline using generative models to automatically construct high-quality CIR triplets (reference image, target image, relative caption). **Three-Stage Pipeline**: (1) **Diversified Quadruple Generation**: LLM (Qwen2.5-32B) generates text quadruples (C_Ir, C_It, C_r→t, C_t→r) with 6 predefined instruction sets covering objects, editing operations, and styles. (2) **Consistent Image Pair Synthesis**: Key insight - independent generation causes uncontrollable visual discrepancies. Strategy: Merge C_Ir and C_It into single prompt using Flux.1-dev to generate image with two semantically related sub-images, then crop into I_r and I_t. Ensures high consistency and shared semantic entities. (3) **Data Filtering**: MLLM (Qwen2.5-VL-32B) scores triplets on three dimensions (image quality, image-caption fidelity, CIR task alignment), discards bottom 15%, resulting in 534K high-quality triplets from 594K raw.
+  - **CIRHS Dataset**: 534K high-quality triplets covering diverse scenes, objects, and editing operations (object/scene change, quantity variation, viewpoint shift, attribute modification) with photorealistic images and precise editing descriptions.
+  - **Experimental Results - SOTA in Both Supervised and Zero-Shot Settings**: **Supervised CIR (trained on CIRHS)**: CIRR R@5 **83.81%**, R_s@1 **80.87%**, Avg **82.34%** (surpasses SPRC +1.69/+0.22/+0.95); FashionIQ Avg@10 **54.92%**, Avg@50 **75.55%** (+0.20/+0.58). **Zero-shot CIR**: CIRR R@1 **41.17%**, Avg **71.17%**; FashionIQ Avg@10 **39.11%**; CIRCO mAP@10 **25.29%** (best among all zero-shot methods). **Dataset Comparison (100K triplets)**: CIRHS significantly outperforms ST18M (CompoDiff) +11.18% R@5, WebVid-CoVR +3.90% R@5, even surpassing real-world dataset.
+  - **Institution**: Beijing University of Posts and Telecommunications, SenseTime
+  - **Authors**: Haiwen Li, Delong Liu, Zhaohui Hou, Zhicheng Zhao, Fei Su
+  - **Publication**: arXiv July 2025 (v3)
+  - **Significance**: First fully automated high-quality CIR triplet generation pipeline without human annotation. Innovative merged-prompt strategy ensures image pair semantic consistency. Synthetic data quality surpasses multiple real and synthetic datasets. Achieves SOTA performance in both supervised and zero-shot CIR.
+
+---
+
+- **📄 SMMQG** [(EMNLP 2024 Findings)](https://aclanthology.org/2024.findings-emnlp.759/) 🏷️ **[Method + Data]**
+  - **Focus**: **Synthetic Multimodal Question Generation** - Generating style and modality-controllable evaluation datasets for Multimodal Retrieval Augmented Generation (MMRAG) systems
+  - **Data Synthesis Method** - **Retriever + LLM + LMM Collaborative Generation Pipeline**:
+    - **Core Innovation**: First framework for controllable synthetic multimodal QA data generation with fine-grained control over question styles and modalities, without human annotation
+    - **Five-Step Generation Pipeline**:
+      1. **Seed Source Sampling**:
+         - Sample seed source s_seed from multimodal sources S (text passages, tables, images)
+         - Use weighted sampling to avoid outliers: w_i based on semantic similarity to k-nearest neighbors (E5-Large embeddings)
+         - Ensures thematic coherence of generated questions
+      2. **Entity Extraction**:
+         - Use GPT-4-Turbo to extract prominent entities from seed source (e.g., "tennis", "Japan", "machine learning")
+         - For image sources, use image verbalization and image caption
+         - High temperature (1.0) improves entity diversity, enhancing question diversity
+      3. **Candidate Source Retrieval**:
+         - Use extracted entity as query to retrieve candidate source set Z̃
+         - Retrieve appropriate number of sources per modality based on modality requirements M (e.g., M=[1,2,0] means 1 text + 2 tables)
+         - Text/tables use E5-Large, images use image verbalization for text-based retrieval
+      4. **Question Generation**:
+         - **Input**: Candidate sources Z̃, question style description v, modality requirements M, 3 style-specific few-shot examples
+         - **Model**: GPT-4-Turbo (text/tables) or GPT-4-Turbo with Vision (with images)
+         - **Task**: Select question sources Z⊆Z̃, generate question q and answer a, output source references
+         - **Prompt Design**: Explicitly require questions must be based on selected sources, follow style description, not answerable if any selected source is removed
+      5. **Verification Step**:
+         - Verify question adheres to specified style
+         - Verify answer can be inferred from question sources
+         - Use GPT-4-Turbo for binary Pass/Fail judgment
+    - **Five Question Styles**:
+      1. **Information Extraction**: Extract and return information from single source
+      2. **Compare Contrast**: Compare two closely related entities or topics
+      3. **Numerical**: Numerical calculations based on numbers from sources
+      4. **Compound**: Two loosely connected information extraction questions separated by "and"
+      5. **Multi-hop**: Requires resolving implicit sub-question first, then resolving full question
+    - **Multi-hop Question Special Generation**:
+      - First generate two intermediate questions: question 1 about entity, question 2 with entity as answer
+      - Use LLM to combine intermediate questions and answers into multi-hop question
+      - Cross-modal multi-hop: split candidate sources by modality; unimodal multi-hop: random split
+    - **Modality Support**: Text, tables, images and all pairwise combinations (9 modality combinations)
+    - **Image Processing Strategy**:
+      - **Image Verbalization**: Use LLaVA-13B to generate image descriptions, enabling text-based models to retrieve and reason over images
+      - **Triplet Representation**: Image source = (image itself, image caption, image verbalization)
+    - **Key Technical Advantages**:
+      - **Style Control**: Precise control over question types through style description v and few-shot examples
+      - **Modality Control**: Precise control over source type combinations through modality requirements M
+      - **No Human Annotation**: Fully automated generation without crowdsourcing
+      - **Scalability**: Applicable to any multimodal document collection
+      - **Domain Customization**: Achieve domain-specific data generation by controlling source documents
+  - **Data Scale**:
+    - **Wikipedia QA Dataset**: 1024 QA pairs, 5 styles, 9 modality combinations
+    - **Biology Dataset**: Additional college biology textbook dataset (demonstrates domain customization capability)
+  - **Human Study Results** - **Quality On Par with Crowdsourced Benchmark MMQA**:
+    - **Question Fluency (1-5 scale)**: SMMQG **4.53** vs MMQA 3.68 (+0.85, p<0.001*)
+    - **Style Faithfulness (%)**: SMMQG **98.3%** vs MMQA 96.7% (+1.6%)
+    - **Source Relevance (%)**: SMMQG **93.0%** vs MMQA 85.8% (+7.2%)
+    - **Answerability (%)**: SMMQG **94.7%** vs MMQA 85.8% (+8.9%, p=0.02*)
+    - **Answer Correctness (%)**: SMMQG **92.7%** vs MMQA 80.0% (+12.7%, p=0.001*)
+  - **Model Evaluation Experiments** - **Reveals Style and Modality-Specific Performance Insights**:
+    - **Retriever Evaluation** (Recall@5):
+      - **E5-Large**: Best performance across all modalities (pure text 98.8%, text-text 91.5%)
+      - **OpenCLIP**: Best for pure image retrieval (84.0%)
+      - **BM25**: Poor performance on non-text modalities
+    - **QA Model Evaluation** (GPT-4-Turbo-judge scores):
+      - **GPT-4-Turbo**: Overall leader (info extraction 99.3%, multi-hop 96.2%)
+      - **Claude-3-Opus**: Second best (info extraction 96.1%, multi-hop 88.7%)
+      - **Open-source models**: Vicuna-13b+LLaVA-13b performs best among open-source
+    - **Style-Specific Insights**:
+      - All models struggle with **compare contrast** and **numerical** tasks
+      - **Multi-hop reasoning** challenging for most models
+      - **Information extraction** relatively easy, most models perform well
+    - **Modality-Specific Insights**:
+      - Pure text tasks show best performance
+      - **Table QA** challenging for all models
+      - Gemini Pro 1.0 excels at image reasoning (pure image 97.0%)
+  - **Dataset Concordance Validation** (Kendall's tau):
+    - **Retrieval**: τ=0.87 (p=0.02*) - Strong concordance between SMMQG and MMQA
+    - **QA**: τ=0.86 (p=0.002*) - SMMQG can replace MMQA for model selection
+    - **Conclusion**: SMMQG dataset can be used in place of MMQA for model evaluation and selection
+  - **Key Findings**:
+    - **Evaluation Data Quality**: SMMQG-generated synthetic data quality comparable to human crowdsourced data (sometimes even superior)
+    - **Style Sensitivity**: MMRAG performance highly dependent on question style, requiring style-specific evaluation data
+    - **Modality Sensitivity**: Both retrieval and QA performance significantly depend on input modality combinations
+    - **Automated Evaluation**: Enables large-scale, customized MMRAG system evaluation
+  - **Institution**: C3 AI, Connectly AI, Carnegie Mellon University
+  - **Authors**: Ian Wu, Sravan Jayanthi, Vijay Viswanathan, Simon Rosenberg, Sina Pakazad, Tongshuang Wu, Graham Neubig
+  - **Publication**: EMNLP 2024 Findings
+  - **Paper Link**: [ACL Anthology](https://aclanthology.org/2024.findings-emnlp.759/)
+  - **Significance**:
+    - **Evaluation Data Generation**: First controllable synthetic multimodal QA data generation framework, addressing evaluation data scarcity
+    - **Quality Validation**: Human study proves synthetic data quality reaches crowdsourcing level
+    - **Performance Insights**: Reveals model strengths and weaknesses on specific styles and modalities, unobtainable through mixed benchmarks
+    - **Scalability**: Fully automated process enables rapid customized evaluation data generation for new domains or requirements
+    - **Cost Efficiency**: No expensive human annotation required, reducing evaluation dataset construction costs
+
+---
 
 - **📄 PROVISION** [(arXiv 2412.07012)](https://arxiv.org/abs/2412.07012) 🏷️ **[Method + Data]**
   - **Focus**: **Programmatically Scaling Vision-centric Instruction Data** - Using scene graphs as symbolic representations of images and human-written programs to systematically synthesize vision-centric instruction data, ensuring interpretability and controllability of the data generation process
@@ -4797,6 +5405,129 @@ This category of methods keeps original images fixed while enriching and improvi
 ## 🎯 VLM Self-Improvement & Reinforcement Learning
 
 This emerging category focuses on **scalable VLM self-improvement** through reinforcement learning and gamified environments, enabling models to enhance their reasoning capabilities **without human annotation**. These methods leverage competitive dynamics, strategic gameplay, and iterative policy optimization to achieve sustained performance improvements across diverse reasoning tasks.
+
+- **📄 Chart-CoCa** [(CIKM 2025)](https://arxiv.org/abs/2508.11975) 🏷️ **[Method + Data]** - **CIKM 2025**
+  - **Focus**: **Chart Understanding Self-Improvement via Code-Driven Synthesis and Candidate-Conditioned Answering** - VLM self-generates code→executes to create charts→automatically extracts precise annotations→trains with candidate-conditioned answering, achieving chart understanding improvement without human annotation or external models
+  - **Data Synthesis Method** - **Code-Mediated Chart Synthesis + Candidate-Conditioned Answering Training**:
+    - **Core Innovation**: First fully self-improving chart understanding paradigm, using code as intermediary to ensure precision and reliability of synthetic data, without human annotation or teacher models
+    - **Problem Identification**:
+      - VLMs struggle with chart understanding tasks (inaccurate descriptions, insufficient reasoning complexity)
+      - Traditional synthetic data methods suffer from noisy labels (direct chart→text generation hard to guarantee accuracy)
+      - Existing methods rely on strong teacher models (e.g., GPT-4) or extensive human annotation
+    - **Code-Driven Synthesis Pipeline (Three Steps)**:
+      1. **Chart Description Generation (Step 1)**:
+         - **Input**: Unlabeled real chart c
+         - **Output**: Chart description d (including title, x/y-axis labels, data points, legends, etc.)
+         - **Model**: VLM M (initial version, e.g., InternVL2-8B)
+         - **Formula**: d = M_LMM(c)
+         - **Purpose**: Transform visual information into structured text description
+      2. **Code Generation (Step 2)**:
+         - **Input**: Chart description d
+         - **Output**: Executable Python Matplotlib code p
+         - **Model**: VLM's language model component M_LM
+         - **Formula**: p = M_LM(d)
+         - **Constraint**: Must use Python Matplotlib library (facilitates execution and information extraction)
+         - **Key Advantage**: Code executability ensures generated chart precisely matches description
+      3. **Code Execution and Information Extraction (Step 3)**:
+         - **Chart Generation**: Execute code p to generate new chart c* (precisely matching description d)
+         - **Information Extraction**: Extract chart elements through reflection during code execution:
+           - **Layout**: fig, axes = plt.subplots(rows, columns)
+           - **Title**: axes[i,j].get_title()
+           - **X/Y Labels**: axes[i,j].get_xlabel(), get_ylabel()
+           - **Legend**: axes[i,j].get_legend()
+           - **Ticks**: axes[i,j].get_xticklabels(), get_yticklabels()
+           - **Colorbar**: axes[i,j].get_images()[0].colorbar
+           - **Lines**: axes[i,j].lines
+         - **QA Pair Generation**:
+           - Use CharXiv's descriptive questions as seeds (simple, no design cost, easy answer access)
+           - Automatically generate precise answers based on extracted information
+           - Example: Q: "What is the chart title?" A: axes[0,0].get_title() → "Optimizations in SizeAware++"
+           - Supports 8 question types: layout, title, labels, legends, ticks, colorbar, lines
+         - **Output**: High-quality triplets ⟨c*, q*, a*⟩ (chart, question, answer)
+    - **Key Technical Advantages**:
+      - **Zero Noisy Labels**: Code execution guarantees absolute consistency between chart and annotations (vs noise in direct generation)
+      - **Full Automation**: No human annotation or external strong models needed
+      - **Verifiability**: Code is traceable, each annotation has clear provenance
+      - **Scalability**: Applicable to any unlabeled chart dataset
+    - **Candidate-Conditioned Answering**:
+      - **Motivation**: Direct fine-tuning problematic - questions simple/fixed, model struggles to handle flexible questions
+      - **Inspiration**: Test-time scaling (increasing inference budget improves performance)
+      - **Training Stage (Three Steps)**:
+        1. **Candidate Answer Generation**: Given ⟨c*, q*⟩, initial VLM M generates k candidate responses r_1,...,r_k
+           - Formula: r_1,...,k = M(c*, q*)
+           - Use sampling strategy (temperature>0) for diverse candidates
+        2. **Answer Model Training**: Train new answer VLM M_ANS, input (c*, q*, r_1,...,r_k), output final answer a
+           - Formula: a = M_ANS(c*, q*, r_1,...,r_k)
+           - M_ANS learns to synthesize multiple candidates and generate optimal answer
+           - Training loss: L_answer = -log P(a* | c*, q*, r_1,...,r_k)
+        3. **Iterative Update**: Use (c*, q*, a) to update initial VLM M parameters, obtaining M_ANS
+      - **Inference Stage (Two Steps)**:
+        1. Initial VLM M generates k candidates: r_1,...,k = M(c, q)
+        2. Trained M_ANS synthesizes candidates to generate final answer: â = M_ANS(c, q, r_1,...,k)
+      - **Advantages**:
+        - Enhances model's ability to handle flexible, diverse questions
+        - Leverages collective wisdom of multiple candidates
+        - Test-time scaling brings performance improvements
+  - **Experimental Results - Significant Improvements on CharXiv Dataset**:
+    - **CharXiv Benchmark**: Includes descriptive tasks (Information Extraction, Pattern Recognition, Enumeration, Counting, Compositionality) and reasoning tasks (Text in Chart/General, Number in Chart/General)
+    - **InternVL2-8B Self-Improvement Effects**:
+      - **Descriptive Tasks**: 54.10% → **69.60%** (+15.50%)
+        - Information Extraction: 69.40% → 74.20% (+4.80%)
+        - Pattern Recognition: 40.52% → 75.46% (+34.94%, largest improvement)
+        - Enumeration: 19.64% → 26.79% (+7.15%)
+        - Counting: 54.10% → 69.60% (+15.50%)
+      - **Reasoning Tasks**: 23.60% → **31.60%** (+8.00%)
+        - Text in Chart: 44.76% → 58.95% (+14.19%)
+        - Text in General: 61.83% → 68.19% (+6.36%)
+        - Number in Chart: 19.64% → 26.79% (+7.15%)
+        - Number in General: 14.85% → 25.33% (+10.48%)
+      - **Overall Improvement**: Average +11.75%, proving effectiveness of fully self-improving paradigm
+    - **Cross-Model Generalization Verification** (using Chart-CoCa method):
+      - **LLaVA-1.6-7B**: 32.77% → **47.83%** (+15.06%, descriptive); 15.50% → **23.10%** (+7.60%, reasoning)
+      - **Qwen2VL-7B**: 59.90% → **71.75%** (+11.85%, descriptive); 30.80% → **36.90%** (+6.10%, reasoning)
+      - **InternVL2-26B**: 61.90% → **72.63%** (+10.73%, descriptive); 34.60% → **39.50%** (+4.90%, reasoning)
+      - **Conclusion**: Chart-CoCa method effective across different model scales and architectures
+    - **Comparison with Majority Voting**:
+      - Majority Voting (5 candidates): Descriptive 61.38%, Reasoning 26.70%
+      - Chart-CoCa (5 candidates): Descriptive **69.60%**, Reasoning **31.60%**
+      - **Improvement**: +8.22% (descriptive), +4.90% (reasoning)
+      - **Reason**: Majority Voting prone to majority bias; Chart-CoCa learns to synthesize diverse information through candidate-conditioned answering
+    - **Pass@K Analysis (Coverage)**:
+      - **Descriptive Tasks**: Pass@1=54.1%, Pass@30=**85.95%** (+31.85%)
+      - **Reasoning Tasks**: Pass@1=23.6%, Pass@30=**55.8%** (+32.2%)
+      - **Conclusion**: VLMs have strong inherent capability (high accuracy with sufficient trials), but need methods to unlock this potential
+    - **Code Execution Success Rate Analysis**:
+      - **Overall Success Rate**: 70.7% (after up to 5 retries)
+      - **Error Type Distribution**: ValueError (36.0%), IndexError (24.1%), SyntaxError (5.6%), AttributeError (5.0%), TypeError (2.9%), Others (1.5%)
+      - **Retry Improvement**: Among samples failing on first attempt, 24% succeed through retries; but some samples stuck in same error
+      - **Improvement Room**: Targeted error handling could further improve code execution success rate
+  - **Ablation Study Key Findings**:
+    - **Necessity of Code Intermediary (-Code)**:
+      - Removing code generation step, directly generating QA from charts: Descriptive -9.20%, Reasoning -5.50%
+      - **Conclusion**: Code intermediary ensures data precision, significantly better than direct generation
+    - **Necessity of Chart Description (-Desc)**:
+      - Removing chart description step, directly generating code from charts: Descriptive -4.53%, Reasoning -3.60%
+      - **Conclusion**: Chart description as intermediate representation reduces difficulty of direct code generation
+    - **Importance of Both Combined (-Both)**:
+      - Removing both description and code steps: Descriptive -13.68%, Reasoning -7.10%
+      - **Conclusion**: Complete pipeline crucial for performance
+  - **Qualitative Analysis**:
+    - **Candidate Answer Diversity**: 5 candidates show different reasoning paths, Chart-CoCa can synthesize to select best answer
+    - **Error Cases**: Mainly concentrated in questions requiring complex reasoning or precise numerical computation (code generation or logic errors)
+    - **Success Cases**: Chart-CoCa excels in most descriptive questions and moderate-difficulty reasoning questions
+  - **Institution**: Hong Kong University of Science and Technology (Guangzhou)
+  - **Authors**: Gongyao Jiang, Qiong Luo
+  - **Publication**: CIKM 2025
+  - **Code**: [To be released]
+  - **Significance**:
+    - **Self-Improvement Paradigm**: First fully self-improving chart understanding method without human annotation or external teacher models
+    - **Code Intermediary Innovation**: Proves using code as intermediary eliminates noisy label problem in synthetic data
+    - **Candidate-Conditioned Answering**: Innovative training strategy leveraging test-time scaling idea to improve model generalization
+    - **Scalability**: Method applicable to any unlabeled chart data, theoretically infinitely scalable for training data
+    - **Cross-Model Generalization**: Validated effectiveness across multiple VLM architectures, providing universal self-improvement framework
+    - **Practical Value**: Provides low-cost, high-quality data generation and model improvement solution for chart understanding tasks
+
+---
 
 - **📄 VLM Dialog Games** [(arXiv 2502.02740)](https://arxiv.org/abs/2502.02740) 🏷️ **[Method + Data]**
   - **Focus**: **Vision-Language Model Dialog Games for Self-Improvement** - Through two VLM agents engaged in goal-oriented reference game self-play, automatically filtering successful game interactions to generate high-quality interleaved image-text data for fine-tuning
