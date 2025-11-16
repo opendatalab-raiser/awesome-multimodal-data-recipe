@@ -20,16 +20,16 @@
 
 ## 📊 Statistics
 
-- **Total Papers:** 82+ (data synthesis/construction methods)
+- **Total Papers:** 89+ (data synthesis/construction methods)
 - **Industrial Reports:** 9 (Baidu, Microsoft, Alibaba, ByteDance, Tencent, Hunyuan, etc.)
 - **Data Synthesis Methods:** 
-  - Image Generation - Synthesizing New Visual Content (17): Geometric/mathematical reasoning + document/text-dense scenes + scene text detection + multimodal dialogue + text-driven image synthesis + ChatGPT-guided synthesis + autonomous driving + fully synthetic image-text generation + 3D physics simulation + 3D scene synthesis + robotic action synthesis
+  - Image Generation - Synthesizing New Visual Content (18): Geometric/mathematical reasoning + document/text-dense scenes + scene text detection + multimodal dialogue + text-driven image synthesis + ChatGPT-guided synthesis + autonomous driving + fully synthetic image-text generation + 3D physics simulation + 3D scene synthesis + robotic action synthesis
   - Image Editing (5): Non-rigid motion, unified editing, referring expression-guided editing, generative visual instruction tuning
   - Compositionality / Preference-Guided Synthesis (6): Enhancing compositional understanding + multi-concept composition + multi-image customization + hard negative contrastive learning + multimodal counterfactual samples + 3D physics simulation VLC enhancement
   - Interleaved Image-Text · Coherence & Consistency (4): Multi-perspective quality filtering + iterative refinement + multimodal embedding-based correlation
   - Think with Image (2): Interleaved multimodal reasoning with image manipulation + large-scale reasoning trajectory synthesis
-  - VLM Self-Improvement & Reinforcement Learning (1): Gamified self-play frameworks for VLM reasoning enhancement without human annotation
-  - Image-Invariant - Text Enhancement (38): Fixed images, enriched text only + adaptive weighted synthetic captions + medical domain purely synthetic data + cost-efficient LVLM data refinement + spatial reasoning enhancement + VLM personalization + continual learning + multimodal RAG training + self-instructed code formatting + multilingual embedding enhancement
+  - VLM Self-Improvement & Reinforcement Learning (3): Calibrated self-rewarding VLM + gamified self-play frameworks for VLM reasoning enhancement without human annotation
+  - Image-Invariant - Text Enhancement (42): Fixed images, enriched text only + adaptive weighted synthetic captions + medical domain purely synthetic data + cost-efficient LVLM data refinement + spatial reasoning enhancement + VLM personalization + continual learning + multimodal RAG training + self-instructed code formatting + multilingual embedding enhancement + MLLM data generators + programmatic instruction generation + information bottleneck concept selection + image comprehension self-training
   - Video - Instruction Tuning (Synthetic Data) (1): Synthetic video instruction-following data (captions + QA)
   - Cross-Domain Methodology Insights (2): Multi-modal model collapse analysis + synthetic data quality assessment
 - **Notable Datasets:** 
@@ -1191,6 +1191,90 @@ This category focuses on **generating new images from scratch** as part of the d
   - **Open Source**: ✅ [Code & Data](https://github.com/FreedomIntelligence/ShareGPT-4o-Image)
 
 #### 📄 Document / Text-Dense Scenes
+
+- **📄 Multimodal Self-Instruct** [(arXiv 2407.07053)](https://arxiv.org/abs/2407.07053) 🏷️ **[Method + Data]**
+  - **Focus**: **Synthetic Abstract Image and Visual Reasoning Instruction Using Language Model** - Leveraging LLMs and their code capabilities to synthesize massive abstract images (charts, maps, dashboards, etc.) and visual reasoning instructions without relying on GPT-4V
+  - **Data Synthesis Method** - **Code-Driven Multimodal Self-Instruct Pipeline**:
+    - **Core Innovation**: First systematic exploration of using LLMs and code to synthesize abstract images (non-natural images), demonstrating that code generation can precisely control abstract image details
+    - **Multimodal Self-Instruct Strategy (Three Key Steps)**:
+      1. **Visual Idea Proposal Stage**:
+         - **Task**: LLM autonomously proposes creative visual ideas describing daily scenarios (e.g., city maps, flowcharts, statistical charts)
+         - **Eight Abstract Image Types**: Chart, Table, Simulated Road Map, Dashboard, Flowchart, Relation Graph, 2D Planar Layout, Visual Puzzle
+         - **Detailed Parameter Control**: Control specific details of image synthesis (colors, fonts, layouts) through natural language descriptions
+      2. **Image Synthesis Stage**:
+         - **Simulated Data Generation**: LLM generates simulated data for proposed visual ideas (e.g., pie chart percentages, map path points)
+         - **Code Generation**: LLM generates Python code using visualization libraries like Matplotlib or ECharts
+         - **Explicit Parameter Definition**: All parameters explicitly defined in code (image style, colors, font size, legend position, etc.)
+         - **Image Rendering**: Execute code to generate desired abstract images
+      3. **Visual Instruction Construction Stage**:
+         - **Question-Answer Pair Generation**: LLM designs multiple Q&A pairs based on visual ideas, simulated data, and generated code
+         - **Question Type Diversity**:
+           - **Chart Tasks**: OCR, Caption, Detailed Perception (position/quantity/layout), Data Extraction, Mathematical Reasoning
+           - **Map Tasks**: Path Planning, Spatial Relation Reasoning
+           - **Flowchart Tasks**: Structural Questions (number of steps, symbol types), Reasoning Questions (next operation)
+           - **Relation Graph Tasks**: Tree Structure Questions, Mathematical Reasoning Questions
+         - **Answer Annotation with Rationale**: Provide detailed rationale for each question (similar to chain-of-thought), enhancing training effectiveness
+    - **Key Technical Advantages**:
+      - **Code Precision Control**: Precisely control geometric features and text content of abstract images through code, avoiding detail control failures of text-to-image models
+      - **Hallucination-Free Guarantee**: Based on code and simulated data generation, ensuring answer accuracy (as long as scene graphs are accurate)
+      - **Interpretability**: Code as intermediate representation makes data generation process fully interpretable and controllable
+      - **Cost Efficiency**: Uses GPT-4-turbo instead of GPT-4V, significantly reducing costs
+      - **Scalability**: Easily extend instruction data types by adding new templates or customizing existing ones
+    - **Dataset Statistics**:
+      - **Benchmark Dataset**: 3,658 images, 11,193 instructions (8 scenarios)
+        - Dashboard: 73 images, 1,013 instructions
+        - RelationGraph: 66 images, 822 instructions
+        - Flowchart: 98 images, 1,451 instructions
+        - VisualPuzzle: 189 images, 529 instructions
+        - 2DPlanarLayout: 25 images, 252 instructions
+      - **Training Dataset**: 19,338 images, 62,476 instructions (3 scenarios)
+        - Chart: 1,768 images, 34,590 instructions
+        - Table: 570 images, 10,886 instructions
+        - Roadmap: 17,000 images, 17,000 instructions
+      - **Data Quality Assurance**:
+        - **Code Feasibility Filtering**: If generated code fails to run, prompt LLM to self-reflect based on compiler error feedback, up to 3 retries
+        - **Image Aesthetics Check**: Use LLaVA-1.5 to check image aesthetics (visual element interference, layout reasonableness, text legibility)
+        - **Answer Accuracy Verification**: Use self-consistency method, let LLM generate multiple responses based on ideas, code, and questions, select final answer through voting
+        - **Human Evaluation**: Randomly sample 10% of <question, answer> pairs, 4 CS graduate students evaluate from four dimensions (image aesthetics, question rationality, answer accuracy, image-instruction relevance)
+    - **Experimental Results**:
+      - **Benchmark Evaluation** (8 abstract image tasks):
+        - **Human Level**: Average accuracy 82.1%
+        - **Best LMM Performance**: Claude-3.5-Sonnet 64.74%, GPT-4o 59.99%
+        - **Significant Gap**: Even most advanced LMMs (GPT-4o) only achieve 54.79% on Dashboard task, far below human level (85.3%)
+        - **Open-source vs Closed-source Gap**: Open-source models (e.g., Vanilla Llava-1.5-7B) average accuracy only 15.4%, huge gap with closed-source models
+      - **Fine-tuning Effects** (Llava-our-62k):
+        - **Chart Understanding**: 10.5% → 30.3% (+19.8%)
+        - **Table Understanding**: 15.8% → 51.8% (+36.0%)
+        - **Map Navigation**: 0.3% → 67.7% (+67.4%), surpassing GPT-4o (23.3%) and Claude-3 (38.3%)
+        - **Using only 68K synthetic data and 4 hours of LoRA fine-tuning**, elevates Llava-1.5-7B's chart understanding capability to Qwen-VL-Plus level
+      - **Task Synergy Effects**:
+        - **Chart+Table Training**: Positive impact on map navigation tasks (+5% performance improvement)
+        - **Map Training**: Smaller impact on chart and table tasks
+        - **Speculated Reason**: Different tasks require different capabilities
+      - **Data Scale Impact**:
+        - As synthetic data increases (35k → 47k → 62k), model performance continuously improves without plateauing
+        - Mathematical reasoning subtask shows most improvement
+      - **Generalization Ability** (weakly related tasks):
+        - **ChartQA**: 19.9% → 23.9% (+4.0%)
+        - **MathVista**: 25.1% → 25.9% (+0.8%)
+        - **Untrained Tasks**: Dashboard +0.0%, RelationGraph +0.5%, Flowchart +2.7%, VisualPuzzle +0.2%, PlanarLayout +6.4%
+        - **Conclusion**: Training only on chart, table, and map data can also improve other abstract image reasoning tasks
+    - **Key Findings**:
+      - **Abstract Image Understanding Challenge**: Current LMMs have significant deficiencies in understanding abstract images, often failing even on simple daily tasks (e.g., reading time from clock, planning route using map)
+      - **Code Generation Advantage**: Using code to synthesize abstract images can precisely control details, avoiding detail control failures of text-to-image models
+      - **Data Quality Importance**: Ensure synthetic data quality through three-layer filtering (code feasibility, image aesthetics, answer accuracy)
+      - **Scalability**: Method can easily extend to more scenarios and task types
+    - **Institution**: Zhejiang University, Institute of Software Chinese Academy of Sciences, University of Shanghai for Science and Technology
+    - **Authors**: Wenqi Zhang, Zhenglin Cheng, Yuanyu He, Mengna Wang, Yongliang Shen, Zeqi Tan, Guiyang Hou, Mingqian He, Yanna Ma, Weiming Lu, Yueting Zhuang
+    - **Publication**: arXiv July 2024 (v5)
+    - **Open Source**: ✅ [Code](https://github.com/zwq2018/Multi-modal-Self-instruct) | [Project Page](https://multi-modal-self-instruct.github.io)
+    - **Significance**:
+      - **Problem Identification**: First systematic identification of significant deficiencies in current LMMs' abstract image understanding
+      - **Method Innovation**: Proposes code-driven abstract image synthesis method, providing high-quality abstract image data for LMM training
+      - **Benchmark Contribution**: Constructs abstract image understanding benchmark covering 8 scenarios, revealing huge gap between LMMs and human level
+      - **Practical Value**: Provides scalable data synthesis framework supporting customized abstract image data generation
+
+---
 
 - **📄 CoSyn** [(arXiv 2502.14846)](https://arxiv.org/abs/2502.14846) 🏷️ **[Method + Data]**
   - **Focus**: **Code-Guided Synthetic Text-Rich Multimodal Data Generation** - Leverages text-only LLM coding capabilities to automatically create diverse text-dense image data
@@ -2583,6 +2667,357 @@ This category focuses on **high-quality interleaved image-text data construction
 This category of methods keeps original images fixed while enriching and improving paired text quality through various techniques. **This is currently the most mainstream multimodal data synthesis paradigm.**
 
 > **Note**: Only includes papers that explicitly describe data synthesis/generation methods, with specific synthesis components annotated.
+
+- **📄 PROVISION** [(arXiv 2412.07012)](https://arxiv.org/abs/2412.07012) 🏷️ **[Method + Data]**
+  - **Focus**: **Programmatically Scaling Vision-centric Instruction Data** - Using scene graphs as symbolic representations of images and human-written programs to systematically synthesize vision-centric instruction data, ensuring interpretability and controllability of the data generation process
+  - **Data Synthesis Method** - **Scene Graph-Driven Programmatic Instruction Generation Pipeline**:
+    - **Core Innovation**: First programmatic approach using scene graphs to systematically generate vision-centric instruction data, ensuring hallucination-free and scalable generation through human-written programs
+    - **Augmented Scene Graph Definition**:
+      - **Standard Scene Graph**: Objects as nodes, attributes assigned to nodes, object relationships/interactions as directed edges
+      - **Augmented Features**: Add depth annotations (DepthAnyThing V2) and segmentation annotations (SAM-2), forming augmented scene graphs
+      - **Scene Graph Sources**:
+        - **Manual Annotation**: Visual Genome dataset (human-annotated scene graphs)
+        - **Auto-Generated**: DataComp dataset (auto-generated using scene graph generation pipeline)
+    - **Programmatic Instruction Generation System**:
+      - **24 Single-Image Instruction Generators**: Transform augmented scene graphs into thousands of high-level perceptual question-answer pairs
+        - **Six Instruction Dimensions**: Object QA, Attribute QA, Depth QA, Segmentation QA, Relation QA, Object+Depth QA
+        - **Each Generator Uses Hundreds of Pre-defined Templates**: Systematically integrate annotations to generate diverse instruction data
+        - **Coverage Capabilities**: Compare, retrieve, and reason about basic visual concepts (objects, attributes, relations)
+      - **14 Multi-Image Instruction Generators**: Process multiple scene graphs to generate cross-image question-answer pairs
+        - **Three Multi-Image Task Types**: Selection, Comparison, Aggregation
+        - **Examples**: "Which image contains more red objects?", "What are the objects common in these images?", "How many red objects in total in these images?"
+    - **Scene Graph Generation Pipeline** (for unlabeled images):
+      - **Object Detection**: YOLO-world detects bounding boxes and labels for all objects
+      - **Image Segmentation**: SAM-2 generates pixel-wise segmentation based on bounding boxes
+      - **Attribute Detection**: Fine-tuned LLaVA-1.5-13B as attribute detection model (trained on LSA dataset, 90% precision)
+      - **Relation Detection**: Fine-tuned Osprey model detects relationships between object pairs
+      - **Depth Estimation**: DepthAnyThing V2 generates pixel-wise depth annotations
+      - **Key Advantage**: Applicable to any image, not limited to datasets with scene graph annotations
+    - **Key Technical Advantages**:
+      - **Interpretability**: Scene graphs + human-written programs introduce transparency and interpretability, eliminating uncertainty of end-to-end models
+      - **Hallucination-Free Guarantee**: As long as scene graphs are accurate, program-generated instructions are hallucination-free, based on explicit information in scene graphs rather than LLM probabilistic outputs
+      - **Scalability**: Shift from powerful LLMs to programmatic generation, enabling scalable and cost-effective data creation
+      - **No License Constraints**: Scene graphs and custom programs don't involve proprietary model outputs, avoiding license restrictions
+      - **Controllability**: Human-written programs allow precise control and customization of output generation
+    - **PROVISION-10M Dataset**:
+      - **Total Scale**: Over 10 million unique instruction data points
+      - **Data Sources**:
+        - **VG-S**: 1.5M single-image instructions (Visual Genome, manually annotated scene graphs)
+        - **VG-M**: 4.2M multi-image instructions (Visual Genome)
+        - **DC-S**: 2.3M single-image instructions (DataComp, auto-generated scene graphs)
+        - **DC-M**: 4.2M multi-image instructions (DataComp)
+      - **Data Format**: Each instruction provided in both multiple-choice and short-answer versions for flexibility
+    - **Experimental Results**:
+      - **Single-Image Instruction Fine-tuning** (LLaVA-1.5-7B, VG-S data):
+        - **CVBench 2D**: 58.0% → 65.0% (+7.0%, 50% Half-Half format)
+        - **CVBench 3D**: 61.0% → 69.0% (+8.0%, 50% Half-Half format)
+        - **QBench2**: 46.4% → 50.2% (+3.8%, 50% Short Answer format)
+        - **RealWorldQA**: 54.2% → 58.2% (+4.0%, 50% Multiple Choice format)
+        - **MMMU**: 36.2% → 39.1% (+2.9%, 20% Half-Half format)
+        - **Key Findings**:
+          - Multiple-choice format performs better in replacement settings (20% replacement rate optimal)
+          - Short-answer format performs better in augmentation settings (50% augmentation rate optimal)
+          - Half-Half format (mixed format) achieves best performance across multiple settings
+      - **Multi-Image Instruction Fine-tuning** (Mantis-SigLIP-8B, VG-M data):
+        - **Mantis-Eval**: 54.4% → 62.7% (+8.3%, 20% Replacement Short Answer format)
+        - **MMT**: 52.9% → 58.6% (+5.7%, 20% Augmentation Half-Half format)
+        - **Single-Image Benchmarks**: Average improvement of 1.95% (SEED +0.5%, MMBench +0.1%, MME +2.0%, etc.)
+      - **Pre-training vs Instruction Fine-tuning** (xGen-MM-4B):
+        - **Pre-training Only**: Average improvement +1.1% (DC-S) and +1.2% (VG-S)
+        - **Instruction Fine-tuning Only**: Average improvement +0.4% (DC-S) and +0.9% (VG-S)
+        - **Both Combined**: Average improvement +1.2% (DC-S) and +1.6% (VG-S), demonstrating synergistic effects
+        - **Data Scale Impact**: Increasing from 0.75M to 1.5M samples in pre-training stage improves average performance from 59.1% to 60.1%
+      - **Manual vs Auto-Generated Scene Graph Comparison**:
+        - **Single-Image Tasks**: DC-S underperforms at lower data scales, but achieves comparable performance to VG-S as data scale increases to 50%
+        - **Multi-Image Tasks**: DC-M consistently underperforms VG-M, possibly due to edge effects triggered by larger-scale generated scene graphs in multi-image settings
+        - **Conclusion**: Manually annotated scene graphs are generally better, but auto-generated scene graphs can also improve model performance
+    - **Key Findings**:
+      - **Data Format Importance**: Multiple-choice and short-answer formats perform differently across settings, mixed format generally achieves best performance
+      - **Data Scale Impact**: Performance improves with increasing data scale, but requires balancing data quality and quantity
+      - **Scene Graph Quality**: Manually annotated scene graphs generally outperform auto-generated ones, but auto-generated scene graphs can also effectively improve performance
+      - **Pre-training + Fine-tuning Synergy**: Adding data in both pre-training and instruction fine-tuning stages performs better than adding in a single stage only
+    - **Institution**: University of Washington, Salesforce Research, University of Southern California
+    - **Authors**: Jieyu Zhang, Le Xue, Linxin Song, Jun Wang, Weikai Huang, Manli Shu, An Yan, Zixian Ma, Juan Carlos Niebles, Silvio Savarese, Caiming Xiong, Zeyuan Chen, Ranjay Krishna, Ran Xu
+    - **Publication**: arXiv December 2024 (v3)
+    - **Open Source**: ✅ [Code](https://github.com/JieyuZ2/ProVision) | [Dataset](https://huggingface.co/datasets/Salesforce/ProVision-10M)
+    - **Significance**:
+      - **Method Innovation**: First programmatic approach using scene graphs to systematically generate vision-centric instruction data, providing interpretable and controllable data generation process
+      - **Scalability**: Through scene graph generation pipeline, applicable to any image, enabling large-scale data generation
+      - **Data Contribution**: Provides over 10 million high-quality vision-centric instruction data points (PROVISION-10M)
+      - **Practical Value**: Significantly improves model performance across multiple benchmarks, demonstrating effectiveness of programmatic data generation
+
+---
+
+- **📄 Self-Synthesized Data** [(arXiv 2502.14044)](https://arxiv.org/abs/2502.14044) 🏷️ **[Method + Data]** - **ICLR 2025**
+  - **Focus**: **Enhancing Cognition and Explainability of Multimodal Foundation Models with Self-Synthesized Data** - Improving LMM's fine-grained visual reasoning capabilities through visual rejection sampling framework, enabling identification of domain-specific objectives and providing verifiable explanations
+  - **Data Synthesis Method** - **Information Bottleneck Concept Selection + Reward Model-Free Rejection Sampling**:
+    - **Core Innovation**: First method using Information Bottleneck principle to select image-level visual concepts, generating interpretable answers through iterative rejection sampling and fine-tuning process without requiring image-specific annotations
+    - **Problem Identification**: LMMs perform poorly on fine-grained visual classification tasks (e.g., LLaVA-1.5 only 12.2% on Stanford Dogs), failing to utilize key visual features for reasoning and provide verifiable explanations
+    - **Two-Stage Self-Synthesis Framework**:
+      1. **Image-Level Visual Concept Selection Stage**:
+         - **Goal**: Select subset Z* most relevant to image X from expert-defined concept set Z
+         - **Information Bottleneck Principle**: Maximize I(X;Z*) while minimizing I(Z*;Z), balancing relevance and redundancy
+         - **Image Description Approximation**:
+           - Use base LLaVA-1.5 to generate multiple image descriptions D = {d₁, d₂, ..., dₙ}
+           - **Theoretical Guarantee**: As n→∞, I(D;Z) converges to I(X;Z) (Theorem 1)
+           - Approximate true image content distribution by increasing number of descriptions n
+         - **InfoNCE Scoring**: Calculate InfoNCE score sⱼ for each concept zⱼ, measuring concept relevance to image descriptions
+         - **Concept Selection Criterion**: Z* = {zⱼ ∈ Z | sⱼ > μ + β̂σ}, where μ and σ are mean and standard deviation of InfoNCE scores
+         - **Interpretable Answer Generation**: Use selected concepts Z* to prompt base LMM to generate interpretable answers
+      2. **Reward Model-Free Rejection Sampling Stage**:
+         - **Goal**: Select best answer from multiple answer candidates generated by fine-tuned model
+         - **Rejection Sampling Process**:
+           - Use fine-tuned model f_θ^T to generate m answer candidates Y = {y₁, y₂, ..., yₘ} for each image
+           - Calculate InfoNCE score s'ᵢ for each answer yᵢ with selected concepts Z*
+           - Select answer with highest score: y* = argmax s'ᵢ
+         - **Additional Constraint**: Selected answer must contain correct label c, otherwise discarded
+         - **Key Advantage**: No need for separate reward model, uses concept alignment as quality metric
+    - **Iterative Fine-tuning Process**:
+      - **Initial Fine-tuning**: Use interpretable answers generated in first stage for initial fine-tuning
+      - **Iterative Improvement**:
+        - Round 1: Use initial fine-tuned model to generate new answers, select best through rejection sampling
+        - Round 2-N: Repeat above process, gradually improving model performance
+        - Maximum 4 rounds of iteration
+    - **Key Technical Advantages**:
+      - **No Image-Specific Annotations**: Only requires images and class labels, no detailed image-specific feature annotations needed
+      - **Information-Theoretic Foundation**: Based on Information Bottleneck principle, providing theoretical guarantees
+      - **No Reward Model**: No need to train or use external reward models, uses concept alignment as quality metric
+      - **Explainability**: Generated answers contain human-verifiable visual features, providing interpretable explanations
+      - **Domain Adaptability**: Applicable to various domains (fine-grained classification, medical images, etc.)
+    - **Experimental Results**:
+      - **Fine-Grained Classification Datasets**:
+        - **CUB-200**: 2.69% → 85.02% (+82.33%, 4 rounds)
+        - **Stanford Dogs**: 12.2% → 86.91% (+74.71%, 4 rounds)
+        - **FGVC-Aircraft**: 3.00% → 91.99% (+88.99%, 4 rounds)
+        - **PLD**: 0.00% → 97.16% (+97.16%, 4 rounds)
+      - **Medical Datasets**:
+        - **HAM10000**: 1.62% → 85.06% (+83.44%, 4 rounds)
+        - **Chest X-Ray**: 62.50% → 98.72% (+36.22%, 4 rounds, using LLaVA-Med)
+      - **Explanation Quality Evaluation**:
+        - **Explanation Existence (EE)**: 1.00 (all datasets), indicating always generating explanations
+        - **Cognition Score (CS)**: 0.79-0.87 (all datasets), indicating good alignment with expert knowledge
+        - **Fluency Score (FS)**: 6.53-9.01, indicating natural and fluent explanations
+      - **vs Baseline Methods**:
+        - **Naive Label (NL)**: Training only with labels, cannot generate explanations (EE=0.00), accuracy generally lower than our method
+        - **Label + General Explanations (L+GE)**: Using labels and general explanations, but lower explanation quality (lower CS), poor performance on some datasets (e.g., HAM10000 only 8.45%)
+      - **Concept Selection Precision**:
+        - With 25 descriptions, concept selection precision reaches 72.89%
+        - Outperforms GPT-4o (63.95%), LLaVA (~55%), and CLIP (~55%)
+      - **Filtering Strategy Effectiveness**:
+        - Without filtering: Accuracy 70.45% (CUB-200), CS 0.71
+        - With filtering: Accuracy 85.02% (CUB-200), CS 0.82
+        - Proves importance of rejection sampling filtering
+    - **Key Findings**:
+      - **Iterative Improvement**: As iteration rounds increase, accuracy and explanation quality continuously improve
+      - **Concept Selection Importance**: Image-level concept selection more effective than using all label-level features
+      - **Rejection Sampling Effectiveness**: Filtering strategy significantly improves model performance and explanation quality
+      - **Avoid Shortcut Learning**: Using image-specific features rather than only labels avoids model learning spurious correlations
+      - **Cross-Dataset Generalization**: Model trained on CUB-200 only improves 4.4% on Stanford Dogs, indicating importance of domain-specific fine-tuning
+    - **Institution**: University of Georgia, Massachusetts General Hospital, Harvard Medical School
+    - **Authors**: Yucheng Shi, Quanzheng Li, Jin Sun, Xiang Li, Ninghao Liu
+    - **Publication**: ICLR 2025 | arXiv February 2025 (v2)
+    - **Open Source**: ✅ [Code](https://github.com/sycny/SelfSynthX)
+    - **Significance**:
+      - **Method Innovation**: First method using Information Bottleneck principle to select image-level visual concepts without image-specific annotations
+      - **Explainability Enhancement**: Generated answers contain human-verifiable visual features, providing interpretable explanations
+      - **Practical Value**: Significantly improves accuracy and explanation quality across multiple fine-grained classification and medical datasets
+      - **Theoretical Contribution**: Provides information-theoretic analysis proving method effectiveness
+
+---
+
+- **📄 STIC (Self-Training on Image Comprehension)** [(arXiv 2405.19716)](https://arxiv.org/abs/2405.19716) 🏷️ **[Method + Data]** - **NeurIPS 2024**
+  - **Focus**: **Self-Training on Image Comprehension for Large Vision Language Models** - Enhancing LVLM's image comprehension capabilities through two-stage self-training approach, self-constructing preference datasets using unlabeled images without relying on GPT-4V or human annotation
+  - **Data Synthesis Method** - **Two-Stage Image Comprehension Self-Training Framework**:
+    - **Core Innovation**: First self-training approach specifically for image comprehension, significantly improving LVLM's visual perception and reasoning capabilities through self-constructed image description preference datasets and description-infused fine-tuning
+    - **Problem Identification**: LVLMs require high-quality vision-language data for fine-tuning, but acquisition is costly, and existing methods rely on GPT-4V for data generation, which is still expensive
+    - **STIC Two-Stage Framework**:
+      - **Stage 1: Image Comprehension Self-Training**:
+        - **Self-Constructed Preference Dataset**: Use base LVLM (e.g., LLaVA-v1.6) to generate preference data pairs for unlabeled images
+          - **Preferred Response**: Generate detailed image descriptions through well-designed step-by-step prompts (e.g., "Please provide a detailed description of the image, focusing on the following aspects: Identify the main subjects...")
+          - **Dispreferred Response**: Generated through two methods
+            - **Method 1**: Use "bad prompts" (e.g., "Describe imaginative objects that may exist in the image") to elicit hallucinated descriptions
+            - **Method 2**: Use normal prompts but input corrupted images (color jittering or lower resolution)
+        - **DPO Alignment Fine-tuning**: Use Direct Preference Optimization (DPO) loss with additional regularization term emphasizing preferred response
+          - **Loss Function**: L(θ,θ_ref) = E[ℓ(λlog(p_θ(y_w|x)/p_θ_ref(y_w|x)) - λlog(p_θ(y_l|x)/p_θ_ref(y_l|x))) - αlog p_θ(y_w|x)]
+          - **Regularization Term**: -αlog p_θ(y_w|x) further emphasizes preferred response, enhancing model's ability to distinguish high-quality and low-quality responses
+        - **Prompt Design**:
+          - **Good Prompts**: Use GPT-4 to generate multiple initial prompts, refined through human filtering and MSCOCO sample testing
+          - **Bad Prompts**: Sampled from GPT-4 generated prompts, designed to elicit inaccurate descriptions (describing objects that could logically exist)
+      - **Stage 2: Description-Infused Fine-tuning**:
+        - **Goal**: Further fine-tune self-trained LVLM to leverage self-generated image descriptions for instruction-following tasks
+        - **Data Construction**:
+          - Randomly select small subset of data (5K samples) from model's previously used instruction fine-tuning dataset
+          - Generate model description for each image (using simple prompts like "Explain what is depicted in the photograph")
+          - Infuse generated description into original instruction: `Image description: {model description} <original instruction>`
+          - Keep original ground-truth completions unchanged
+        - **Fine-tuning**: Fine-tune for one epoch on description-infused dataset
+      - **Optional: Describe and Respond (DaR)**:
+        - At inference, optionally let model describe image first, then concatenate description with original question to generate more informed answer
+        - **Format**: First prompt model to describe image, then use description+original question as new prompt
+    - **Key Technical Advantages**:
+      - **No External Models**: No need for GPT-4V or other external models, only uses base LVLM itself
+      - **Cost Efficiency**: Uses GPT-4-turbo instead of GPT-4V, significantly reducing costs
+      - **Scalability**: Applicable to large amounts of unlabeled images, enabling large-scale data generation
+      - **Goal-Oriented**: Goal-oriented nature of preference data construction ensures quality of generated data
+      - **Iterative**: Improved models can be used to generate better datasets, enabling continuous improvement
+    - **Experimental Results**:
+      - **Main Results** (LLaVA-v1.6-7B):
+        - **ScienceQA**: 68.9% → 75.3% (+6.4%)
+        - **TextVQA**: 60.3% → 65.2% (+4.9%)
+        - **ChartQA**: 36.4% → 41.5% (+5.1%)
+        - **LLaVA-Bench**: 77.3% → 79.2% (+1.9%)
+        - **MMBench**: 63.7% → 67.8% (+4.1%)
+        - **MM-Vet**: 42.2% → 45.0% (+2.8%)
+        - **MathVista**: 34.6% → 37.0% (+2.4%)
+        - **Average Improvement**: +4.0%
+      - **LLaVA-v1.5-7B Comparison**:
+        - **ScienceQA**: 66.8% → 69.5% (+2.7%)
+        - **TextVQA**: 58.2% → 61.4% (+3.2%)
+        - **ChartQA**: 6.3% → 6.6% (+0.3%)
+        - **LLaVA-Bench**: 65.4% → 68.9% (+3.5%)
+        - **MMBench**: 64.3% → 65.3% (+1.0%)
+        - **MM-Vet**: 31.1% → 32.6% (+1.5%)
+        - **MathVista**: 25.1% → 27.2% (+2.1%)
+        - **Average Improvement**: +1.7%
+      - **Ablation Studies**:
+        - **Describe and Respond (DaR) Effectiveness**:
+          - **DaR Only (No Fine-tuning)**: Average drop 2.3% (some datasets improve, some degrade)
+          - **STIC + DaR**: Average improvement 1.1%, ScienceQA improvement 2.8%
+          - **Conclusion**: DaR has synergistic effect with fine-tuning process
+        - **Stage Progression**:
+          - **Base**: 68.9% (ScienceQA)
+          - **Stage 1**: 72.5% (+3.6%)
+          - **Stage 2**: 74.0% (+1.5%)
+          - **Stage 2 + DaR**: 75.3% (+1.3%)
+        - **Role of Dispreferred Samples**:
+          - **Positive Samples Only SFT**: LLaVA-Bench 76.7% (vs Base 77.3%), drop 0.6%
+          - **STIC (Preference Data)**: LLaVA-Bench 79.2%, improvement 1.9%
+          - **Conclusion**: Negative samples play crucial role in preference alignment
+        - **Scaling Law**:
+          - **6K Preference Data**: LLaVA-Bench improvement 1.9%
+          - **12K Preference Data**: LLaVA-Bench improvement 3.1%
+          - **Conclusion**: Performance improves with increasing data scale, no plateau reached
+        - **Image Distribution Correlation**:
+          - **ScienceQA**: Large overlap with MSCOCO distribution, improvement 6.4% (highest)
+          - **TextVQA**: Large overlap with MSCOCO distribution, improvement 4.9%
+          - **MathVista**: Small overlap with MSCOCO distribution, improvement 2.4% (lower)
+          - **ChartQA**: Small overlap with MSCOCO distribution, but improvement 5.1% (improved image comprehension plays fundamental role)
+      - **Different Data Source Experiments**:
+        - **MSCOCO**: Average improvement 4.0%
+        - **Vision Flan**: Average improvement 4.3% (broader range of image types)
+        - **Conclusion**: Using more diverse image data can further improve performance
+      - **Scalability** (LLaVA-v1.6-13B):
+        - **LLaVA-Bench**: 84.5% → 85.6% (+1.1%)
+        - **MM-Vet**: 48.9% → 50.5% (+1.6%)
+        - **MMBench**: 70.6% → 72.3% (+1.7%)
+        - **Conclusion**: STIC effective across different model sizes
+    - **Key Findings**:
+      - **Self-Training Effectiveness**: Current LVLM's image comprehension capabilities enable generation of useful preference data, providing foundation for scalable data generation
+      - **Two-Stage Synergy**: Stage 1 improves image comprehension, Stage 2 improves reasoning based on comprehension, combination achieves best results
+      - **Negative Sample Importance**: Dispreferred samples play crucial role in preference alignment, using only positive samples cannot achieve same effect
+      - **Data Scale Impact**: Performance improves with increasing data scale, demonstrating potential to leverage vast amounts of unlabeled images
+      - **Image Distribution Correlation**: Greater overlap between training images and evaluation task distributions leads to more significant performance improvements
+    - **Institution**: University of California, Los Angeles, University of California, Berkeley, Stanford University
+    - **Authors**: Yihe Deng, Pan Lu, Fan Yin, Ziniu Hu, Sheng Shen, Quanquan Gu, James Zou, Kai-Wei Chang, Wei Wang
+    - **Publication**: NeurIPS 2024 | arXiv May 2024
+    - **Open Source**: ✅ [Code and Data](https://stic-lvlm.github.io/)
+    - **Significance**:
+      - **Method Innovation**: First self-training approach specifically for image comprehension, improving LVLM performance through self-constructed preference datasets
+      - **Cost Efficiency**: Uses 70% less supervised fine-tuning data while achieving average 4.0% performance improvement
+      - **Scalability**: Applicable to large amounts of unlabeled images, demonstrating potential to leverage large-scale unlabeled data
+      - **Practical Value**: Consistent and significant performance improvements across 7 different benchmarks, demonstrating method effectiveness
+
+---
+
+- **📄 Genixer** [(arXiv 2312.06731)](https://arxiv.org/abs/2312.06731) 🏷️ **[Method + Data]**
+  - **Focus**: **Empowering Multimodal Large Language Models as Powerful Data Generators** - Exploring the potential of current MLLMs to independently generate visual instruction tuning data without relying on GPT-4V
+  - **Data Synthesis Method** - **Four-Stage Automated Data Generation Pipeline**:
+    - **Core Innovation**: First systematic exploration of current MLLMs' capability as data generators, demonstrating that MLLMs can independently generate high-quality visual instruction data, even surpassing GPT-4V on some complex tasks
+    - **Genixer Pipeline (Four Key Steps)**:
+      1. **Instruction Data Collection**:
+         - **Task Selection**: Carefully selected 9 representative VL tasks, divided into two main categories
+         - **Generic Tasks**: Common VQA, Adversarial VQA, Multi-choice VQA, Multi-turn Dialogue
+         - **Grounding Tasks**: REC (Referring Expression Comprehension), REG (Referring Expression Generation), PointQA, Q→CBoxA, Referential Dialogue
+         - **Data Sources**: VQAv2, GQA, Counting110K, POPE, A-OKVQA, LLaVA-Conv-58K, VG, RefCOCO, PointQALocal, Visual7W, etc.
+         - **Total Training Data**: ~2M samples for training data generators
+      2. **Instruction Template Design**:
+         - **Two-Level Instruction System**: Enables both task-agnostic and task-specific generation modes
+         - **Generic Instructions**: 58 handwritten instruction templates, e.g., "Please provide a clear and direct question and answer after examining the image"
+         - **Specific Instructions**: Explicitly specify task type, e.g., "This is a Common VQA task"
+         - **Control Constant τ**: Controls ratio of samples using only generic instructions during training (different values 0.2-0.5 for different task types)
+         - **Inference Flexibility**: Can switch modes during inference by adding or omitting specific instructions
+      3. **Empowering MLLMs**:
+         - **Two Data Generators**:
+           - **Genixer-L**: Trained on LLaVA1.5, focused on generic task data generation
+             - **Training Tasks**: Common VQA, Adv VQA, MC VQA, MD
+             - **Training Settings**: AdamW optimizer, learning rate 1×10⁻⁵, batch size 128, 1 epoch training (~14 hours)
+           - **Genixer-S**: Trained on Shikra, focused on grounding task data generation
+             - **Two-Phase Training**: Phase 1 focuses on REC and REG, Phase 2 adds PointQA, Q→CBoxA, RD
+             - **Training Settings**: Phase 1 learning rate 3×10⁻⁵, batch 128; Phase 2 learning rate 1×10⁻⁵, batch 64
+         - **Training Objective**: Autoregressive generation of question-answer pairs, formula: max log p(Xₒ|X_G, X_S, X_I)
+      4. **Data Generation and Filtering**:
+         - **Image Sources**: 1.4M images (558K from LAION/CC3M/SBU mix, 830K from SBU)
+         - **Generic Task Data Generation**:
+           - **Generation**: Use Genixer-L to generate 1.4M raw VQA triplets on 1.4M images
+           - **Fuyu-Driven Filtering Framework**:
+             - **Verification Prompt**: "Here is a question-answer pair. Is {Q:X_q \nA:X_a} true for this image?\nPlease answer this question with Yes or No.\n"
+             - **Probability Calculation**: Calculate probability of predicting "Yes": P(Y_r|X_I, X_q, X_a)
+             - **Threshold Filtering**: λ=0.7, retain high-quality samples
+             - **Result**: Filter from 1.4M to 915K, named **Genixer-915K**
+         - **Grounding Task Data Generation**:
+           - **Generation**: Use Genixer-S to generate 1.4M raw REC data on 1.4M images
+           - **CLIP-Driven Filtering Framework**:
+             - **Three-Step Filtering**: (1) Format validation (regex extraction of coordinates and text); (2) Bounding box size filtering (width/height ≥ 50); (3) CLIP similarity filtering (OpenCLIP-L, threshold 0.6)
+             - **Result**: Filter from 1.4M to 350K, named **Genixer-350K**
+    - **Key Technical Advantages**:
+      - **No GPT-4V Required**: Fully based on open-source MLLMs, eliminating high API costs
+      - **Complex Task Superiority**: Generation quality surpasses GPT-4V on complex tasks like REC (as shown in Fig. 1)
+      - **Controllable Generation**: Two-level instruction system enables flexible task control
+      - **Automatic Filtering**: Dual filtering mechanisms ensure data quality
+    - **Data Scale**:
+      - **Genixer-915K**: 915K VQA-like synthetic data
+        - **Question Length**: Significant long-tail distribution, contains more long sentences than VQAv2
+        - **Vocabulary Diversity**: Rich noun and verb distributions
+        - **Quality Verification**: Fuyu-8B evaluation shows 82-88% accuracy, average probability 0.82-0.87
+      - **Genixer-350K**: 350K REC-like synthetic data
+        - **Expression Length**: Average 6.67 words (vs. RefCOCOg's 8.43)
+        - **Region Coverage**: 447.8K objects, covering diverse scenarios
+        - **Quality Verification**: CLIP similarity filtering ensures text-region alignment
+    - **Experimental Results**:
+      - **Generic Task Evaluation** (LLaVA1.5 + Genixer-915K):
+        - **12 Benchmarks**: Improvements on 10 benchmarks
+        - **Significant Improvements**: VizWiz +3.8%, ScienceQA +2.9%, MME +37.7 points
+        - **Other Gains**: VQAv2 +0.6%, GQA +1.1%, TextVQA +0.8%, POPE +1.4%
+      - **Grounding Task Evaluation** (Shikra + Genixer-350K):
+        - **8 REC Datasets**: Improvements on 7 datasets
+        - **Average Gain**: +0.6% (non-trivial improvement)
+        - **Best Performance**: RefCOCO test-A +0.53%, RefCOCO+ test-B +1.02%
+      - **Data Generator Performance**:
+        - **Genixer-L**: On 6 benchmarks, zero-shot setting shows partial task improvements (VQAv2 +1.2%, VizWiz +0.8%)
+        - **Mixed Training**: After combining with original fine-tuning data, all benchmarks show significant improvements (VQAv2 +1.7%, VizWiz +4.1%)
+      - **Ablation Studies**:
+        - **Data Scale Effect**: 300K→610K→915K, performance continuously improves
+        - **Filtering Threshold**: λ=0.7 outperforms 0.5 and 0, proving quality > quantity
+      - **Human Evaluation**:
+        - **100 Sample Analysis**: 7 question type distributions (Action, Color, Counting, Object Type, Relative Position, Yes/No, Others)
+        - **Accuracy**: held-in (COCO) 75-92%, held-out (Flickr30K) 65-100%
+        - **User Preference Study**: 13 valid surveys show Genixer-generated data preferred on REC tasks (vs. GPT-4V)
+    - **Key Findings**:
+      - **MLLMs as Data Generators**: Current MLLMs can independently generate high-quality visual instruction data without GPT-4V assistance
+      - **Complex Task Advantage**: On complex tasks like REC, MLLMs after training generate higher quality than GPT-4V
+      - **Performance Enhancement**: Synthetic datasets significantly enhance MLLM performance on multiple multimodal benchmarks and help mitigate model hallucinations
+      - **Cost Efficiency**: Eliminates GPT-4V API costs while providing more flexible generation control
+    - **Institution**: Show Lab, National University of Singapore; Singapore Management University
+    - **Authors**: Henry Hengyuan Zhao, Pan Zhou, Mike Zheng Shou
+    - **Publication**: arXiv December 2023 (v6: 2024)
+    - **Open Source**: ✅ [Code, Data, and Models](https://github.com/zhaohengyuan1/Genixer)
+    - **Significance**:
+      - **Paradigm Innovation**: First systematic proof that MLLMs can serve as independent data generators without relying on commercial APIs
+      - **Cost Reduction**: Provides economically viable alternative for large-scale data generation
+      - **Quality Assurance**: Dual filtering mechanisms ensure synthetic data quality
+      - **Task Coverage**: Simultaneously supports generic and grounding tasks, providing comprehensive data generation solution
+
+---
 
 - **📄 mmE5** [(arXiv 2502.08468)](https://arxiv.org/abs/2502.08468) 🏷️ **[Method + Data]**
   - **Focus**: **Improving Multimodal Multilingual Embeddings via High-quality Synthetic Data** - Develop high-quality synthetic data generation framework for multimodal multilingual embeddings covering diverse tasks, modality combinations, and languages
@@ -4362,6 +4797,164 @@ This category of methods keeps original images fixed while enriching and improvi
 ## 🎯 VLM Self-Improvement & Reinforcement Learning
 
 This emerging category focuses on **scalable VLM self-improvement** through reinforcement learning and gamified environments, enabling models to enhance their reasoning capabilities **without human annotation**. These methods leverage competitive dynamics, strategic gameplay, and iterative policy optimization to achieve sustained performance improvements across diverse reasoning tasks.
+
+- **📄 VLM Dialog Games** [(arXiv 2502.02740)](https://arxiv.org/abs/2502.02740) 🏷️ **[Method + Data]**
+  - **Focus**: **Vision-Language Model Dialog Games for Self-Improvement** - Through two VLM agents engaged in goal-oriented reference game self-play, automatically filtering successful game interactions to generate high-quality interleaved image-text data for fine-tuning
+  - **Data Synthesis Method** - **Goal-Oriented Self-Play Framework + Automatic Success Detection**:
+    - **Core Innovation**: First dialog game-based VLM self-improvement framework, generating high-quality synthetic data through goal-oriented self-play without human annotation or external models
+    - **VLM Dialog Game Mechanism**:
+      - **Game Setup**: Construct reference game variant using unlabeled images
+        - **Describer**: Sees single target image, instructed to answer questions about it faithfully
+        - **Guesser**: Sees N images (including target and multiple distractors), identifies target image by asking questions
+      - **Game Flow**:
+        - Guesser poses clarifying questions (e.g., "How many objects are in the image?")
+        - Describer answers questions (e.g., "There are 9 objects")
+        - Guesser makes guess based on accumulated information (e.g., "I know the answer, it is image 4")
+        - If Guesser correctly identifies target image, game succeeds
+      - **Game Difficulty Control**:
+        - **Number of Distractors**: Increasing N directly increases difficulty (N=2 to 8)
+        - **Image Similarity**: Random image selection creates easier games, while grouping visually or semantically similar images increases challenge
+        - **Optimal Setting**: N=4 achieves best balance in study
+    - **Self-Improvement Workflow**:
+      1. **Game Setup**: Configure dialog game with designated unlabeled image dataset (OpenImages, DOCCI, or domain-specific datasets like robotics video frames)
+      2. **Dialog Generation**: Generate dialogs via self-play between VLM agents
+        - **Describer Examples**: Input=single image+question, Output=corresponding answer
+        - **Guesser Examples**: Input=N images+target image description summary, Output=clarifying question or guess
+        - Each successful VLM Dialog Game generates multiple training examples of both types
+      3. **Dialog Filtering**: Filter generated dialogs based on success criteria
+        - **Success Detection**: If Guesser's final selection matches target image, dialog considered successful
+        - **Validation Step**: To avoid correct guesses by chance, rerun dialog with same images but permuted order, verify correct target identification in all permutations
+        - **Computational Efficiency**: Limit tested permutations to N, ensuring target image appears at each possible position (1 to N), distractor order can remain fixed
+      4. **Model Improvement**: Fine-tune VLM using filtered successful dialog game data
+        - **Standard Supervised Fine-tuning**: Use filtered dialog data
+        - **Iterative Improvement**: Improved model can be used to generate new, higher-quality dataset for further improvement (round 1, round 2, etc.)
+    - **Key Technical Advantages**:
+      - **Goal-Oriented**: Goal-oriented nature of game ensures quality of generated data, success detection provides automatic quality control
+      - **Self-Play**: Leverages VLM's instruction-following capabilities for scalable data collection approach
+      - **No External Models**: No need for GPT-4V or other external models, only uses base VLM itself
+      - **Domain Adaptability**: Can adapt to specific domains (e.g., robotics) by designing games using images from that domain
+      - **Iterative**: Improved models can be used to generate better datasets, enabling continuous improvement
+    - **Experimental Results**:
+      - **General Image Experiments** (DOCCI and OpenImages datasets):
+        - **Game Success Rate**: Gemini 1.5 Flash 20.3% → VLM Dialog Games (DOCCI) 24.4% (+4.1%)
+        - **VQA Performance** (VQAv2):
+          - **Yes/No Questions**: 73.0% → 79.8% (+6.8%, DOCCI) and 83.4% (+10.4%, OpenImages)
+          - **Counting Questions**: 56% → 58.3% (+2.3%, DOCCI) and 56% (+0.0%, OpenImages)
+        - **Cross-Dataset Generalization**: Model trained on DOCCI performs better on OpenImages games (21.9% vs 18.4%), and vice versa
+      - **Robotics Domain Experiments** (ALOHA dataset):
+        - **Game Success Rate**: Gemini 1.5 Flash 14.39% → Round 1 40.15% (+25.76%) → Round 2 53.74% (+39.35%)
+        - **Success Detection Accuracy**: 56.5% → Round 1 69.5% (+13.0%) → Round 2 73.0% (+16.5%)
+        - **Iterative Improvement**: Round 2 further improves both game success rate and success detection accuracy
+        - **vs Baselines**:
+          - **SFT-Description**: 65.0% (+8.5%) - Direct fine-tuning on image-task description pairs
+          - **Self-QA**: 67.0% (+10.5%) - Question-answering based self-improvement approach
+          - **VLM Dialog Games (answers only)**: 68% (+12.5%) - Using only Describer answers, but low game success rate (17.92%), unable to achieve further iterative improvement
+      - **Ablation Studies**:
+        - **Impact of Number of Images** (N value):
+          - **N=2**: Game success rate 83.7%, but game simple, less informative data, VQA accuracy 81.3% (+8.3%)
+          - **N=4**: Game success rate 18.4%, VQA accuracy 83.4% (+10.4%) - **Optimal**
+          - **N=8**: Game success rate 0.24%, game too difficult, very few dialog data generated, VQA accuracy 77.1% (+4.1%)
+        - **Image Grouping Strategy**:
+          - **Similar Image Grouping**: Game success rate 18.4%, VQA accuracy 83.4% (+10.4%)
+          - **Random Image Grouping**: Game success rate 24.7%, VQA accuracy 82.6% (+9.6%)
+          - **Conclusion**: Both strategies significantly improve, similar image grouping slightly better, but random grouping also works effectively
+    - **Key Findings**:
+      - **Self-Play Effectiveness**: Current VLM's instruction-following capabilities enable non-zero success rate in dialog games, providing foundation for scalable data generation
+      - **Goal-Oriented Advantage**: Goal-oriented nature of game ensures quality of generated data, success detection provides automatic quality control
+      - **Iterative Improvement Capability**: Improved models can be used to generate better datasets, enabling continuous improvement (Round 1 → Round 2)
+      - **Domain Adaptability**: Method can adapt to specific domains (e.g., robotics), particularly effective in domains where high-quality data is scarce
+      - **Importance of Guesser Questions**: Using only Describer answers can improve success detection but cannot improve game success rate, limiting further iterative improvement
+    - **Institution**: Google DeepMind
+    - **Authors**: Ksenia Konyushkova, Christos Kaplanis, Serkan Cabi, Misha Denil
+    - **Publication**: arXiv February 2025 (v1)
+    - **Open Source**: ⚠️ Code/data availability not explicitly stated in paper
+    - **Significance**:
+      - **Method Innovation**: First dialog game-based VLM self-improvement framework, generating high-quality data through goal-oriented self-play
+      - **Scalability**: Leverages VLM's own capabilities, no external models or human annotation required, enabling scalable data generation
+      - **Domain Adaptability**: Can adapt to specific domains (e.g., robotics), particularly effective in domains where high-quality data is scarce
+      - **Practical Value**: Significantly improves performance on general VQA and robotics success detection tasks, demonstrating method effectiveness
+
+---
+
+- **📄 CSR (Calibrated Self-Rewarding)** [(arXiv 2405.14622)](https://arxiv.org/abs/2405.14622) 🏷️ **[Method + Data]** - **NeurIPS 2024**
+  - **Focus**: **Calibrated Self-Rewarding Vision Language Models** - Improving modality alignment in LVLMs by incorporating visual constraints into the calibrated self-rewarding process, reducing hallucinations and enhancing performance
+  - **Data Synthesis Method** - **Iterative Preference Optimization Framework + Calibrated Reward Model**:
+    - **Core Innovation**: First method to integrate visual constraints into the self-rewarding paradigm, addressing modality alignment issues in LVLMs during both response generation and preference modeling stages
+    - **Problem Identification**: LVLMs suffer from modality misalignment, where models tend to prioritize textual information over visual input, leading to hallucination phenomena
+    - **CSR Framework (Two Alternating Stages)**:
+      1. **Candidate Response Generation Stage**:
+         - **Sentence-Level Beam Search**: Uses sentence-level beam search to generate fine-grained candidate responses for each input prompt
+         - **Reward Calculation Process**:
+           - **Initial Reward**: Language decoder determines initial reward R_T(s) for each generated sentence (sentence-level cumulative probability)
+           - **Image-Response Relevance Score**: Calculates R_I(s) = max(100×cos(F_I(x_v), F_T(s)), 0) using CLIP-score
+           - **Calibrated Reward**: R(s) = λ·R_I(s) + (1-λ)·R_T(s), where λ=0.9 (emphasizing visual calibration)
+         - **Iterative Generation**: Selects top-k and bottom-k sentences based on calibrated reward scores, continues to next round of beam search
+         - **Cumulative Reward**: Cumulative reward for response y: R(y) = Σ R(s_i)
+      2. **Preference Curation and Fine-tuning Stage**:
+         - **Preference Data Construction**: Selects responses with highest and lowest cumulative calibrated rewards as preferred and dispreferred responses
+         - **DPO Optimization**: Uses Direct Preference Optimization (DPO) for fine-tuning
+         - **Reference Model**: Each iteration uses the model from previous round as reference model
+         - **Loss Function**: L_t = -E log σ(α log(π_θ(y_w,t|x)/π_θt-1(y_w,t|x)) - α log(π_θ(y_l,t|x)/π_θt-1(y_l,t|x)))
+    - **Key Technical Advantages**:
+      - **Vision-Constrained Reward**: Addresses LVLM's tendency to overlook visual input when generating preferences by incorporating image-response relevance information
+      - **Step-Wise Reward**: Sentence-level rewards provide finer-grained guidance and stronger robustness
+      - **Self-Rewarding Paradigm**: No external models or human annotations required, leverages model itself to generate preference data
+      - **Iterative Improvement**: Continuously enhances model performance and modality alignment through multiple iterations
+    - **Training Settings**:
+      - **Base Models**: LLaVA-1.5 7B and 13B
+      - **Training Data**: Randomly sampled ~13,000 samples from detailed description and complex reasoning subclasses of LLaVA150k dataset
+      - **Fine-tuning Method**: LoRA fine-tuning
+      - **Iterations**: 3 rounds (~3.5-5 hours per round, 1×A100 80GB)
+      - **Hyperparameters**: λ=0.9 (CLIP score weight), α=0.1 (language score weight)
+    - **Experimental Results**:
+      - **Comprehensive Benchmarks** (MME, SEED, LLaVAW, MMBench, MM-Vet):
+        - **LLaVA-1.5-7B + CSR**: Average improvement of 7.62% (3 iterations)
+        - **LLaVA-1.5-13B + CSR**: Average improvement of 5.25% (3 iterations)
+        - **Significant Improvements**: LLaVAW +8.9%, CHAIR +49.50%
+      - **General VQA** (ScienceQA, VizWiz, GQA):
+        - **7B Model**: ScienceQA +2.9%, VizWiz +4.1%, GQA +0.3%
+        - **13B Model**: ScienceQA +3.5%, VizWiz +3.2%, GQA +0.4%
+      - **Hallucination Benchmarks** (POPE, CHAIR):
+        - **POPE**: 7B model 85.90%→87.01% (+1.11%), 13B model 85.90%→87.30% (+1.40%)
+        - **CHAIR_S**: 7B model 48.8%→21.0% (-27.8%, lower is better), 13B model 48.3%→28.0% (-20.3%)
+        - **CHAIR_I**: 7B model 14.9%→6.0% (-8.9%), 13B model 14.1%→7.3% (-6.8%)
+      - **vs. Competitive Methods**:
+        - **Outperforms Self-Rewarding Baseline**: Average improvement of 2.43%
+        - **Outperforms External Preference Methods**: Better than POVID, RLHF-V, Silkie that rely on GPT-4 or human annotations
+        - **vs. SOTA Open-Source VLMs**: Outperforms InstructBLIP, Qwen-VL-Chat, mPLUG-Owl2 on 9 out of 10 benchmarks
+      - **Iterative Improvement Analysis**:
+        - **Reward Score Changes**: Preferred response rewards improve from 0.4885 (iteration 1) to 0.5066 (iteration 5)
+        - **Image-Response Relevance**: Both preferred and dispreferred responses show improved image relevance scores, with gap gradually narrowing
+        - **Attention Analysis**: CSR enhances attention to visual tokens, reduces over-reliance on textual context
+      - **Compatibility Validation** (Vila 7B):
+        - **Overall Improvement**: Average improvement of 3.37% after 3 iterations
+        - **Significant Improvements**: VizWiz +8.48%, MM-Vet +14.0%
+    - **Ablation Studies**:
+      - **Only R_T (Language Score)**: 68.46% (7B), 68.12% (13B)
+      - **Only R_I (Image Score)**: 67.49% (7B), 69.23% (13B)
+      - **CSR (Combined)**: 72.39% (7B), 71.95% (13B)
+      - **Conclusion**: Combined use of both scores achieves best results
+      - **λ Value Analysis**: λ=0.9 outperforms 0.5 and 0.1, proving importance of visual calibration
+    - **Theoretical Analysis**:
+      - **Theorem 5.1**: Under mild assumptions, incorporating image-response relevance scores can calibrate the self-rewarding process and improve generation accuracy
+      - **Key Condition**: When model tends to prioritize textual information over visual input (∥β*^T V_1*∥ ≪ ∥β*^T V_2*∥), visual constraints (λ<1) can increase attention to image signals
+    - **Key Findings**:
+      - **Self-Rewarding Effectiveness**: Self-generated preference data is more effective than external model (e.g., GPT-4) generated preferences, as it better captures target LVLM's inherent preferences
+      - **Visual Constraint Necessity**: Directly applying self-rewarding to LVLMs cannot address modality alignment issues, visual constraints are required
+      - **Iterative Improvement Capability**: CSR can continuously improve performance through iterative fine-tuning, gradually converging
+      - **Cross-Model Compatibility**: Method applicable to different LVLM architectures (LLaVA-1.5, Vila)
+    - **Institution**: UNC-Chapel Hill, University of Chicago, University of Maryland, Rutgers University, HKUST, PolyU, NTU, NUS
+    - **Authors**: Yiyang Zhou, Zhiyuan Fan, Dongjie Cheng, Sihan Yang, Zhaorun Chen, Chenhang Cui, Xiyao Wang, Yun Li, Linjun Zhang, Huaxiu Yao
+    - **Publication**: arXiv May 2024 (v4) | NeurIPS 2024
+    - **Open Source**: ✅ [Code and Data](https://github.com/YiyangZhou/CSR)
+    - **Significance**:
+      - **Paradigm Innovation**: First to integrate visual constraints into self-rewarding paradigm, addressing LVLM-specific modality alignment issues
+      - **Cost Reduction**: No external models or human annotations required, uses model itself for self-improvement
+      - **Performance Enhancement**: Significant improvements across multiple benchmarks and hallucination reduction, average improvement of 7.62%
+      - **Theoretical Support**: Provides rigorous theoretical analysis validating method effectiveness
+      - **Practical Value**: Provides scalable and cost-effective solution for LVLM self-improvement
+
+---
 
 - **📄 Vision-Zero** [(arxiv 2509.25541)](https://arxiv.org/abs/2509.25541) 🏷️ **[VLM Self-Improvement & RL]**
   - **Data Synthesis Method** - **Strategic Gamified Self-Play Framework**:
