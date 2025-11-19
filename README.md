@@ -20,16 +20,16 @@
 
 ## 📊 Statistics
 
-- **Total Papers:** 96 (data synthesis/construction methods)
+- **Total Papers:** 101 (data synthesis/construction methods)
 - **Industrial Reports:** 9 (Baidu, Microsoft, Alibaba, ByteDance, Tencent, Hunyuan, etc.)
 - **Data Synthesis Methods:** 
-  - Image Generation - Synthesizing New Visual Content (21): Geometric/mathematical reasoning + document/text-dense scenes (OCR-free scene text, document layout analysis) + scene text detection + multimodal dialogue + text-driven image synthesis + ChatGPT-guided synthesis + autonomous driving + fully synthetic image-text generation + 3D physics simulation + 3D scene synthesis (3D visual instruction data) + robotic action synthesis
+  - Image Generation - Synthesizing New Visual Content (22): Geometric/mathematical reasoning + document/text-dense scenes (OCR-free scene text, document layout analysis) + scene text detection + multimodal dialogue (any-to-any generative synthesis) + text-driven image synthesis + ChatGPT-guided synthesis + autonomous driving + fully synthetic image-text generation + 3D physics simulation + 3D scene synthesis (3D visual instruction data) + robotic action synthesis
   - Image Editing (5): Non-rigid motion, unified editing, referring expression-guided editing, generative visual instruction tuning
   - Compositionality / Preference-Guided Synthesis (6): Enhancing compositional understanding + multi-concept composition + multi-image customization + hard negative contrastive learning + multimodal counterfactual samples + 3D physics simulation VLC enhancement
-  - Interleaved Image-Text · Coherence & Consistency (4): Multi-perspective quality filtering + iterative refinement + multimodal embedding-based correlation
+  - Interleaved Image-Text · Coherence & Consistency (5): Multi-perspective quality filtering + iterative refinement + multimodal embedding-based correlation + instructional video extraction (video-to-textbook)
   - Think with Image (2): Interleaved multimodal reasoning with image manipulation + large-scale reasoning trajectory synthesis
   - VLM Self-Improvement & Reinforcement Learning (4): Calibrated self-rewarding VLM + gamified self-play frameworks + chart understanding self-improvement (code-driven synthesis)
-  - Image-Invariant - Text Enhancement (45): Fixed images, enriched text only + adaptive weighted synthetic captions + medical domain purely synthetic data + cost-efficient LVLM data refinement + spatial reasoning enhancement + VLM personalization + continual learning + multimodal RAG training + self-instructed code formatting + multilingual embedding enhancement + MLLM data generators + programmatic instruction generation + information bottleneck concept selection + image comprehension self-training + multimodal instruction following (constraint-driven) + composed image retrieval triplet synthesis + multimodal question generation (style & modality controllable)
+  - Image-Invariant - Text Enhancement (48): Fixed images, enriched text only + adaptive weighted synthetic captions + medical domain purely synthetic data + cost-efficient LVLM data refinement + spatial reasoning enhancement + VLM personalization + continual learning + multimodal RAG training + self-instructed code formatting + multilingual embedding enhancement + MLLM data generators + programmatic instruction generation + information bottleneck concept selection + image comprehension self-training + multimodal instruction following (constraint-driven) + composed image retrieval triplet synthesis + multimodal question generation (style & modality controllable) + chart understanding (GPT-4-driven multi-task instruction generation) + scientific figure understanding (GPT-4V generated QA) + domain-adaptive post-training (open-source MLLM-driven generate-then-filter) + task type hierarchical expansion (GPT-4o automated generation)
   - Video - Instruction Tuning (Synthetic Data) (1): Synthetic video instruction-following data (captions + QA)
   - Cross-Domain Methodology Insights (2): Multi-modal model collapse analysis + synthetic data quality assessment
 - **Notable Datasets:** 
@@ -37,9 +37,9 @@
   - 2 domain-specific datasets (MMM-RS, MESED)
   - 4 image editing datasets (ByteMorph-6M, ImgEdit, RefEdit, RefCOCO-Edit)
   - 4 large-scale general training datasets
-  - 4 chart reasoning datasets (ChartInstruct, Synthesize Step-by-Step, ECD, ChartGen)
-  - 1 multimodal dialogue dataset (MAGID)
-- **Open Source Datasets:** 28+ datasets fully open-sourced
+  - 5 chart reasoning datasets (ChartInstruct, Synthesize Step-by-Step, ECD, ChartGen, MMC-Instruction)
+  - 2 multimodal dialogue datasets (MAGID, AnyInstruct-108k)
+- **Open Source Datasets:** 29+ datasets fully open-sourced
 
 ---
 
@@ -3012,6 +3012,84 @@ This category focuses on **high-quality interleaved image-text data construction
 
 ---
 
+- **📄 2.5 Years in Class** [(arXiv 2501.00958)](https://arxiv.org/abs/2501.00958) 🏷️ **[Method + Data]** - **Zhejiang University + Alibaba DAMO Academy**
+  - **Focus**: **Instructional Video-to-Multimodal Textbook** - Constructing high-quality interleaved image-text "textbook" corpus from online instructional videos to improve VLM pretraining
+  - **Data Synthesis Method** - **Video-to-Textbook Multi-Level Pipeline**:
+    - **Core Innovation**: First systematic method to construct interleaved image-text datasets from instructional videos through multi-level extraction (Video→ASR→Keyframes→OCR) generating textbook-quality data
+    - **Problem Identification**:
+      - Existing interleaved datasets (MMC4, OBELICS) crawled from webpages suffer from **low knowledge density, loose image-text relations, poor logical coherence between images**
+      - Online instructional videos (e.g., geometry courses) contain rich foundational knowledge but remain underexplored in VLM training
+    - **Three-Stage Data Construction Pipeline**:
+      1. **Instructional Video Collection**:
+         - **Knowledge Taxonomy Construction**: Use GPT-4o to build taxonomy with 3,915 knowledge points covering 6 subjects (Math, Physics, Chemistry, Earth Science, Engineering, Computer Science)
+         - **Video Retrieval**: Automatically retrieve instructional videos from YouTube and other platforms based on knowledge taxonomy
+         - **Metadata Filtering**: Use LLM to review video metadata (title, description, comments), filtering non-instructional content
+         - **Scale**: Collect 159,565 instructional videos, retain 75,000 high-quality videos after filtering (22,697 class hours, avg 18 min/video)
+      2. **Video-Level Extraction & Filtering**:
+         - **Audio Transcription (ASR)**: Use Whisper-large-v3 to convert audio to text, preserving timestamps
+         - **ASR Refinement**: Use Qwen2-72B-Instruct to refine colloquial ASR text, improving grammar and coherence
+         - **Quality Scoring**: Use DeepSeek-V2 and Llama3-70B to score ASR text quality, filtering low-quality videos
+      3. **Clip-Level Extraction (Long Video→Short Clips)**:
+         - **Video Segmentation**: Split long videos into short clips based on ASR timestamps (each clip corresponds to complete semantic unit)
+         - **ASR Segment Merging**: Merge incomplete ASR segments into semantically coherent paragraphs
+         - **Quality Filtering**: 
+           - Use VideoLlama2-7B to generate caption for each clip
+           - Calculate similarity between clip caption and ASR (GTE-Qwen2-7B-Instruct)
+           - Filter clips where visual content mismatches ASR
+         - **Scale**: Generate 4M video clips
+      4. **Keyframe-Level Extraction**:
+         - **Keyframe Detection**: Use SSIM (Structural Similarity Index) algorithm to detect inter-frame changes, extracting keyframes
+         - **OCR Extraction**: Use InternVL2 to extract text, symbols, formulas from keyframes
+         - **OCR Filtering**: 
+           - Remove OCR unrelated to ASR (e.g., only showing speaker)
+           - Remove OCR identical to previous frame
+           - Discard keyframes lacking useful information
+         - **Scale**: Extract 6.5M keyframes, generate 0.75B text tokens (ASR + OCR)
+      5. **Textbook Sample Construction**:
+         - Concatenate multiple `<keyframe, OCR, ASR>` fragments into single sample
+         - Each sample contains average 10.7 keyframes and 1,297 text tokens
+         - **Final Scale**: 610K interleaved image-text samples
+    - **Advantages vs. Existing Datasets**:
+      - **In-sample Image Similarity**: 0.686 (vs. MMC4 0.319, OBELICS 0.345), indicating more coherent frame sequences from instructional videos
+      - **Average Images per Sample**: 10.7 (vs. MMC4 5.7, OBELICS 2.5), richer content
+      - **Average Text Tokens per Sample**: 1,297 (vs. MMC4 417, OBELICS 816), higher knowledge density
+  - **Data Statistics**:
+    - **Video Scale**: 75K instructional videos, 22,697 class hours (2.5 years)
+    - **Keyframes**: 6.5M
+    - **Text**: 259M ASR tokens + 500M OCR tokens
+    - **Final Samples**: 610K interleaved image-text samples
+    - **Subject Distribution**: Math (21.7K videos), Physics (11K), Chemistry (4.5K), Earth Science (12K), Engineering (13K), Computer Science (12.8K)
+  - **Experimental Results** - **Significantly improves knowledge & reasoning-intensive benchmarks**:
+    - **Pretraining LLaVA-1.5-7B** (continual pretraining on 610K textbook data):
+      - **MathVista**: 1-shot 43.4% (vs. MMC4 30.0%, OBELICS 28.5%, **+13.4%~14.9%**)
+      - **ScienceQA**: 1-shot 29.4% (vs. MMC4 1.6%, OBELICS 2.8%, **+26.6%~27.8%**)
+      - **MathVision**: 1-shot 25.6% (vs. MMC4 21.3%, OBELICS 20.1%, **+4.3%~5.5%**)
+      - **Average Improvement**: Average **+11.5%** across 7 VQA benchmarks (vs. OBELICS)
+    - **Pretraining Idefics2-8B**:
+      - **MathVista**: 8-shot 29.7% (vs. MMC4 27.8%, OBELICS 27.6%)
+      - **Continual Pretraining**: From Idefics2-8B-base continual pretraining, improvements across all benchmarks
+    - **In-Context Learning Enhancement**: 
+      - Textbook data significantly improves model's ability to leverage few-shot context
+      - In "1-shot Cheat" experiment (test sample directly in context), textbook-trained model achieves 94.1% accuracy (MathVista), far surpassing MMC4 (72.6%) and OBELICS (67.7%)
+    - **SFT Stage Transfer**: Pretraining gains transfer to instruction fine-tuning stage, further improving downstream task performance
+  - **Ablation Study Key Findings**:
+    - **ASR Refinement Crucial**: Removing ASR refinement increases perplexity from 13.92 to 16.86, accuracy drops 4.9%
+    - **OCR Importance**: Removing OCR drops accuracy by 2.3%, greater impact on math-related tasks
+    - **SSIM Superior to Other Keyframe Extraction Methods**: Pixel-level extractor produces 18M keyframes (too redundant), CLIP-based only 1.7M (missing critical frames), SSIM's 6.5M optimal
+    - **Image Order Matters**: Shuffling image order drops accuracy from 31.1% to 22.1% (-9%), proving temporal coherence of video frames critical for learning
+  - **Institution**: Zhejiang University, Alibaba DAMO Academy
+  - **Authors**: Wenqi Zhang, Hang Zhang, Xin Li, Jiashuo Sun, Yongliang Shen, Weiming Lu, Deli Zhao, Yueting Zhuang, Lidong Bing
+  - **Publication**: arXiv January 2025 (v4)
+  - **Paper Link**: [arXiv:2501.00958](https://arxiv.org/abs/2501.00958)
+  - **Project Page**: https://multimodal-interleaved-textbook.github.io/
+  - **Significance**:
+    - **Data Source Innovation**: First systematic construction of VLM pretraining data from instructional videos, filling "textbook-quality" multimodal data gap
+    - **High Knowledge Density**: Compared to webpage-crawled data, instructional videos are more structured, higher knowledge density, tighter image-text relations
+    - **In-Context Learning Enhancement**: Significantly enhances VLM's context awareness, models more effectively leverage few-shot examples
+    - **Scalability**: Fully automated pipeline, easily extensible to more subjects and languages
+
+---
+
 ### Image-Invariant Text Enhancement
 
 This category of methods keeps original images fixed while enriching and improving paired text quality through various techniques. **This is currently the most mainstream multimodal data synthesis paradigm.**
@@ -3273,6 +3351,358 @@ This category of methods keeps original images fixed while enriching and improvi
     - **Performance Insights**: Reveals model strengths and weaknesses on specific styles and modalities, unobtainable through mixed benchmarks
     - **Scalability**: Fully automated process enables rapid customized evaluation data generation for new domains or requirements
     - **Cost Efficiency**: No expensive human annotation required, reducing evaluation dataset construction costs
+
+---
+
+- **📄 MMC** [(arXiv 2311.10774)](https://arxiv.org/abs/2311.10774) 🏷️ **[Method + Data]** - **Tencent AI Lab**
+  - **Focus**: **Large-Scale Chart Understanding Instruction Tuning** - Creating a large-scale multi-task instruction dataset for chart image understanding tasks, significantly improving LMM performance on chart comprehension
+  - **Data Synthesis Method** - **GPT-4-Driven Multi-Task Chart Instruction Generation Pipeline**:
+    - **Core Innovation**: First large-scale (600K) multi-task chart understanding instruction dataset, covering 9 different task types, with high-quality instruction-answer pairs generated through GPT-4
+    - **Problem Identification**:
+      - Existing open-source LMMs perform poorly on chart understanding due to the vast difference between chart images and natural scene images
+      - Existing chart QA datasets are small-scale, single-task, and rely on template generation or fixed vocabulary answers
+      - Lack of comprehensive chart understanding evaluation benchmarks
+    - **Four-Stage Data Construction Pipeline**:
+      1. **Chart-Text Alignment Data Collection (210K)**:
+         - **Data Sources**: Collect 210K chart-caption pairs for vision-text alignment training
+         - **Sources**: Existing public datasets (FigureQA, DVQA, PlotQA, ChartQA, SciGraphQA, etc.)
+         - **Format Conversion**: Unify annotations from different datasets into standard format
+         - **Purpose**: Help models learn basic visual-language alignment for charts
+      2. **Chart Information Extraction & Reasoning Task Generation**:
+         - **Image Sources**: High-quality charts from ChartQA and Statista.com
+         - **GPT-4 Generation**: Based on chart descriptions (title, axes, data range, etc.), use GPT-4 to generate diverse question-answer pairs
+         - **Task Types**:
+           - **Chart Information Extraction**: Extract detailed information like title, coordinate values, range, data patterns
+           - **Chart Reasoning**: Reasoning questions about trends, data patterns, and analytical insights
+         - **Prompt Design**: Request generation of 3 different questions, each answer less than 20 words, ensuring diversity
+         - **Scale**: 330 information extraction samples, 256 reasoning samples
+      3. **Scientific Chart Understanding Task Generation**:
+         - **Data Sources**: Charts from arXiv scientific papers
+         - **Multi-turn Dialogue Construction**: Use GPT-4 to generate multi-turn chart-related dialogues
+         - **Task Types**:
+           - **Contextual Chart Understanding**: Understanding the role and significance of charts in scientific literature
+           - **Multiple Chart Understanding**: Understanding relationships between multiple related charts in the same document
+         - **Quality Control**: Use heuristic rules to remove non-chart-related questions, ensuring focus on chart content
+         - **Scale**: 56 contextual understanding samples, 52 multi-chart understanding samples
+      4. **Structured Tasks & Classification Task Generation**:
+         - **Chart-to-DataTable/JSON**: 
+           - Use real data tables from VisText dataset
+           - Convert to JSON format (GPT-4 assisted)
+           - Task: Convert visual information in charts to structured data formats
+           - Scale: 400 data table samples, 96 JSON samples
+         - **Chart Type/Topic Classification**:
+           - Diverse charts crawled from the web
+           - Use ground truth labels as answers
+           - Scale: 360 type classification samples, 536 topic classification samples
+         - **Stock Chart Analysis**:
+           - Use Google Bard and source articles to generate analysis questions
+           - Scale: 40 samples
+    - **Human Quality Control**:
+      - Filter samples with answers longer than 20 words
+      - Remove samples mentioning "given caption", "existing descriptions", etc.
+      - Chart-to-Json task: Remove samples not mentioning "title" as a key
+      - Random sample 500 instances for human evaluation to ensure quality
+    - **Key Technical Advantages**:
+      - **Multi-Task Coverage**: 9 different task types, comprehensive evaluation of chart understanding capabilities
+      - **High-Quality Generation**: GPT-4 generated instruction-answer pairs are natural and fluent, aligned with human cognition
+      - **Open-Ended Answers**: Average answer length 23.7 words, far exceeding existing datasets' 1-2 word fixed answers
+      - **Real Charts**: Use real web charts and scientific paper charts, not synthetic data
+      - **Scalability**: Pipeline can be applied to any chart dataset
+  - **MMC-Instruction Dataset**:
+    - **Total Scale**: 600K chart instruction data
+    - **Task Distribution** (9 tasks):
+      1. **Chart Information Extraction**: 330 samples (extracting title, coordinates, range, etc.)
+      2. **Chart Reasoning**: 256 samples (trend analysis, data pattern recognition)
+      3. **Contextual Chart Understanding**: 56 samples (role of charts in scientific literature)
+      4. **Multiple Chart Understanding**: 52 samples (understanding multi-chart relationships)
+      5. **Chart Type Classification**: 360 samples (identifying bar, line, pie charts, etc.)
+      6. **Chart Topic Classification**: 536 samples (identifying business, health, travel themes, etc.)
+      7. **Chart-to-DataTable**: 400 samples (converting charts to table format)
+      8. **Chart-to-JSON**: 96 samples (converting charts to JSON format)
+      9. **Stock Chart Analysis**: 40 samples (analyzing stock chart trends)
+    - **Data Characteristics**:
+      - **Diverse Chart Types**: Bar charts, histograms, line plots, scatter plots, heatmaps, etc.
+      - **Rich Topics**: Business, health, biology, engineering, sports, travel, etc.
+      - **Open-Ended Answers**: Average 23.7 words, free-form responses
+      - **Image Sources**: Statista.com, arXiv, VisText, web crawling
+  - **MMC-Benchmark Evaluation Benchmark**:
+    - **Scale**: 2,126 high-quality test samples
+    - **Image Count**: 1,063 unique images
+    - **Question Types**:
+      - **Multiple-Choice Questions (MQA)**: 1,275 questions
+      - **Free-Form Questions**: 851 questions
+    - **Average Question Length**: 15.6 words
+    - **Evaluation Methods**:
+      1. **Generation Ability Evaluation**: Use GPT-4 to assess free-form answer accuracy (0.90 Cohen's kappa human agreement)
+      2. **Understanding Ability Evaluation**: Use multiple-choice questions to directly calculate accuracy, no GPT-4 needed
+    - **Data Sources**: Statista.com, arXiv scientific papers, VisText, web crawling
+    - **Human Verification**: All samples underwent human quality checks
+  - **MMCA Model (MultiModal Chart Assistant)**:
+    - **Architecture**: 
+      - Vision Encoder: ViT-L (0.3B parameters)
+      - Language Model: Vicuna-7B (fine-tuned with LoRA)
+      - Visual Abstractor: Learnable query tokens
+    - **Two-Stage Training**:
+      - **Stage 1**: Chart-text alignment (freeze LLM, train visual abstractor)
+      - **Stage 2**: Chart instruction tuning (LoRA fine-tune LLM, train on MMC-Instruction for 3 epochs)
+    - **Training Setup**: Tesla V100 GPUs
+  - **Experimental Results** - **Achieves Open-Source SOTA on Chart Understanding Tasks**:
+    - **MMC-Benchmark Performance** (Generation Ability Evaluation, GPT-4 scoring):
+      - **MMCA**: Overall accuracy **26%**, surpassing all open-source models
+      - **LLaVA-1.5**: 24% (second place)
+      - **MiniGPT-v2**: 21%
+      - **mPLUG-Owl**: 20%
+      - **GPT-4V**: **51%** (far exceeds open-source models, but still challenged by Chart-to-Datatable and Chart-to-Json tasks)
+    - **MMC-Benchmark Performance** (Understanding Ability Evaluation, MQA accuracy):
+      - **MMCA**: Overall accuracy **56%**, surpassing all open-source models
+      - **LLaVA-1.5**: 51%
+      - **Chart-to-DataTable**: MMCA **64%** vs other models ≤57%
+      - **Chart-to-JSON**: MMCA **59%** vs other models ≤51%
+    - **Existing Benchmark Performance**:
+      - **ChartQA**: **57.4%** (surpasses LLaVA-1.5's 51.4%)
+      - **DocVQA**: **72.5%** (comparable to LLaVA-1.5's 72.8%)
+      - **TextVQA**: **59.6%** (surpasses LLaVA-1.5's 58.2%)
+    - **Ablation Studies**:
+      - MMCA without fine-tuning vision encoder shows significant performance drop (ChartQA: 54.2% vs 57.4%)
+      - Proves fine-tuning vision encoder is crucial for chart understanding
+  - **Error Analysis** (100 GPT-4V error samples):
+    - **Language Bias (35%)**: Strong language priors mislead the model, ignoring visual input
+    - **Vision Perception Errors (29.6%)**: Existing vision encoders (CLIP) have weak chart understanding ability, as CLIP is mainly trained on natural images
+    - **Reasoning Errors (18.9%)**: Failures on complex reasoning tasks
+    - **Not Following Instructions (16.5%)**: Most open-source models cannot follow human instructions well
+  - **Institution**: University of Maryland College Park, Tencent AI Lab Bellevue
+  - **Authors**: Fuxiao Liu, Xiaoyang Wang, Wenlin Yao, Jianshu Chen, Kaiqiang Song, Sangwoo Cho, Yaser Yacoob, Dong Yu
+  - **Publication**: arXiv November 2023 (v2)
+  - **Paper Link**: [arXiv:2311.10774](https://arxiv.org/abs/2311.10774)
+  - **Significance**:
+    - **Data Contribution**: First large-scale (600K) multi-task chart understanding instruction dataset, filling the gap in chart understanding training data
+    - **Evaluation Benchmark**: Provides comprehensive chart understanding evaluation benchmark (MMC-Benchmark) covering 9 task types
+    - **Open-Source Model Improvement**: Demonstrates that open-source models can significantly improve chart understanding through high-quality instruction data
+    - **Error Insights**: Systematically analyzes error types of open-source and closed-source models on chart understanding, pointing direction for future improvements
+    - **Scalability**: Pipeline can be applied to other domain-specific image understanding tasks
+
+---
+
+- **📄 AdaMLLM** [(arXiv 2411.19930)](https://arxiv.org/abs/2411.19930) 🏷️ **[Method + Data]** - **BIGAI**
+  - **Focus**: **Domain-Adaptive Post-Training Data Synthesis** - Using only open-source models to generate diverse visual instruction tasks from domain-specific image-caption pairs for MLLM domain adaptation
+  - **Data Synthesis Method** - **Open-Source MLLM-Driven Generate-then-Filter Pipeline**:
+    - **Core Innovation**: First domain-adaptive instruction synthesis method relying solely on open-source models, avoiding expert annotation through consistency-based filtering, outperforming rule-based methods and closed-source models
+    - **Problem Identification**:
+      - Domain-specific MLLM training data is scarce, especially in professional domains like medicine, food, and remote sensing
+      - Existing methods rely on manual rules or expensive closed-source models (GPT-4/GPT-4V)
+      - Traditional two-stage training (image-caption alignment → visual instruction tuning) reduces task diversity in domain-specific scenarios
+    - **Two-Stage Data Construction Pipeline**:
+      1. **Visual Instruction Synthesizer Fine-tuning (Stage A)**:
+         - **Seed Data Construction**:
+           - Aggregate existing multi-domain datasets covering various image domains and task types
+           - Include: object recognition, domain classification, step-by-step guidance, text detection & OCR, task-oriented recognition, etc.
+           - No additional expert annotation required
+         - **Task Triplet Format**:
+           - **Instruction**: Task description based on image-caption pair
+           - **Informative Response**: Detailed answer with reasoning process
+           - **Precise Response**: Concise final answer
+         - **Fine-tuning Strategy**:
+           - Base Model: LLaVA-v1.6-Llama3-8B (or other open-source MLLMs)
+           - Input: Image + caption → Output: Task triplet
+           - **Modality Balancing Strategy**: Replace 10% images with blank ones to encourage leveraging textual captions, avoiding over-reliance on visual inputs
+           - Calculate loss only on conversational turns related to task triplets
+      2. **Target Domain Task Synthesis (Stage B)**:
+         - **Task Generation**: Use fine-tuned synthesizer to generate task triplets for target domain image-caption pairs
+         - **Consistency-Based Filter (Key Innovation)**:
+           - **Core Idea**: Instead of directly verifying response accuracy (requiring expert knowledge), check consistency between precise and informative responses
+           - **Verification Tool**: Use Llama-3-8B to evaluate consistency
+           - **Judgment Criteria**: Yes (consistent) / No (inconsistent) / Open (open-ended questions allowing multiple interpretations)
+           - **Advantage**: Significantly reduces need for expert annotation, accuracy improves from 60-77% to 75-84% after filtering
+         - **Quality Assurance**: ~30% of task triplets retained after filtering
+    - **Single-Stage Post-Training (Innovative Training Strategy)**:
+      - **Problem**: Traditional two-stage training (image-caption alignment first, then visual instruction tuning) reduces task diversity in domain-specific training
+      - **Solution**: Merge into single-stage training, each sample contains two tasks:
+        - **Image Captioning Task**: Use original caption as ground-truth
+        - **Synthetic Visual Instruction Task**: Use filtered task triplets
+      - **Advantage**: In most cases, single-stage training outperforms two-stage training
+    - **Key Technical Advantages**:
+      - **No Closed-Source Models**: Only uses open-source MLLMs, no need for GPT-4/GPT-4V
+      - **Reduced Expert Annotation**: Consistency filter avoids per-task expert verification
+      - **Task Diversity**: Synthesized instructions cover 12 major task types
+      - **Domain Knowledge Utilization**: Effectively extracts domain expertise from image-caption pairs
+      - **Scalability**: Pipeline applicable to any domain and any open-source MLLM
+  - **Synthetic Data Scale** (based on different domain image-caption sources):
+    - **Biomedicine**:
+      - PMCRaw: 150K instruction-response pairs (from PMC-OA raw captions)
+      - PMCRefined: 144K instruction-response pairs (from LLAVA-Med refined captions)
+    - **Food Domain**:
+      - Recipe1M: 32K instruction-response pairs (from Recipe1M dataset)
+    - **Remote Sensing Domain**:
+      - Remote Sensing: 15K instruction-response pairs (from multiple remote sensing datasets)
+  - **AdaMLLM Models**:
+    - **Supported Base Models**: LLaVA-v1.6-8B, Qwen2-VL-2B, Llama-3.2-11B
+    - **Training Method**: Single-stage post-training (image captioning + synthetic instruction tasks)
+    - **Training Time**: 13 hours (8×A100-80GB GPUs)
+  - **Experimental Results** - **Significantly outperforms baselines and specialized models across all domains**:
+    - **Biomedicine Domain** (AdaMLLM-8B from PMCRefined):
+      - **SLAKE**: 58.0% (Open) / 73.3% (Closed), surpassing LLaVA-Med (43.4%/50.2%) and PubMedVision (50.0%/68.3%)
+      - **PathVQA**: 22.9% (Open) / 78.6% (Closed), surpassing all baselines
+      - **VQA-RAD**: 59.8% (Open) / 81.3% (Closed)
+      - **PMC-VQA**: 47.9%, surpassing LLaVA-Med (37.1%)
+    - **Food Domain** (AdaMLLM-8B):
+      - **Recipe1M**: 24.8 Rouge-L (vs. LLaVA-Chef 23.1)
+      - **Nutrition5K**: 36.1 Recall (vs. LLaVA-Chef 29.1)
+      - **Food101**: 65.3% Acc (vs. LLaVA-1.6 47.9%)
+      - **FoodSeg**: 42.0 F1 (vs. LLaVA-Chef 14.5)
+    - **Remote Sensing Domain** (AdaMLLM-8B):
+      - **CLRS**: 66.9% Acc (vs. LLaVA-1.6 54.3%)
+      - **UCMerced**: 72.1% Acc (vs. LLaVA-1.6 64.9%)
+      - **NWPU**: 47.1 Rouge-L (vs. LLaVA-1.6 26.1)
+    - **Cross-Model Generalization**: Equally effective on Qwen2-VL-2B and Llama-3.2-11B
+  - **Synthetic Data Quality Comparison** - **Surpasses rule-based methods and closed-source models**:
+    - **vs. Rule-Based Methods**:
+      - Task Diversity: 68.0 vs. 52.5 (+29.6%)
+      - Domain Knowledge Utilization: 95.0 vs. 72.5 (+31.0%)
+      - Task Complexity: 77.9 vs. 43.8 (+77.9%)
+    - **vs. GPT-4 (Text-only)**:
+      - Task Diversity: 81.0 vs. 75.2
+      - Complexity: 80.0 vs. 75.3
+    - **vs. GPT-4V (Vision+Text)**:
+      - Task Diversity: 85.5 vs. 83.2 (comparable)
+      - Accuracy (PMCRefined): 79.6 vs. 87.5 (slightly lower but acceptable)
+  - **Ablation Study Key Findings**:
+    - **Consistency Filter is Crucial**: Removing it drops accuracy from 58.3% to 54.2% (biomedicine)
+    - **Single-Stage Training Outperforms Two-Stage**: Average 3-5% improvement on 8B and 11B models
+    - **Modality Balancing Strategy is Effective**: Replacing 10% with blank images improves robustness
+    - **Task Diversity Matters**: Using only synthetic tasks (without image captioning) significantly degrades performance
+  - **Task Type Distribution** (synthetic data covers 12 major task types):
+    - Task-Oriented Image Recognition
+    - Attribute and Context Recognition
+    - Object Recognition
+    - Data Representation and Visualization
+    - Step-by-Step Guidance
+    - Anomaly Detection
+    - Image-Text Matching
+    - Caption Generation
+    - Text Detection and OCR
+    - Scene Classification
+    - Domain Classification
+    - Pose and Activity Recognition
+  - **Institution**: BIGAI, BUAA, THU, BIT, RUC
+  - **Authors**: Daixuan Cheng, Shaohan Huang, Ziyu Zhu, Xintong Zhang, Wayne Xin Zhao, Zhongzhi Luan, Bo Dai, Zhenliang Zhang
+  - **Publication**: arXiv November 2024 (v4)
+  - **Paper Link**: [arXiv:2411.19930](https://arxiv.org/abs/2411.19930)
+  - **Open Source**: ✅ [HuggingFace](https://huggingface.co/AdaptLLM)
+  - **Significance**:
+    - **Open-Source Alternative**: Proves open-source models can replace expensive closed-source models (GPT-4V) for domain-adaptive data synthesis
+    - **Consistency Filter Innovation**: Checking response consistency instead of directly verifying accuracy avoids massive expert annotation
+    - **Single-Stage Training**: Proposes more efficient training strategy maintaining task diversity
+    - **Domain Generalization**: Achieves SOTA across biomedicine, food, and remote sensing domains, proving method universality
+    - **Reproducibility**: Fully open-sources models, code, and data, lowering domain adaptation barriers
+
+---
+
+- **📄 Multimodal ArXiv** [(arXiv 2403.00231)](https://arxiv.org/abs/2403.00231) 🏷️ **[Method + Data]** - **The University of Hong Kong**
+  - **Focus**: **Scientific Figure Understanding Dataset** - Extracting large-scale image-caption pairs from ArXiv papers and using GPT-4V to generate scientific figure QA data, improving MLLM scientific comprehension
+  - **Data Synthesis Method** - **GPT-4V-Driven Scientific Figure QA Generation Pipeline**:
+    - **Core Innovation**: First large-scale open-domain scientific figure understanding dataset covering multiple scientific domains, using GPT-4V to generate multiple-choice QA pairs from images
+    - **Problem Identification**:
+      - Existing MLLMs struggle with abstract figures (geometric shapes, scientific plots) compared to concrete images from everyday scenes
+      - Scientific domain training data is scarce
+      - Existing scientific figure datasets are small-scale, single-task, or limited to computer science domain only
+    - **Two-Stage Data Construction Pipeline**:
+      1. **ArXivCap Dataset Construction (Image-Caption Pairs)**:
+         - **Data Source**: ArXiv paper source files before June 2023
+         - **Paper Filtering**:
+           - Retrieve paper metadata from Semantic Scholar
+           - Only keep published papers (Journal Article, Conference, Review)
+           - Filter low-quality papers to ensure dataset quality
+         - **Image-Caption Extraction**:
+           - Extract images and corresponding captions from LaTeX source files
+           - **Two Image Types**:
+             - **Single-Figure Pairs**: One image with one caption
+             - **Multiple-Figure Pairs**: Multiple sub-figures, each with sub-caption, plus overall main caption
+         - **Caption Cleaning**:
+           - Remove chunks with captions shorter than 5 words
+           - Use pylatexenc to convert LaTeX expressions to text
+           - Preserve LaTeX formulas, convert citations to `<cit.>`, references to `<ref>`
+           - Ensure caption quality and readability
+         - **Scale**: 6.4M images + 3.9M captions (from 572K papers)
+         - **Domain Coverage**: Mathematics, physics, computer science, biomedicine, astrophysics, condensed matter, statistics, etc.
+      2. **ArXivQA Dataset Construction (GPT-4V Generated QA)**:
+         - **Data Source**: Select high-quality images from ArXivCap
+         - **GPT-4V QA Generation**:
+           - Input: Scientific image + caption
+           - Output: Multiple-choice question (question, 4 options, correct answer, rationale)
+           - Prompt Design: Request generating challenging, college-level reasoning questions
+           - Task Diversity: Covers figure understanding, data interpretation, scientific reasoning, etc.
+         - **Quality Control**:
+           - Filter invalid samples (answer not in options, formatting errors, etc.)
+           - Human sampling validation (100 samples, human accuracy 80%)
+           - Ensure question answerability and difficulty
+         - **Scale**: 32K QA pairs (from 16.6K images)
+         - **Question Characteristics**:
+           - Average question length: 16.98 words
+           - Average 4.20 options per question
+           - Average option length: 7.59 words
+    - **Key Technical Advantages**:
+      - **Large-Scale Real Data**: Uses real scientific paper images, not synthetic data
+      - **Open-Domain Coverage**: Covers multiple scientific domains, not limited to single discipline
+      - **High-Quality QA**: GPT-4V generated questions are challenging and scientific
+      - **Multimodal Alignment**: Image-caption pairs and QA pairs combined to enhance multimodal understanding
+  - **ArXivCap Dataset**:
+    - **Total Scale**: 6.4M images + 3.9M captions (572K papers)
+    - **Image Type Distribution**:
+      - Single-figure pairs: ~5.4M
+      - Multiple-figure pairs: ~1M (including sub-captions)
+    - **Caption Statistics**:
+      - Average main caption length: 47.6 words (median 35 words)
+      - Average sub-caption length: 4.8 words (median 3 words)
+      - Chunk caption (merged) average length: 48.8 words
+    - **Domain Distribution**: Math, computer science, physics, astrophysics, condensed matter, statistics, etc.
+  - **ArXivQA Dataset**:
+    - **Total Scale**: 32K multiple-choice QA pairs
+    - **Image Count**: 16.6K unique images
+    - **Question Types**: Figure QA, geometry problem solving, math word problems, textbook QA, visual QA, etc.
+    - **Difficulty**: Requires college-level reasoning ability
+  - **Experimental Results** - **ArXivQA significantly improves mathematical reasoning**:
+    - **Baseline Model Evaluation** (1000-sample test set):
+      - LLaVA-1.5-7B: 44.2% (second place)
+      - Qwen-VL-Chat: 46.6%
+      - InstructBLIP-Vicuna7B: 7.0%
+      - OpenFlamingo-9B: 9.9%
+      - Human Performance: 80.0% (100-sample subset)
+    - **MathVista Improvement** (fine-tuning Qwen-VL-Chat-7B):
+      - **Overall Accuracy**: 50.4% (vs. baseline 40.0%, +10.4% absolute improvement)
+      - **Geometry Problem Solving**: 34.0% (vs. baseline 19.1%, +14.9%)
+      - **Textbook QA**: 70.0% (vs. baseline 46.7%, +23.3%)
+      - **Visual QA**: 64.1% (vs. baseline 57.6%, +6.5%)
+      - **Surpasses Commercial Models**: 50.4% vs. Bard 50.0%
+    - **ArXivCap Single-Figure Captioning** (fine-tuning Qwen-VL-Chat-7B):
+      - BLEU-2: 8.9 (vs. baseline 4.4, +102%)
+      - ROUGE-L: 15.8 (vs. baseline 11.1, +42%)
+      - BERT-Score: 83.3 (vs. baseline 81.8)
+      - Surpasses all open-source baseline models
+    - **New Task Benchmarks** (defined on ArXivCap):
+      - Multiple-Figure Captioning
+      - Contextualized Captioning (in-context learning)
+      - Title Generation (inferring paper title from figure-caption pairs)
+  - **Domain-Specific Performance Analysis**:
+    - Different scientific domain QA data improves different tasks differently
+    - Astrophysics domain data enhances geometry problem-solving ability
+    - Condensed matter domain data improves math word problem performance
+    - Most domain data negatively affects FigureQA task (indicating synthetic FigureQA may not be best benchmark)
+  - **Error Analysis** (human analysis of 100 samples):
+    - **Language Bias**: Strong language priors mislead model (ignoring visual input)
+    - **Visual Perception Errors**: CLIP and other vision encoders have weak figure understanding ability
+    - **Reasoning Errors**: Complex reasoning task failures
+    - **Not Following Instructions**: Open-source models cannot follow instructions well
+  - **Institution**: The University of Hong Kong, Peking University
+  - **Authors**: Lei Li, Yuqi Wang, Runxin Xu, Peiyi Wang, Xiachong Feng, Lingpeng Kong, Qi Liu
+  - **Publication**: arXiv March 2024 (v3)
+  - **Paper Link**: [arXiv:2403.00231](https://arxiv.org/abs/2403.00231)
+  - **Open Source**: ✅ Dataset and code
+  - **Significance**:
+    - **Data Scale**: Largest real paper image-caption dataset (6.4M images)
+    - **Open-Domain Coverage**: First large-scale QA dataset covering multiple scientific domains
+    - **Scientific Understanding Improvement**: Significantly improves MLLM mathematical reasoning and scientific figure understanding
+    - **Evaluation Benchmarks**: Provides four new task benchmarks for comprehensive scientific figure understanding evaluation
+    - **GPT-4V Application**: Proves GPT-4V can effectively generate high-quality scientific QA data
 
 ---
 
@@ -4927,6 +5357,93 @@ This category of methods keeps original images fixed while enriching and improvi
   - **Publication**: arXiv October 2025
   - **Institution**: MIT, IBM Research, etc.
 
+---
+
+- **📄 AnyGPT** [(arXiv 2402.12226)](https://arxiv.org/abs/2402.12226) 🏷️ **[Method + Data]** - **Fudan University**
+  - **Focus**: **Any-to-Any Multimodal Language Model** - Unified processing and generation across speech, text, images, and music using discrete representations
+  - **Data Synthesis Method** - **Two-Stage Fully Synthetic Any-to-Any Multimodal Dialogue Pipeline**:
+    - **Core Innovation**: First any-to-any multimodal LLM using discrete representations, with fully synthetic multimodal dialogue data (AnyInstruct-108k) without needing paired multimodal data
+    - **Problem Identification**:
+      - Existing multimodal models typically support only specific modality combinations (e.g., image+text), lacking unified any-to-any capabilities
+      - Difficult to obtain large-scale paired multimodal dialogue data covering all modality combinations
+      - Complex model architectures requiring modality-specific encoders/decoders limit scalability
+    - **Discrete Representation Approach**:
+      - **Speech**: Pre-trained SpeechTokenizer converts speech to discrete tokens
+      - **Images**: Pre-trained SEED tokenizer converts images to discrete tokens  
+      - **Music**: Pre-trained Encodec converts music to discrete tokens
+      - **Text**: Standard text tokenization
+      - **Advantage**: All modalities represented as discrete token sequences, enabling LLM to process and generate any modality uniformly
+    - **Two-Stage Data Construction Pipeline**:
+      1. **Multimodal Alignment Pre-training**:
+         - **Data Collection**: Collect text-centric multimodal data from internet (images, audio, music paired with text descriptions)
+         - **Format Conversion**: Convert all modalities to discrete tokens, interleave with text
+         - **Scale**: Large-scale alignment data for basic multimodal understanding
+         - **Purpose**: Enable LLM to understand correlations between different modality tokens
+      2. **Any-to-Any Multimodal Instruction Tuning - AnyInstruct-108k**:
+         - **Fully Synthetic Data Generation (Key Innovation)**:
+           - **Step 1: Text-based Conversation Generation**:
+             - Use GPT-4 to generate text-only multi-turn conversations covering various scenarios
+             - Conversations include placeholders for multimodal elements (e.g., "[IMAGE]", "[MUSIC]", "[SPEECH]")
+             - Topics cover: daily dialogue, creative scenarios, educational content, entertainment, etc.
+           - **Step 2: Modality Content Generation**:
+             - For IMAGE placeholders: Use SDXL (Stable Diffusion XL) to generate images based on GPT-4 descriptions
+             - For MUSIC placeholders: Use MusicGen to generate music based on GPT-4 descriptions
+             - For SPEECH placeholders: Use Azure TTS to synthesize speech from text
+           - **Step 3: Convert to Discrete Tokens**:
+             - Convert all generated images, music, speech to discrete tokens
+             - Replace placeholders in conversations with actual discrete token sequences
+           - **Step 4: Quality Filtering**:
+             - Remove conversations with generation failures
+             - Ensure all modality contents match conversation context
+             - Verify conversation coherence and naturalness
+         - **Data Characteristics**:
+           - **108K samples**: 108K multi-turn multimodal conversations
+           - **Multi-turn**: Average 3-5 turns per conversation
+           - **Any-to-Any**: Covers all possible input-output modality combinations
+           - **Modality Interleaving**: Each conversation can contain multiple modality switchings
+           - **Task Diversity**: Question answering, content generation, modality conversion, creative tasks, etc.
+    - **Key Technical Advantages**:
+      - **Unified Architecture**: No need for modality-specific encoders/decoders, only requires discrete tokenizers
+      - **Fully Synthetic**: No need for expensive paired multimodal data collection
+      - **Flexible Scalability**: New modalities can be easily integrated by adding new tokenizers
+      - **Any-to-Any Capability**: Supports arbitrary input-output modality combinations
+      - **Standard LLM Training**: Uses standard language model training without architectural modifications
+  - **AnyGPT Model**:
+    - **Base Model**: Vicuna-7B or Vicuna-13B
+    - **Training Stages**: 
+      - Stage 1: Multimodal alignment pre-training
+      - Stage 2: AnyInstruct-108k instruction tuning
+    - **Inference**: Auto-regressive generation of discrete tokens, then convert back to corresponding modalities
+  - **Experimental Results** - **Achieves comparable performance to specialized models across all modalities**:
+    - **Text Understanding**: Comparable to LLaMA-based models
+    - **Image Understanding**: Comparable to BLIP-2, LLaVA on image captioning and VQA
+    - **Speech Recognition**: Comparable to Whisper on ASR tasks
+    - **Music Understanding**: Novel capability, no direct comparison
+    - **Any-to-Any Tasks**: Demonstrates flexible modality conversion capabilities (e.g., image-to-music, speech-to-image)
+    - **Multi-turn Dialogue**: Supports coherent multi-turn multimodal conversations
+  - **Key Innovation Analysis**:
+    - **Discrete Representation Advantage**: Unifies all modalities within single LLM, avoiding complex fusion modules
+    - **Synthetic Data Pipeline**: Fully automated data generation reduces manual annotation costs
+    - **Scalability**: Framework easily extensible to new modalities (e.g., video, 3D)
+    - **Training Efficiency**: Reuses existing LLM training infrastructure without architectural changes
+  - **Limitations**:
+    - **Token Sequence Length**: Discrete representation significantly increases token sequence length, limiting long-context handling
+    - **Generation Quality**: Quality of generated non-text modalities depends on quality of discrete tokenizers
+    - **Computational Cost**: Processing multiple modalities requires substantial computational resources
+  - **Institution**: Fudan University
+  - **Authors**: Jun Zhan, Junqi Dai, Jiasheng Ye, Yunhua Zhou, Dong Zhang, Zhigeng Liu, Xin Zhang, Ruibin Yuan, Ge Zhang, Linyang Li, Hang Yan, Jie Fu, Tao Gui, Tianxiang Sun, Yugang Jiang, Xipeng Qiu
+  - **Publication**: arXiv February 2024 (v2)
+  - **Paper Link**: [arXiv:2402.12226](https://arxiv.org/abs/2402.12226)
+  - **Open Source**: ✅ [GitHub](https://github.com/OpenMOSS/AnyGPT)
+  - **Dataset**: AnyInstruct-108k
+  - **Significance**:
+    - **Any-to-Any Pioneer**: First work demonstrating truly unified any-to-any multimodal LLM using only discrete representations
+    - **Synthetic Data Innovation**: Proves fully synthetic multimodal dialogue data can effectively train any-to-any models
+    - **Simplified Architecture**: Shows complex multimodal fusion modules unnecessary when using appropriate discrete representations
+    - **Research Inspiration**: Opens new research direction for unified multimodal models
+
+---
+
 - **📄 MAGID** [(arXiv 2403.03194)](https://arxiv.org/abs/2403.03194) 🏷️ **[Method + Data]**
   - **Focus**: **Automatic Multimodal Dialogue Data Generation** - Automatically augments text-only dialogues into multimodal dialogues (text + images)
   - **Problem Background**:
@@ -5399,6 +5916,100 @@ This category of methods keeps original images fixed while enriching and improvi
     - Builds AS-1B dataset (1.2B region-text pairs)
   - **This is true data synthesis**: Uses tool combination to generate new annotations
   - **Open Source**: ✅ [Dataset](https://huggingface.co/datasets/OpenGVLab/AS-V2) | [Code](https://github.com/OpenGVLab/all-seeing)
+
+---
+
+- **📄 TaskGalaxy** [(ICLR 2025)](https://arxiv.org/abs/2502.09925) 🏷️ **[Method + Data]** - **ICLR 2025 - Kuaishou Technology**
+  - **Focus**: **Large-Scale Task Type Expansion** - Constructing multimodal instruction fine-tuning dataset with 19,227 hierarchical task types and 413K samples, significantly improving task diversity through automated pipeline
+  - **Data Synthesis Method** - **GPT-4o-Driven Hierarchical Task Type Expansion + Multi-Referee Filtering Pipeline**:
+    - **Core Innovation**: First dataset with tens of thousands of task types, automatically expanding task taxonomy via GPT-4o, combined with CLIP filtering and multi-open-source-model scoring to ensure quality
+    - **Problem Identification**:
+      - Existing instruction fine-tuning datasets have limited task types (e.g., Vision-Flan only 196 types), limiting model generalization
+      - Manual task type annotation is costly and time-consuming, difficult to scale
+      - Low task type-image matching quality leads to poor training data quality
+    - **Five-Step Automated Generation Pipeline**:
+      1. **Hierarchical Task Type Generation**:
+         - **Seed Task Definition**: Manually define small set of level-1 task types (e.g., OCR, Image Description, Logical Reasoning)
+         - **GPT-4o Iterative Expansion**: 
+           - **Level-1 Tasks**: Expand from seed tasks to 115 level-1 task types
+           - **Level-2 Tasks**: Generate 2,796 level-2 subtasks for each level-1 task
+           - **Level-3 Tasks**: Further subdivide into 14,370 level-3 tasks
+         - **Prompt Design**: Design specialized prompts for different levels to ensure systematic and complete expansion
+         - **Final Scale**: 19,227 hierarchical task types (1:2:3 ratio = 115:2,796:14,370)
+      2. **Image Data Collection**:
+         - **Multi-Source Images**: Collect images from ALLaVA, Visual Genome, LAION, DocVQA, CLEVR-Math and other public datasets
+         - **Preserve Original Resolution**: No additional preprocessing
+         - **Support Diverse Image Types**: Natural scenes, documents, charts, artwork, watermarked images, etc.
+      3. **Task Type-Image Matching (CLIP Filtering)**:
+         - **Text-Image Similarity Computation**: Use CLIP to compute similarity between task type text and images
+         - **Initial Screening**: Match most relevant task types for each image
+         - **Issue**: CLIP matching performance limited, may produce mismatches
+      4. **Question-Answer Generation (GPT-4o)**:
+         - **Input**: Image + matched task type text
+         - **Output**: Question-answer pairs (JSON format)
+         - **Prompt Design**: Request generating complex questions with detailed answers
+         - **Diversity**: Generate multiple different questions for each task type-image pair
+      5. **Multi-Referee Scoring Filtering (Referee Screening)**:
+         - **Three-Model Consensus Mechanism**: Use three high-performance open-source multimodal models (InternVL, Qwen-VL, other MLLMs) as referees
+         - **Scoring Criteria**: Each model scores task type, question-image matching (0 or 1)
+         - **Filtering Rule**: Only retain samples with cumulative score ≥2 (at least two of three models agree)
+         - **Advantage**: Improves task type, question-image alignment accuracy, reduces closed-source API costs
+         - **Balance Strategy**: To maintain task type balance, randomly select 1-55 samples per task type
+    - **Key Technical Advantages**:
+      - **Fully Automated**: Except for small number of seed tasks, entire pipeline requires no human intervention
+      - **Task Type Quantity**: 19,227 task types, 98× more than Vision-Flan
+      - **Quality Control**: Multi-referee mechanism ensures data quality, avoids single-model bias
+      - **Scalability**: Pipeline adaptable to new image types and task types
+  - **TaskGalaxy Dataset**:
+    - **Total Scale**: 413,648 high-quality question-answer pairs
+    - **Task Types**: 19,227 hierarchical task types
+    - **Sample Distribution**: 1-55 samples per task type
+      - 1-10 samples: 50.1% of task types
+      - 11-20 samples: 11.1%
+      - 21-40 samples: 10.21%
+      - 41-55 samples: 27.99%
+    - **Hierarchical Distribution**: Level-1:Level-2:Level-3 = 1:2:3 (115:2,796:14,370)
+  - **Experimental Results** - **Improvements across all 16 benchmarks**:
+    - **LLaVA-v1.5-7B** (fine-tuned with TaskGalaxy):
+      - MME: 1506→1533, MMBench: 64.69%→68.04%, ScienceQA: 69.51%→71.26%
+      - MathVista: 26.7%→31.4% (+4.7%), ChartQA: 14.72%→20.20% (+5.48%)
+      - AI2D: 25.32%→38.26% (+12.94%), HalluBench: 50.05%→51.74%
+      - **Average Improvement**: 44.46%→48.96% (+4.5%, excluding MME)
+    - **LLaVA-v1.5-13B** (fine-tuned with TaskGalaxy):
+      - MME: 1532→1600, MMBench: 68.47%→69.85%, MathVista: 28.1%→33.3% (+5.2%)
+      - ChartQA: 15.56%→23.44% (+7.88%), AI2D: 21.13%→41.19% (+20.06%)
+      - **Average Improvement**: 45.21%→49.04% (+3.83%)
+    - **InternVL-Chat-v1.0-7B** (fine-tuned with TaskGalaxy):
+      - MMBench: 65.29%→67.10%, ScienceQA: 66.4%→70.93%, MathVista: 27.7%→30.8%
+      - MMMU: 27.0%→34.9% (+7.9%), AI2D: 35.96%→38.57%
+      - **Average Improvement**: 47.79%→50.79% (+3.0%)
+    - **InternVL-Chat-v1.0-13B** (fine-tuned with TaskGalaxy):
+      - MMBench: 65.64%→69.50%, ScienceQA: 70.12%→72.72%, MathVista: 28.7%→30.5%
+      - AI2D: 38.55%→52.60% (+14.05%), Q-Bench: 56.13%→58.60%
+      - **Average Improvement**: 49.90%→53.17% (+3.27%)
+  - **Ablation Study Key Findings**:
+    - **Task Type Quantity Critical**: 
+      - Fixed 100K samples, task types from 2K to 19K, performance continuously improves
+      - Proves task diversity more important than data volume
+    - **Sample Quantity Impact**: 
+      - Fixed 19,227 task types, samples from 76K to 413K, performance gradually improves
+      - But optimal sample size exists for some benchmarks (e.g., LLaVA-in-the-wild at 281K)
+    - **vs. Rule-Based Methods and Closed-Source Models**: TaskGalaxy's task coverage and quality superior to manual rule construction and closed-source model generation
+  - **Task Type Examples** (showing task hierarchy):
+    - **Level-1**: OCR, Image Description, Logical Reasoning, Suggestions, Storytelling
+    - **Level-2**: OCR→webpage OCR / handwritten OCR, Image Description→location-based / historical context
+    - **Level-3**: webpage OCR→extract links / recognize style, location-based→describe cityscapes / identify landmarks
+  - **Institution**: Kuaishou Technology
+  - **Authors**: Jiankang Chen, Tianke Zhang, Changyi Liu, Haojie Ding, Yaya Shi, Feng Cheng, Huihui Xiao, Bin Wen, Fan Yang, Tingting Gao, Di Zhang
+  - **Publication**: ICLR 2025, arXiv February 2025
+  - **Paper Link**: [arXiv:2502.09925](https://arxiv.org/abs/2502.09925)
+  - **Open Source**: ✅ [GitHub](https://github.com/Kwai-YuanQi/TaskGalaxy)
+  - **Significance**:
+    - **Task Type Breakthrough**: First to achieve tens of thousands of task type coverage, 100× existing datasets
+    - **Automated Pipeline**: Dramatically reduces task type expansion costs, improves scalability
+    - **Task Diversity Value**: Empirically proves task diversity importance for model generalization exceeds data volume
+    - **Multi-Referee Mechanism**: Innovative quality control method balancing cost and quality
+    - **Practicality**: Significant improvements across 16 mainstream benchmarks, proving method universality
 
 ---
 
